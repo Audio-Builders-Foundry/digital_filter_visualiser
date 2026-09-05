@@ -65,7 +65,7 @@ namespace CoefficientsToRoots
       pair of conjugates being combined with the real root (counts the complex
       order as double).
    */
-  [[maybe_unused]] static Root mergeRoot(Root oldRoot, Root addedRoot);
+  [[maybe_unused]] static Root mergeRoots(Root oldRoot, Root addedRoot);
 
   /** returns the center of the unique circle passing through 3 complex points */
   [[maybe_unused]] static c128 centerOfCircleThroughPoints(c128 z0, c128 z1, c128 z2);

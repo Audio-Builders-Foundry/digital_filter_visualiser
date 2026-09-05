@@ -184,6 +184,8 @@ void QR::decompGramSchmidt(Matrix &A, size_t degree, size_t shift_idx)
 
 void QR::decompHouseholder(Matrix &A, size_t degree, size_t shift_idx)
 {
+  PROFILE_FUNCTION();
+
   Q.resize(A.size());
   R.resize(A.size());
   auto N = degree;
@@ -318,10 +320,67 @@ void QR::decompHouseholder(Matrix &A, size_t degree, size_t shift_idx)
   }
 }
 
+Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root currentCluster, Root newRoot)
+{
+  PROFILE_FUNCTION();
+
+  jassert(newRoot.order > 0);
+
+  if(currentCluster.order == 0)
+  {
+    return newRoot;
+  }
+
+  jassert(currentCluster.order > 0);
+  jassert(currentCluster.order >= newRoot.order);
+  jassert(currentCluster.order + newRoot.order <= int(coeffs.size()));
+
+  Root newCluster = mergeRoots(currentCluster, newRoot);
+  DBG("currentCluster = (" << currentCluster.value.real() << ", " << currentCluster.value.imag() << ")^" << currentCluster.order);
+  DBG("newRoot = (" << newRoot.value.real() << ", " << newRoot.value.imag() << ")^" << newRoot.order);
+  DBG("newCluster = (" << newCluster.value.real() << ", " << newCluster.value.imag() << ")^" << newCluster.order);
+
+  ComplexCoefficients remaindersCurrent(size_t(currentCluster.order));
+  ComplexCoefficients remaindersNew(size_t(newCluster.order));
+  dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent); // TODO(ry): if we kept last call's newCluster, we already computed this, so we should keep `remaindersNew` to save computation
+  dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
+
+  double const divEps = 1e-12;
+
+  // NOTE(ry): compare remainders of old and new clusters to see if new cluster still divides polynomial
+  double clusterScore = 0.0;
+  for(int i = 0; i < currentCluster.order; ++i)
+  {
+    // TODO(ry): is it correct to compare remainders directly, or is there some
+    // normalization necessary to map them to the same space?
+    double remCurrent = std::abs(remaindersCurrent[i]);
+    double remNew = std::abs(remaindersNew[i + newRoot.order]);
+    DBG("remCurrent = " << remCurrent);
+    DBG("remNew = " << remNew);
+    clusterScore = std::max(clusterScore, remNew / (remCurrent + divEps));
+    DBG("clusterScore = " << clusterScore);
+  }
+
+  // TODO(ry): how to factor in new remainders that don't get counted because of the larger order?
+
+  double const tol = 1300;
+  if(clusterScore < tol)
+  {
+    return newCluster;
+  }
+  else
+  {
+    // TODO(ry): divide out the coefficients to save evaluation iterations down the line?
+    solns.push_back(currentCluster);
+    return newRoot;
+  }
+}
+
 void QR::extractRoots(SolutionSet& roots, const std::vector<double>& M, size_t degree, const Coefficients &coeffs)
 {
     PROFILE_FUNCTION();
 
+#if 0
   // DEBUG:
   bool firstrun = 1;
   int clusterCount = 1;
@@ -427,7 +486,9 @@ void QR::extractRoots(SolutionSet& roots, const std::vector<double>& M, size_t d
         roots.emplace_back(newVal, 1);
 #endif
     };
+#endif
 
+    Root currentCluster{};
     size_t i = 0;
     while (i < degree)
     {
@@ -435,7 +496,8 @@ void QR::extractRoots(SolutionSet& roots, const std::vector<double>& M, size_t d
         {
             // Real eigenvalue on diagonal
             c128 newRoot (M[i * degree + i], 0.0);
-            addRoot(newRoot);
+            //addRoot(newRoot);
+	    currentCluster = updateSolutions(roots, coeffs, currentCluster, {newRoot, 1});
             ++i;
         }
         else
@@ -463,21 +525,28 @@ void QR::extractRoots(SolutionSet& roots, const std::vector<double>& M, size_t d
             if ( discriminant >= 0.0)
             {
                 // two real roots
-                addRoot(c128(halfSum + halfSqrt, 0.0));
-                addRoot(c128(halfSum - halfSqrt, 0.0));
+                //addRoot(c128(halfSum + halfSqrt, 0.0));
+                //addRoot(c128(halfSum - halfSqrt, 0.0));
+		auto r0 = c128(halfSum + halfSqrt, 0.0);
+		auto r1 = c128(halfSum + halfSqrt, 0.0);
+		currentCluster = updateSolutions(roots, coeffs, currentCluster, {r0, 1});
+		currentCluster = updateSolutions(roots, coeffs, currentCluster, {r1, 1});
             }
             else
             {
                 // Complex conjugate pair
                 const double re = halfSum;
                 const double im = halfSqrt;
-                addRoot(c128(re,im));
+		auto r = c128(re, im);
+		currentCluster = updateSolutions(roots, coeffs, currentCluster, {r, 1});
+                //addRoot(c128(re,im));
                 // addRoot(c128(re,-im)); // Note: this is added automatically later using FilterState::add method. Commenting this, removes the bug of overlapping roots.
             }
             i += 2;
         }
     }
 
-    roots.push_back(oldSolution);
-    DBG("counted " << clusterCount << " clusters");
+    //roots.push_back(oldSolution);
+    roots.push_back(currentCluster);
+    DBG("counted " << roots.size() << " clusters");
 }

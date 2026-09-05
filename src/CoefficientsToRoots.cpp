@@ -228,7 +228,7 @@ namespace CoefficientsToRoots
   }
 
   static Root
-  mergeRoot(Root oldRoot, Root addedRoot)
+  mergeRoots(Root oldRoot, Root addedRoot)
   {
     Root newRoot;
     if(juce::exactlyEqual(oldRoot.value.imag(), 0.0) == juce::exactlyEqual(addedRoot.value.imag(), 0.0))

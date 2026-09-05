@@ -38,6 +38,11 @@ private:
   static void decompHouseholder(Matrix &A, size_t degree, size_t shift_idx);
   static constexpr DecompFn decomp = &decompHouseholder;
 
+  // NOTE(ry): tries adding new root to cluster. if it still divides and is
+  // better guess, returns updated root; else adds old cluster to solns and
+  // returns newRoot as cluster state.
+  static Root updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root currentCluster, Root newRoot);
+
   // TODO Finetune these parameters
 
   /*	Threshold for detecting convergence (near-zero) of the subdiagonal elements in QR iteration.*/
