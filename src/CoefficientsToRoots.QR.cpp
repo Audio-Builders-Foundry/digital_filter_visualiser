@@ -351,7 +351,8 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
   double clusterScore = 0.0;
   for(int i = 0; i < currentCluster.order; ++i)
   {
-    // TODO(ry): is it correct to compare remainders directly, or is there some
+    // TODO(ry): is it correct to compare remainders in the same position but
+    // corresponding to different points directly, or is there some
     // normalization necessary to map them to the same space?
     double remCurrent = std::abs(remaindersCurrent[i]);
     double remNew = std::abs(remaindersNew[i + newRoot.order]);
@@ -361,10 +362,36 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
     DBG("clusterScore = " << clusterScore);
   }
 
-  // TODO(ry): how to factor in new remainders that don't get counted because of the larger order?
+  double const tolNewCurrent = 1300;
+  bool clusterDividesPoly = clusterScore < tolNewCurrent;
 
-  double const tol = 1300;
-  if(clusterScore < tol)
+  // NOTE(ry): compare higher-order remainders of new cluster to see if new
+  // cluster divides polynomial in its full order.
+  // it is possible the current cluster and new root are distinct, but their
+  // average lies at another true root.
+  // this check covers this edge case when the other true root order is less
+  // than the order of the new cluster.
+  // if the other true root order is at least the new cluster's order, this
+  // check will fail and we will overcount that root.
+  if(clusterDividesPoly)
+  {
+    double const tolHiLo = 200000;
+    for(int i = 0; clusterDividesPoly && (i < newRoot.order); ++i)
+    {
+      // TODO(ry): is it correct to compare remainders in different positions
+      // directly, or is there some normalization necessary to map them to the
+      // same space?
+      double remHi = std::abs(remaindersNew[i]);
+      double remLo = std::abs(remaindersNew[i+1]);
+      DBG("remHi = " << remHi);
+      DBG("remLo = " << remLo);
+      double rat = remHi / (remLo + divEps);
+      DBG("rat = " << rat);
+      clusterDividesPoly = rat < tolHiLo;
+    }
+  }
+
+  if(clusterDividesPoly)
   {
     return newCluster;
   }
