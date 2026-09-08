@@ -38,6 +38,8 @@ private:
   static void decompHouseholder(Matrix &A, size_t degree, size_t shift_idx);
   static constexpr DecompFn decomp = &decompHouseholder;
 
+  static ComplexCoefficients remaindersCurrent, remaindersNew;
+
   // NOTE(ry): tries adding new root to cluster. if it still divides and is
   // better guess, returns updated root; else adds old cluster to solns and
   // returns newRoot as cluster state.

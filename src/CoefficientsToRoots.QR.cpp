@@ -1,5 +1,7 @@
 QR::Matrix QR::Q, QR::R;
 
+ComplexCoefficients QR::remaindersCurrent{}, QR::remaindersNew{};
+
 SolutionSet QR::Solve(Coefficients coefs)
 {
     PROFILE_FUNCTION();
@@ -340,9 +342,17 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
   DBG("newRoot = (" << newRoot.value.real() << ", " << newRoot.value.imag() << ")^" << newRoot.order);
   DBG("newCluster = (" << newCluster.value.real() << ", " << newCluster.value.imag() << ")^" << newCluster.order);
 
-  ComplexCoefficients remaindersCurrent(size_t(currentCluster.order));
-  ComplexCoefficients remaindersNew(size_t(newCluster.order));
-  dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent); // TODO(ry): if we kept last call's newCluster, we already computed this, so we should keep `remaindersNew` to save computation
+  if(remaindersCurrent.size() == 0)
+  {
+    remaindersCurrent.resize(size_t(currentCluster.order));
+    dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent);
+  }
+
+  //ComplexCoefficients remaindersCurrent(size_t(currentCluster.order));
+  //ComplexCoefficients remaindersNew(size_t(newCluster.order));
+  //dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent); // TODO(ry): if we kept last call's newCluster, we already computed this, so we should keep `remaindersNew` to save computation
+  //dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
+  remaindersNew.resize(size_t(newCluster.order));
   dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
 
   double const divEps = 1e-12;
@@ -392,6 +402,7 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
     }
   }
 
+  std::swap(remaindersCurrent, remaindersNew);
   if(clusterDividesPoly)
   {
     return newCluster;
@@ -400,6 +411,7 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
   {
     // TODO(ry): divide out the coefficients to save evaluation iterations down the line?
     solns.push_back(currentCluster);
+    remaindersCurrent.resize(0);
     return newRoot;
   }
 }
@@ -517,6 +529,8 @@ void QR::extractRoots(SolutionSet& roots, const std::vector<double>& M, size_t d
 #endif
 
     Root currentCluster{};
+    remaindersCurrent.resize(0);
+    //remaindersNew.resize(0);
     size_t i = 0;
     while (i < degree)
     {
