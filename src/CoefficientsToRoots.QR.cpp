@@ -480,4 +480,11 @@ void QR::extractRoots(SolutionSet& roots, const std::vector<double>& M, size_t d
 
     roots.push_back(oldSolution);
     DBG("counted " << clusterCount << " clusters");
+#ifdef DEBUG_C2R
+    std::cout<<"Calculated Roots: ";
+    for (auto root : roots)
+        std::cout<<"("<<root.value.real()<<","<<root.value.imag()<<") - "<<root.order<<", ";
+    std::cout<<std::endl;
+#endif
+
 }

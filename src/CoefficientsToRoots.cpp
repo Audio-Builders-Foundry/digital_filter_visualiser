@@ -5,6 +5,7 @@
 #include "CoefficientsToRoots.h"
 
 #include <algorithm>
+#include <iostream>
 #include <cmath>
 
 namespace CoefficientsToRoots

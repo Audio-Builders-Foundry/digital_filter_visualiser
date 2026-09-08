@@ -5,6 +5,8 @@
 #include <vector>
 #include <utility>
 
+#define DEBUG_C2R 1
+
 namespace CoefficientsToRoots
 {
   struct Root
