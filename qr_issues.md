@@ -26,7 +26,7 @@
 -  ~~4: 2 real order 1 + 1 real order 2~~
 -  ~~4: 4 real order 1~~
 -  ~~5: 5 real order 1 b~~
--  5: 3 real order 1 + 1 complex order 1 b (NEW WITH `QR::updateSolutions`)
+-  ~~5: 3 real order 1 + 1 complex order 1 b (NEW WITH `QR::updateSolutions`)~~
 -  ~~5: 1 real order 1 + 2 complex order 1 a~~
 -  ~~6: 1 real order 4 + 1 complex order 1 a~~
 -  ~~6: 1 real order 4 + 2 real order 1 a~~

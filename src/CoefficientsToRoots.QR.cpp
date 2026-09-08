@@ -348,6 +348,7 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
   double const divEps = 1e-12;
 
   // NOTE(ry): compare remainders of old and new clusters to see if new cluster still divides polynomial
+  size_t orderDiff = newCluster.order - currentCluster.order;
   double clusterScore = 0.0;
   for(int i = 0; i < currentCluster.order; ++i)
   {
@@ -355,7 +356,7 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
     // corresponding to different points directly, or is there some
     // normalization necessary to map them to the same space?
     double remCurrent = std::abs(remaindersCurrent[i]);
-    double remNew = std::abs(remaindersNew[i + newRoot.order]);
+    double remNew = std::abs(remaindersNew[i + orderDiff]);
     DBG("remCurrent = " << remCurrent);
     DBG("remNew = " << remNew);
     clusterScore = std::max(clusterScore, remNew / (remCurrent + divEps));
@@ -376,7 +377,7 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
   if(clusterDividesPoly)
   {
     double const tolHiLo = 200000;
-    for(int i = 0; clusterDividesPoly && (i < newRoot.order); ++i)
+    for(int i = 0; clusterDividesPoly && (i < orderDiff); ++i)
     {
       // TODO(ry): is it correct to compare remainders in different positions
       // directly, or is there some normalization necessary to map them to the
