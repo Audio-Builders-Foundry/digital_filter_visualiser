@@ -70,17 +70,8 @@ SolutionSet QR::Solve(Coefficients coefs)
 	state2x2[2] = A[(shift_idx-1)*degree + shift_idx-2];
 	state2x2[3] = A[(shift_idx-1)*degree + shift_idx-1];
 
-        // subtract rayleigh quotient shift
-        const double shift = A[(shift_idx - 1) * degree + (shift_idx - 1)];
-        for (size_t i = 0; i < shift_idx; ++i)
-            A[i * degree + i] -= shift; // Decompose (Ak - sI)
-
 	// NOTE(ry): compute QR = A, A' = RQ using the default decomposition method
-	decomp(A, degree, shift_idx);
-
-        // add shift back in A and check sub-diagonal entries
-        for (size_t i = 0; i < shift_idx; ++i)
-            A[i * degree + i] += shift;
+	decompUpdate(A, degree, shift_idx);
 
         // check only the last subdiagonal entry (real eigenvalue)
         if (std::abs(A[(shift_idx-1)* degree + (shift_idx-2)]) < Epsilon)
@@ -106,9 +97,11 @@ SolutionSet QR::Solve(Coefficients coefs)
     return roots;
 }
 
-void QR::decompGramSchmidt(Matrix &A, size_t degree, size_t shift_idx)
+void QR::decompUpdateGramSchmidtExplicit(Matrix &A, size_t degree, size_t shift_idx)
 {
     PROFILE_FUNCTION();
+
+    auto shift = shiftRayleigh(A, degree, shift_idx);
 
     std::vector<double> v(shift_idx); // vector for storing current column of A. Note: only the first {0 to (curr val of shift_idx - 1) } indexes are used per iteration.
 
@@ -182,11 +175,15 @@ void QR::decompGramSchmidt(Matrix &A, size_t degree, size_t shift_idx)
 	    A[row* degree + col] = sum; // resetting A[row][col]
 	}
     }
+
+    unshiftRayleigh(A, degree, shift_idx, shift);
 }
 
-void QR::decompHouseholder(Matrix &A, size_t degree, size_t shift_idx)
+void QR::decompUpdateHouseholderExplicit(Matrix &A, size_t degree, size_t shift_idx)
 {
   PROFILE_FUNCTION();
+
+  auto shift = shiftRayleigh(A, degree, shift_idx);
 
   Q.resize(A.size());
   R.resize(A.size());
@@ -320,6 +317,25 @@ void QR::decompHouseholder(Matrix &A, size_t degree, size_t shift_idx)
       }
     }
   }
+
+  unshiftRayleigh(A, degree, shift_idx, shift);
+}
+
+double QR::shiftRayleigh(Matrix &A, size_t degree, size_t shift_idx)
+{
+  // subtract rayleigh quotient shift
+  const double shift = A[(shift_idx - 1) * degree + (shift_idx - 1)];
+  for (size_t i = 0; i < shift_idx; ++i)
+    A[i * degree + i] -= shift; // Decompose (Ak - sI)
+
+  return shift;
+}
+
+void QR::unshiftRayleigh(Matrix &A, size_t degree, size_t shift_idx, double shift)
+{
+  // add shift back in A and check sub-diagonal entries
+  for (size_t i = 0; i < shift_idx; ++i)
+    A[i * degree + i] += shift;
 }
 
 Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root currentCluster, Root newRoot)

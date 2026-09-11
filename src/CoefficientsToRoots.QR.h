@@ -34,9 +34,12 @@ private:
   static Matrix Q, R;
 
   using DecompFn = void(*)(Matrix &, size_t, size_t);
-  static void decompGramSchmidt(Matrix &A, size_t degree, size_t shift_idx);
-  static void decompHouseholder(Matrix &A, size_t degree, size_t shift_idx);
-  static constexpr DecompFn decomp = &decompHouseholder;
+  static void decompUpdateGramSchmidtExplicit(Matrix &A, size_t degree, size_t shift_idx);
+  static void decompUpdateHouseholderExplicit(Matrix &A, size_t degree, size_t shift_idx);
+  static constexpr DecompFn decompUpdate = &decompUpdateHouseholderExplicit;
+
+  static double shiftRayleigh(Matrix &A, size_t degree, size_t shift_idx);
+  static void unshiftRayleigh(Matrix &A, size_t degree, size_t shift_idx, double shift);
 
   static ComplexCoefficients remaindersCurrent, remaindersNew;
 
