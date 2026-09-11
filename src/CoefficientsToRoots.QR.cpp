@@ -35,6 +35,29 @@ SolutionSet QR::Solve(Coefficients coefs)
         roots.emplace_back(Root{static_cast<c128>(-coefs[coefs.size() - 1]), 1});
         return roots;
     }
+    else if (degree == 2)
+    {
+	// NOTE(ry): solve for roots explicitly via quadratic formula
+	auto a = coefs[0];
+	auto b = coefs[1];
+	auto c = coefs[2];
+	auto disc = b*b - 4.0*a*c;
+	if (disc < 0)
+	{
+	    auto sln = c128(-b, std::sqrt(-disc))/(2.0*a);
+	    roots.push_back(Root{sln, 1});
+	}
+	else
+	{
+	    auto sln0 = c128(-b + std::sqrt(disc), 0)/(2.0*a);
+	    auto sln1 = c128(-b - std::sqrt(disc), 0)/(2.0*a);
+	    auto root0 = Root{sln0, 1};
+	    auto root1 = updateSolutions(roots, coefs, root0, Root{sln1, 1});
+	    roots.push_back(root1);
+	}
+
+	return roots;
+    }
 
     // build companion Matrix
     std::vector<double> A(degree * degree, 0.0);
@@ -55,7 +78,7 @@ SolutionSet QR::Solve(Coefficients coefs)
     double state2x2[4]{};
     size_t shift_idx {degree}, iter {0};
     std::vector<double> v(shift_idx); // vector for storing current column of A. Note: only the first {0 to (curr val of shift_idx - 1) } indexes are used per iteration.
-    while(shift_idx > 1)
+    while(shift_idx > 2)
     {
         if (++iter > MaxIterations)
 	{
@@ -84,7 +107,10 @@ SolutionSet QR::Solve(Coefficients coefs)
 	    }
 	}
         // check the entry above the 2x2 block in search of complex conjugate pairs
-        else if (shift_idx > 2 && std::abs(A[(shift_idx-2) * degree + (shift_idx-3)]) < Epsilon)
+        //else if (shift_idx > 2 && std::abs(A[(shift_idx-2) * degree + (shift_idx-3)]) < Epsilon)
+	else if (std::abs(A[(shift_idx-2)*degree + (shift_idx-3)]) <=
+		 std::numeric_limits<double>::epsilon() * (std::abs(A[(shift_idx-2)*degree + (shift_idx-2)]) +
+							   std::abs(A[(shift_idx-3)*degree + (shift_idx-3)])))
         {
 	    DBG("shift " << shift_idx << " converged after " << iter << " iterations (2x2)");
 	    shift_idx -= 2;
@@ -319,6 +345,168 @@ void QR::decompUpdateHouseholderExplicit(Matrix &A, size_t degree, size_t shift_
   }
 
   unshiftRayleigh(A, degree, shift_idx, shift);
+}
+
+void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_idx)
+{
+  PROFILE_FUNCTION();
+
+  // NOTE(ry): computes a Francis Implicit QR Step
+  // adapted from _Matrix Computations_ by Golub and Van Loan, pgs. 356-9
+
+  // NOTE(ry): compute first column of (A - a_1I)(A - a_2I) (a_1, a_2 eigenvalues of lowest 2x2 sub-block)
+  size_t n = shift_idx - 1;
+  size_t m = n - 1;
+
+  // NOTE(ry): A is assumed row-major
+  double Amm = A[m*degree + m];
+  double Ann = A[n*degree + n];
+  double Amn = A[m*degree + n];
+  double Anm = A[n*degree + m];
+  double A00 = A[0*degree + 0];
+  double A01 = A[0*degree + 1];
+  double A10 = A[1*degree + 0];
+  double A11 = A[1*degree + 1];
+  double A21 = A[2*degree + 1];
+
+  double s = Amm + Ann;
+  double t = Amm*Ann - Amn*Anm;
+
+  double x = A00*A00 + A01*A10 - s*A00 + t;
+  double y = A10*(A00 + A11 - s);
+  double z = A10*A21;
+
+  // NOTE(ry): symmetrically update A via 3x3 householder matrices ("bulge chasing").
+  // applies all but the last transformation, which is 2x2
+  for(size_t k = 0; k < shift_idx-2; ++k)
+  {
+    size_t colIdx = (k == 0) ? 0 : k-1;
+
+    size_t rowIdx = std::min(k + 4, shift_idx);
+
+    // NOTE(ry): compute householder reflection vector.
+    // the vector is normalized so the first entry is 1; we store a separate
+    // coefficient beta so the reflection matrix is (I - beta*v*v^T)
+    double beta, vy, vz;
+    {
+      auto sigma = y*y + z*z;
+      if(juce::exactlyEqual(sigma, 0.0))
+      {
+	beta = 0;
+	vy = 0;
+	vz = 0;
+      }
+      else
+      {
+	auto mu = std::sqrt(x*x + sigma);
+	double vx;
+	if(x <= 0)
+	{
+	  vx = x - mu;
+	}
+	else
+	{
+	  vx = -sigma/(x + mu);
+	}
+
+	beta = 2.0*vx*vx/(sigma + vx*vx);
+	vz = z/vx;
+	vy = y/vx;
+      }
+    }
+
+    // NOTE(ry): multiply on the left (A' = (I - beta*v*v^T)*A)
+    {
+      auto *arow0 = &A.data()[(k+0)*degree + colIdx];
+      auto *arow1 = &A.data()[(k+1)*degree + colIdx];
+      auto *arow2 = &A.data()[(k+2)*degree + colIdx];
+
+      for(size_t j = 0; j < shift_idx - colIdx; ++j)
+      {
+	auto sum = arow0[j] + vy*arow1[j] + vz*arow2[j];
+
+	arow0[j] -= beta*sum;
+	arow1[j] -= beta*vy*sum;
+	arow2[j] -= beta*vz*sum;
+      }
+    }
+
+    // NOTE(ry): multiply on the right (A'' = A'*(I - beta*v*v^T))
+    {
+      for(size_t i = 0; i < rowIdx; ++i)
+      {
+	auto *arow = &A.data()[i*degree + k];
+
+	auto sum = arow[0] + vy*arow[1] + vz*arow[2];
+
+	arow[0] -= beta*sum;
+	arow[1] -= beta*vy*sum;
+	arow[2] -= beta*vz*sum;
+      }
+    }
+
+    x = A[(k+1)*degree + k];
+    y = A[(k+2)*degree + k];
+    if(k < shift_idx - 3)
+    { z = A[(k+3)*degree + k]; }
+  }
+
+  // NOTE(ry): last bulge chansing transform (2x2)
+  {
+    // NOTE(ry): householder reflection vector
+    double beta, vy;
+    {
+      auto sigma = y*y;
+      if(juce::exactlyEqual(sigma, 0.0))
+      {
+	beta = 0;
+	vy = 0;
+      }
+      else
+      {
+	auto mu = std::sqrt(x*x + sigma);
+	double vx;
+	if(x <= 0)
+	{
+	  vx = x - mu;
+	}
+	else
+	{
+	  vx = -sigma/(x + mu);
+	}
+
+	beta = 2.0*vx*vx/(sigma + vx*vx);
+	vy = y/vx;
+      }
+    }
+
+    // NOTE(ry): multiply on the left (A' = (I - beta*v*v^T)*A)
+    {
+      auto *arow0 = &A.data()[(shift_idx - 2)*degree + (shift_idx - 3)];
+      auto *arow1 = &A.data()[(shift_idx - 1)*degree + (shift_idx - 3)];
+
+      for(size_t j = 0; j < 3; ++j)
+      {
+	auto sum = arow0[j] + vy*arow1[j];
+
+	arow0[j] -= beta*sum;
+	arow1[j] -= beta*vy*sum;
+      }
+    }
+
+    // NOTE(ry): multiply on the right (A'' = A'*(I - beta*v*v^T))
+    {
+      for(size_t i = 0; i < shift_idx; ++i)
+      {
+	auto *arow = &A.data()[i*degree + (shift_idx - 2)];
+
+	auto sum = arow[0] + vy*arow[1];
+
+	arow[0] -= beta*sum;
+	arow[1] -= beta*vy*sum;
+      }
+    }
+  }
 }
 
 double QR::shiftRayleigh(Matrix &A, size_t degree, size_t shift_idx)
