@@ -556,7 +556,7 @@ void QR::extractRoots(SolutionSet& roots, const std::vector<double>& M, size_t d
                 //addRoot(c128(halfSum + halfSqrt, 0.0));
                 //addRoot(c128(halfSum - halfSqrt, 0.0));
 		auto r0 = c128(halfSum + halfSqrt, 0.0);
-		auto r1 = c128(halfSum + halfSqrt, 0.0);
+		auto r1 = c128(halfSum - halfSqrt, 0.0);
 		currentCluster = updateSolutions(roots, coeffs, currentCluster, {r0, 1});
 		currentCluster = updateSolutions(roots, coeffs, currentCluster, {r1, 1});
             }
