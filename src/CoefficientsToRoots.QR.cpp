@@ -75,46 +75,71 @@ SolutionSet QR::Solve(Coefficients coefs)
 
     // QR algorithm
 
-    double state2x2[4]{};
-    size_t shift_idx {degree}, iter {0};
-    std::vector<double> v(shift_idx); // vector for storing current column of A. Note: only the first {0 to (curr val of shift_idx - 1) } indexes are used per iteration.
-    while(shift_idx > 2)
+    double const eps = 2.0*std::numeric_limits<double>::epsilon();
+    size_t iter {0};
+    size_t startIdx{0}, endIdx{degree-1};
+    while(endIdx > 1)
     {
         if (++iter > MaxIterations)
 	{
-	    DBG("hit MaxIterations " << MaxIterations << " for shift index " << shift_idx);
-	    shift_idx -= 1;
+	    DBG("hit MaxIterations " << MaxIterations << " for range [" << startIdx << ", " << endIdx << "]");
+	    endIdx -= 1;
 	    iter = 0;
 	    continue;
 	}
 
-	state2x2[0] = A[(shift_idx-2)*degree + shift_idx-2];
-	state2x2[1] = A[(shift_idx-2)*degree + shift_idx-1];
-	state2x2[2] = A[(shift_idx-1)*degree + shift_idx-2];
-	state2x2[3] = A[(shift_idx-1)*degree + shift_idx-1];
-
 	// NOTE(ry): compute QR = A, A' = RQ using the default decomposition method
-	decompUpdate(A, degree, shift_idx);
+	decompUpdate(A, degree, startIdx, endIdx);
 
-        // check only the last subdiagonal entry (real eigenvalue)
-        if (std::abs(A[(shift_idx-1)* degree + (shift_idx-2)]) < Epsilon)
-        {
-	    if(std::abs(state2x2[1*2 + 0] - A[(shift_idx-1)*degree + (shift_idx-2)]) < Epsilon)
+	// NOTE(ry): update unreduced matrix range
+	{
+	    while(endIdx > 1)
 	    {
-	        DBG("shift " << shift_idx << " converged after " << iter << " iterations (1x1)");
-                shift_idx--;
-                iter = 0;
+		double diag0 = A[endIdx*degree + endIdx];
+		double diag1 = A[(endIdx-1)*degree + (endIdx-1)];
+		double diag2 = A[(endIdx-2)*degree + (endIdx-2)];
+		double subdiag0 = A[endIdx*degree + (endIdx-1)];
+		double subdiag1 = A[(endIdx-1)*degree + (endIdx-2)];
+		if(std::abs(subdiag0) <= eps*(std::abs(diag0) + std::abs(diag1)))
+		{
+		    DBG("1x1 convergence at index " << endIdx << ", iter = " << iter);
+		    A[endIdx*degree + (endIdx-1)] = 0.0;
+		    endIdx -= 1;
+		    iter = 0;
+		}
+		else if(std::abs(subdiag1) <= eps*(std::abs(diag1) + std::abs(diag2)))
+		{
+		    DBG("2x2 convergence at index " << endIdx << ", iter = " << iter);
+		    A[(endIdx-1)*degree + (endIdx-2)] = 0.0;
+		    endIdx -= 2;
+		    iter = 0;
+		}
+		else
+		{
+		    break;
+		}
 	    }
-	}
-        // check the entry above the 2x2 block in search of complex conjugate pairs
-        //else if (shift_idx > 2 && std::abs(A[(shift_idx-2) * degree + (shift_idx-3)]) < Epsilon)
-	else if (std::abs(A[(shift_idx-2)*degree + (shift_idx-3)]) <=
-		 std::numeric_limits<double>::epsilon() * (std::abs(A[(shift_idx-2)*degree + (shift_idx-2)]) +
-							   std::abs(A[(shift_idx-3)*degree + (shift_idx-3)])))
-        {
-	    DBG("shift " << shift_idx << " converged after " << iter << " iterations (2x2)");
-	    shift_idx -= 2;
-	    iter = 0;
+
+	    if(endIdx > 1)
+	    {
+		startIdx = endIdx - 2;
+		while(startIdx > 0)
+		{
+		    double diag0 = A[startIdx*degree + startIdx];
+		    double diag1 = A[(startIdx-1)*degree + (startIdx-1)];
+		    double subdiag = A[startIdx*degree + (startIdx-1)];
+		    if(std::abs(subdiag) <= eps*(std::abs(diag0) + std::abs(diag1)))
+		    {
+			A[startIdx*degree + (startIdx-1)] = 0.0;
+			break;
+		    }
+		    startIdx -= 1;
+		}
+	    }
+	    else
+	    {
+		break;
+	    }
 	}
     }
 
@@ -347,7 +372,7 @@ void QR::decompUpdateHouseholderExplicit(Matrix &A, size_t degree, size_t shift_
   unshiftRayleigh(A, degree, shift_idx, shift);
 }
 
-void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_idx)
+void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t startIdx, size_t endIdx)
 {
   PROFILE_FUNCTION();
 
@@ -355,7 +380,9 @@ void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_
   // adapted from _Matrix Computations_ by Golub and Van Loan, pgs. 356-9
 
   // NOTE(ry): compute first column of (A - a_1I)(A - a_2I) (a_1, a_2 eigenvalues of lowest 2x2 sub-block)
-  size_t n = shift_idx - 1;
+  //size_t n = shift_idx - 1;
+  size_t p = startIdx;
+  size_t n = endIdx;
   size_t m = n - 1;
 
   // NOTE(ry): A is assumed row-major
@@ -363,11 +390,11 @@ void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_
   double Ann = A[n*degree + n];
   double Amn = A[m*degree + n];
   double Anm = A[n*degree + m];
-  double A00 = A[0*degree + 0];
-  double A01 = A[0*degree + 1];
-  double A10 = A[1*degree + 0];
-  double A11 = A[1*degree + 1];
-  double A21 = A[2*degree + 1];
+  double A00 = A[p*degree + p];
+  double A01 = A[p*degree + p+1];
+  double A10 = A[(p+1)*degree + p];
+  double A11 = A[(p+1)*degree + p+1];
+  double A21 = A[(p+2)*degree + p+1];
 
   double s = Amm + Ann;
   double t = Amm*Ann - Amn*Anm;
@@ -378,11 +405,11 @@ void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_
 
   // NOTE(ry): symmetrically update A via 3x3 householder matrices ("bulge chasing").
   // applies all but the last transformation, which is 2x2
-  for(size_t k = 0; k < shift_idx-2; ++k)
+  for(size_t k = p; k < n - 1; ++k)
   {
-    size_t colIdx = (k == 0) ? 0 : k-1;
+    size_t colIdx = (k == p) ? p : k-1;
 
-    size_t rowIdx = std::min(k + 4, shift_idx);
+    size_t rowIdx = std::min(k+4, n+1);
 
     // NOTE(ry): compute householder reflection vector.
     // the vector is normalized so the first entry is 1; we store a separate
@@ -421,7 +448,7 @@ void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_
       auto *arow1 = &A.data()[(k+1)*degree + colIdx];
       auto *arow2 = &A.data()[(k+2)*degree + colIdx];
 
-      for(size_t j = 0; j < shift_idx - colIdx; ++j)
+      for(size_t j = 0; j < n+1 - colIdx; ++j)
       {
 	auto sum = arow0[j] + vy*arow1[j] + vz*arow2[j];
 
@@ -433,7 +460,7 @@ void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_
 
     // NOTE(ry): multiply on the right (A'' = A'*(I - beta*v*v^T))
     {
-      for(size_t i = 0; i < rowIdx; ++i)
+      for(size_t i = p; i < rowIdx; ++i)
       {
 	auto *arow = &A.data()[i*degree + k];
 
@@ -447,7 +474,7 @@ void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_
 
     x = A[(k+1)*degree + k];
     y = A[(k+2)*degree + k];
-    if(k < shift_idx - 3)
+    if(k < n-2)
     { z = A[(k+3)*degree + k]; }
   }
 
@@ -482,8 +509,8 @@ void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_
 
     // NOTE(ry): multiply on the left (A' = (I - beta*v*v^T)*A)
     {
-      auto *arow0 = &A.data()[(shift_idx - 2)*degree + (shift_idx - 3)];
-      auto *arow1 = &A.data()[(shift_idx - 1)*degree + (shift_idx - 3)];
+      auto *arow0 = &A.data()[(n-1)*degree + (n-2)];
+      auto *arow1 = &A.data()[n*degree + (n-2)];
 
       for(size_t j = 0; j < 3; ++j)
       {
@@ -496,9 +523,9 @@ void QR::decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_
 
     // NOTE(ry): multiply on the right (A'' = A'*(I - beta*v*v^T))
     {
-      for(size_t i = 0; i < shift_idx; ++i)
+      for(size_t i = p; i < n+1; ++i)
       {
-	auto *arow = &A.data()[i*degree + (shift_idx - 2)];
+	auto *arow = &A.data()[i*degree + (n-1)];
 
 	auto sum = arow[0] + vy*arow[1];
 

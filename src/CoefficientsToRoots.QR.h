@@ -33,10 +33,10 @@ private:
   using Matrix = std::vector<double>;
   static Matrix Q, R;
 
-  using DecompFn = void(*)(Matrix &, size_t, size_t);
+  using DecompFn = void(*)(Matrix &, size_t, size_t, size_t);
   static void decompUpdateGramSchmidtExplicit(Matrix &A, size_t degree, size_t shift_idx);
   static void decompUpdateHouseholderExplicit(Matrix &A, size_t degree, size_t shift_idx);
-  static void decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t shift_idx);
+  static void decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t startIdx, size_t endIdx);
   static constexpr DecompFn decompUpdate = &decompUpdateHouseholderImplicit;
 
   static double shiftRayleigh(Matrix &A, size_t degree, size_t shift_idx);
@@ -52,7 +52,7 @@ private:
   // TODO Finetune these parameters
 
   /*	Threshold for detecting convergence (near-zero) of the subdiagonal elements in QR iteration.*/
-  static constexpr double Epsilon = 1e-6;//1e-12;
+  static constexpr double Epsilon = 1e-10;//1e-6;//1e-12;
 
   /*	Maximum QR iterations per eigenvalue block to prevent infinite loops.*/
   static constexpr size_t MaxIterations = 100;

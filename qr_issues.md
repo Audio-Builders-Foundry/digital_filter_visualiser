@@ -8,19 +8,19 @@
 - some tests not passing, mostly because root clusters no longer appear contiguously in the matrix, but also sometimes because of bad convergence
   - failing tests:
 	- roots in clusters not in order:
-	  - 4: 2 real order 2
+	  - ~~4: 2 real order 2~~
 	  - 5: 2 real order 2 + 1 real order 1
 	  - 6: 3 real order 2
-    - convergence to wrong values:
-      - 6: 2 real order 2 + 1 complex order 1
+    - ~~convergence to wrong values:~~
+      - ~~6: 2 real order 2 + 1 complex order 1~~
 - max iterations still being hit on some tests, possibly because 2x2 convergence check is too strict
   - tests hitting max iterations:
-    - 5: 1 real order 1 + 1 complex order 2 a
-	- 5: 1 real order 1 + 1 complex order 2 b
+    - ~~5: 1 real order 1 + 1 complex order 2 a~~
+	- ~~5: 1 real order 1 + 1 complex order 2 b~~
 	- 5: 2 real order 2 + 1 real order 1
-	- 6: 1 real order 3 + 3 real order 1
-	- 6: 2 real order 2 + 1 complex order 1
-	- 7: 1 real order 1 + 1 complex order 3
+	- ~~6: 1 real order 3 + 3 real order 1~~
+	- ~~6: 2 real order 2 + 1 complex order 1~~
+	- 7: ~~1 real order 1 + 1 complex order 3~~
   - possibly the cause of the wrong value convergence in some cases (see shared test case)
 
 ## WORK
