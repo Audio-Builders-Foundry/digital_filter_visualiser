@@ -60,15 +60,17 @@ private:
 	clusters.push_back(roots[0]);
 	// NOTE(ry): why can't I just get a reference to the imaginary part?
 	setSignedBit(reinterpret_cast<double(&)[2]>(roots[0].value)[1]);
+	firstUnclusteredIndex = 1;
       }
     }
 
     const Coefficients &coeffs;
     SolutionSet &roots;
     SolutionSet &clusters;
+    size_t firstUnclusteredIndex = 0;
   };
 
-  static bool clusterSolutions(ClusterSolutionsState &state);
+  static void clusterSolutions(ClusterSolutionsState &state);
 
   static ComplexCoefficients remaindersCurrent, remaindersNew;
   static bool compareRemainders(void);

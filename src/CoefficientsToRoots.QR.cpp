@@ -206,12 +206,15 @@ SolutionSet QR::Solve(Coefficients coefs)
     ClusterSolutionsState clusterState(coefs, roots, clusters);
 
     remaindersCurrent.resize(0);
-    while(clusterSolutions(clusterState)) {}
+    while(clusterState.firstUnclusteredIndex < roots.size())
+    {
+      clusterSolutions(clusterState);
+    }
 
     return clusters;
 }
 
-bool QR::clusterSolutions(ClusterSolutionsState &state)
+void QR::clusterSolutions(ClusterSolutionsState &state)
 {
   PROFILE_FUNCTION();
 
@@ -222,14 +225,16 @@ bool QR::clusterSolutions(ClusterSolutionsState &state)
   // since state.roots only has roots with non-negative imaginary part, we can
   // use the signed bit of the imaginary part to indicate that we have not
   // touched this root yet.
+  bool seenUnclustered = false;
   size_t newRootIndex = state.roots.size();
   double minDist = DBL_MAX;
-  for(size_t i = 0; i < state.roots.size(); ++i)
+  for(size_t i = state.firstUnclusteredIndex; i < state.roots.size(); ++i)
   {
     Root root = state.roots[i];
 
     if(!signedBitSet(root.value.imag()))
     {
+      seenUnclustered = true;
       double dist = std::norm(root.value - cluster.value);
 
       if(dist < minDist)
@@ -238,11 +243,16 @@ bool QR::clusterSolutions(ClusterSolutionsState &state)
 	minDist = dist;
       }
     }
+    else
+    {
+      if(!seenUnclustered)
+      { state.firstUnclusteredIndex = i+1; }
+    }
   }
 
   // NOTE(ry): if we have clustered all the roots, return
   if(newRootIndex == state.roots.size())
-  { return false; }
+  { return; }
 
   // NOTE(ry): compare remainders of new and current clusters to see if the new
   // root is the start of a new cluster or not
@@ -277,9 +287,11 @@ bool QR::clusterSolutions(ClusterSolutionsState &state)
     state.clusters.push_back(newRoot);
   }
 
+  if(newRootIndex == state.firstUnclusteredIndex)
+  { state.firstUnclusteredIndex += 1; }
+
   // NOTE(ry): why can't I just get a reference to the imaginary part?
   setSignedBit(reinterpret_cast<double(&)[2]>(state.roots[newRootIndex].value)[1]);
-  return true;
 }
 
 void QR::decompUpdateGramSchmidtExplicit(Matrix &A, size_t degree, size_t shift_idx)
