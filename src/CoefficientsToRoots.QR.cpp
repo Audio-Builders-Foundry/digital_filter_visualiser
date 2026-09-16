@@ -82,6 +82,10 @@ SolutionSet QR::Solve(Coefficients coefs)
     {
         if (++iter > MaxIterations)
 	{
+	    // TODO(ry): this should never happen, but how to handle pulling out
+	    // roots if this hits?  assuming we subsequently have 2x2
+	    // convergence, it will be fine, but if 1x1 convergence somehow
+	    // doesn't work, there will be a problem.
 	    DBG("hit MaxIterations " << MaxIterations << " for range [" << startIdx << ", " << endIdx << "]");
 	    endIdx -= 1;
 	    iter = 0;
@@ -102,6 +106,8 @@ SolutionSet QR::Solve(Coefficients coefs)
 		double subdiag1 = A[(endIdx-1)*degree + (endIdx-2)];
 		if(std::abs(subdiag0) <= eps*(std::abs(diag0) + std::abs(diag1)))
 		{
+		    roots.push_back({c128(diag0, 0.0), 1});
+
 		    DBG("1x1 convergence at index " << endIdx << ", iter = " << iter);
 		    A[endIdx*degree + (endIdx-1)] = 0.0;
 		    endIdx -= 1;
@@ -109,6 +115,23 @@ SolutionSet QR::Solve(Coefficients coefs)
 		}
 		else if(std::abs(subdiag1) <= eps*(std::abs(diag1) + std::abs(diag2)))
 		{
+		    double tr = diag0 + diag1;
+		    double det = diag0*diag1 - subdiag0*A[(endIdx-1)*degree + endIdx];
+		    double disc = tr*tr - 4.0*det;
+		    double t = 0.5*tr;
+		    double s = 0.5*std::sqrt(std::abs(disc));
+		    if(disc >= 0.0)
+		    {
+			// NOTE(ry): 2 real roots
+			roots.push_back({c128(t + s, 0.0), 1});
+			roots.push_back({c128(t - s, 0.0), 1});
+		    }
+		    else
+		    {
+			// NOTE(ry): complex-conjugate pair
+			roots.push_back({c128(t, s), 1});
+		    }
+
 		    DBG("2x2 convergence at index " << endIdx << ", iter = " << iter);
 		    A[(endIdx-1)*degree + (endIdx-2)] = 0.0;
 		    endIdx -= 2;
@@ -143,9 +166,120 @@ SolutionSet QR::Solve(Coefficients coefs)
 	}
     }
 
-    // Extract roots — read diagonal
-    extractRoots(roots, A, degree, coefs);
-    return roots;
+    // NOTE(ry): pull out remaining roots
+    if(endIdx == 0)
+    {
+	// NOTE(ry): 1 real root remaining
+        roots.push_back({c128(A[0], 0.0), 1});
+    }
+    else
+    {
+	// NOTE(ry): 2 roots remaining (either both real, or complex-conjugate pair)
+	jassert(endIdx == 1);
+
+	double a = A[0];
+	double b = A[1];
+	double c = A[degree];
+	double d = A[degree + 1];
+
+	double tr = a + d;
+	double det = a*d - b*c;
+	double disc = tr*tr - 4.0*det;
+
+	double t = 0.5*tr;
+	double s = 0.5*std::sqrt(std::abs(disc));
+	if(disc >= 0)
+	{
+	    // NOTE(ry): 2 real roots
+	    roots.push_back({c128(t + s, 0.0), 1});
+	    roots.push_back({c128(t - s, 0.0), 1});
+	}
+	else
+	{
+	    // NOTE(ry): complex-conjugate pair
+	    roots.push_back({c128(t, s), 1});
+	}
+    }
+
+    SolutionSet clusters;
+    clusters.reserve(roots.size());
+    ClusterSolutionsState clusterState(coefs, roots, clusters);
+
+    remaindersCurrent.resize(0);
+    while(clusterSolutions(clusterState)) {}
+
+    return clusters;
+}
+
+bool QR::clusterSolutions(ClusterSolutionsState &state)
+{
+  PROFILE_FUNCTION();
+
+  Root &cluster = state.clusters.back();
+
+  // NOTE(ry): find the closest root to the current cluster that we haven't
+  // already clustered.
+  // since state.roots only has roots with non-negative imaginary part, we can
+  // use the signed bit of the imaginary part to indicate that we have not
+  // touched this root yet.
+  size_t newRootIndex = state.roots.size();
+  double minDist = DBL_MAX;
+  for(size_t i = 0; i < state.roots.size(); ++i)
+  {
+    Root root = state.roots[i];
+
+    if(!signedBitSet(root.value.imag()))
+    {
+      double dist = std::norm(root.value - cluster.value);
+
+      if(dist < minDist)
+      {
+	newRootIndex = i;
+	minDist = dist;
+      }
+    }
+  }
+
+  // NOTE(ry): if we have clustered all the roots, return
+  if(newRootIndex == state.roots.size())
+  { return false; }
+
+  // NOTE(ry): compare remainders of new and current clusters to see if the new
+  // root is the start of a new cluster or not
+  Root newRoot = state.roots[newRootIndex];
+  Root newCluster = mergeRoots(cluster, newRoot);
+
+  DBG("currentCluster = (" << cluster.value.real() << ", " << cluster.value.imag() << ")^" << cluster.order);
+  DBG("newRoot = (" << newRoot.value.real() << ", " << newRoot.value.imag() << ")^" << newRoot.order);
+  DBG("newCluster = (" << newCluster.value.real() << ", " << newCluster.value.imag() << ")^" << newCluster.order);
+
+  if(remaindersCurrent.size() == 0)
+  {
+    remaindersCurrent.resize(size_t(cluster.order));
+    dividePolynomialByRoot(state.coeffs, cluster, remaindersCurrent);
+  }
+
+  remaindersNew.resize(size_t(newCluster.order));
+  dividePolynomialByRoot(state.coeffs, newCluster, remaindersNew);
+
+  bool newClusterBetter = compareRemainders();
+
+  std::swap(remaindersCurrent, remaindersNew);
+  if(newClusterBetter)
+  {
+    // NOTE(ry): new root part of same cluster: update current cluster
+    cluster = newCluster;
+  }
+  else
+  {
+    // NOTE(ry): new root part of new cluster: start new cluster
+    remaindersCurrent.resize(0);
+    state.clusters.push_back(newRoot);
+  }
+
+  // NOTE(ry): why can't I just get a reference to the imaginary part?
+  setSignedBit(reinterpret_cast<double(&)[2]>(state.roots[newRootIndex].value)[1]);
+  return true;
 }
 
 void QR::decompUpdateGramSchmidtExplicit(Matrix &A, size_t degree, size_t shift_idx)
@@ -553,45 +687,16 @@ void QR::unshiftRayleigh(Matrix &A, size_t degree, size_t shift_idx, double shif
     A[i * degree + i] += shift;
 }
 
-Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root currentCluster, Root newRoot)
+bool QR::compareRemainders(void)
 {
   PROFILE_FUNCTION();
-
-  jassert(newRoot.order > 0);
-
-  if(currentCluster.order == 0)
-  {
-    return newRoot;
-  }
-
-  jassert(currentCluster.order > 0);
-  jassert(currentCluster.order >= newRoot.order);
-  jassert(currentCluster.order + newRoot.order <= int(coeffs.size()));
-
-  Root newCluster = mergeRoots(currentCluster, newRoot);
-  DBG("currentCluster = (" << currentCluster.value.real() << ", " << currentCluster.value.imag() << ")^" << currentCluster.order);
-  DBG("newRoot = (" << newRoot.value.real() << ", " << newRoot.value.imag() << ")^" << newRoot.order);
-  DBG("newCluster = (" << newCluster.value.real() << ", " << newCluster.value.imag() << ")^" << newCluster.order);
-
-  if(remaindersCurrent.size() == 0)
-  {
-    remaindersCurrent.resize(size_t(currentCluster.order));
-    dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent);
-  }
-
-  //ComplexCoefficients remaindersCurrent(size_t(currentCluster.order));
-  //ComplexCoefficients remaindersNew(size_t(newCluster.order));
-  //dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent); // TODO(ry): if we kept last call's newCluster, we already computed this, so we should keep `remaindersNew` to save computation
-  //dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
-  remaindersNew.resize(size_t(newCluster.order));
-  dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
 
   double const divEps = 1e-12;
 
   // NOTE(ry): compare remainders of old and new clusters to see if new cluster still divides polynomial
-  size_t orderDiff = newCluster.order - currentCluster.order;
+  size_t orderDiff = remaindersNew.size() - remaindersCurrent.size();
   double clusterScore = 0.0;
-  for(int i = 0; i < currentCluster.order; ++i)
+  for(int i = 0; i < remaindersCurrent.size(); ++i)
   {
     // TODO(ry): is it correct to compare remainders in the same position but
     // corresponding to different points directly, or is there some
@@ -632,6 +737,44 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
       clusterDividesPoly = rat < tolHiLo;
     }
   }
+
+  return clusterDividesPoly;
+}
+
+Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root currentCluster, Root newRoot)
+{
+  PROFILE_FUNCTION();
+
+  jassert(newRoot.order > 0);
+
+  if(currentCluster.order == 0)
+  {
+    return newRoot;
+  }
+
+  jassert(currentCluster.order > 0);
+  jassert(currentCluster.order >= newRoot.order);
+  jassert(currentCluster.order + newRoot.order <= int(coeffs.size()));
+
+  Root newCluster = mergeRoots(currentCluster, newRoot);
+  DBG("currentCluster = (" << currentCluster.value.real() << ", " << currentCluster.value.imag() << ")^" << currentCluster.order);
+  DBG("newRoot = (" << newRoot.value.real() << ", " << newRoot.value.imag() << ")^" << newRoot.order);
+  DBG("newCluster = (" << newCluster.value.real() << ", " << newCluster.value.imag() << ")^" << newCluster.order);
+
+  if(remaindersCurrent.size() == 0)
+  {
+    remaindersCurrent.resize(size_t(currentCluster.order));
+    dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent);
+  }
+
+  //ComplexCoefficients remaindersCurrent(size_t(currentCluster.order));
+  //ComplexCoefficients remaindersNew(size_t(newCluster.order));
+  //dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent); // TODO(ry): if we kept last call's newCluster, we already computed this, so we should keep `remaindersNew` to save computation
+  //dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
+  remaindersNew.resize(size_t(newCluster.order));
+  dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
+
+  bool clusterDividesPoly = compareRemainders();
 
   std::swap(remaindersCurrent, remaindersNew);
   if(clusterDividesPoly)

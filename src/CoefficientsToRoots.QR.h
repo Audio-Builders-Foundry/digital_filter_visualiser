@@ -42,7 +42,36 @@ private:
   static double shiftRayleigh(Matrix &A, size_t degree, size_t shift_idx);
   static void unshiftRayleigh(Matrix &A, size_t degree, size_t shift_idx, double shift);
 
+  static bool signedBitSet(double num)
+  { return *reinterpret_cast<u64*>(&num) & (1ULL << 63); }
+
+  static void setSignedBit(double &num)
+  { *reinterpret_cast<u64*>(&num) |= (1ULL << 63); }
+
+  struct ClusterSolutionsState
+  {
+    ClusterSolutionsState(const Coefficients &_coeffs, SolutionSet &_roots, SolutionSet &_clusters)
+      :coeffs(_coeffs)
+      ,roots(_roots)
+      ,clusters(_clusters)
+    {
+      if(clusters.size() == 0)
+      {
+	clusters.push_back(roots[0]);
+	// NOTE(ry): why can't I just get a reference to the imaginary part?
+	setSignedBit(reinterpret_cast<double(&)[2]>(roots[0].value)[1]);
+      }
+    }
+
+    const Coefficients &coeffs;
+    SolutionSet &roots;
+    SolutionSet &clusters;
+  };
+
+  static bool clusterSolutions(ClusterSolutionsState &state);
+
   static ComplexCoefficients remaindersCurrent, remaindersNew;
+  static bool compareRemainders(void);
 
   // NOTE(ry): tries adding new root to cluster. if it still divides and is
   // better guess, returns updated root; else adds old cluster to solns and
