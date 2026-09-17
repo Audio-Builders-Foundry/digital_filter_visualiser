@@ -208,7 +208,31 @@ SolutionSet QR::Solve(Coefficients coefs)
     remaindersCurrent.resize(0);
     while(clusterState.firstUnclusteredIndex < roots.size())
     {
-      clusterSolutions(clusterState);
+	clusterSolutions(clusterState);
+    }
+
+    // NOTE(ry): we only extract complex roots with positive imaginary parts,
+    // leaving the corresponding root with negative imaginary part
+    // implicit. high-order real roots are often appear as complex conjugate
+    // pairs with very small imaginary parts; we only ever add the imaginary
+    // parts during clustering, so they can accumulate and make the cluster
+    // appear as a complex conjugate pair instead of real. so we check here if
+    // complex clusters actually correspond to real roots or true complex roots
+    // by collapsing each complex pair onto the real axis and seeing if the real
+    // cluster is better or not.
+    for(size_t i = 0; i < clusters.size(); ++i)
+    {
+	Root currentCluster = clusters[i];
+	if(!juce::exactlyEqual(currentCluster.value.imag(), 0.0))
+	{
+	    remaindersCurrent.resize(0);
+	    Root realCluster{c128(currentCluster.value.real(), 0.0), 2*currentCluster.order};
+	    if(compareClusters(coefs, currentCluster, realCluster))
+	    {
+		DBG("refined (" << currentCluster.value.real() << ", " << currentCluster.value.imag() << ")^" << currentCluster.order << "to (" << realCluster.value.real() << ", 0)^" << realCluster.order);
+		clusters[i] = realCluster;
+	    }
+	}
     }
 
     return clusters;
@@ -263,16 +287,7 @@ void QR::clusterSolutions(ClusterSolutionsState &state)
   DBG("newRoot = (" << newRoot.value.real() << ", " << newRoot.value.imag() << ")^" << newRoot.order);
   DBG("newCluster = (" << newCluster.value.real() << ", " << newCluster.value.imag() << ")^" << newCluster.order);
 
-  if(remaindersCurrent.size() == 0)
-  {
-    remaindersCurrent.resize(size_t(cluster.order));
-    dividePolynomialByRoot(state.coeffs, cluster, remaindersCurrent);
-  }
-
-  remaindersNew.resize(size_t(newCluster.order));
-  dividePolynomialByRoot(state.coeffs, newCluster, remaindersNew);
-
-  bool newClusterBetter = compareRemainders();
+  bool newClusterBetter = compareClusters(state.coeffs, cluster, newCluster);
 
   std::swap(remaindersCurrent, remaindersNew);
   if(newClusterBetter)
@@ -292,6 +307,75 @@ void QR::clusterSolutions(ClusterSolutionsState &state)
 
   // NOTE(ry): why can't I just get a reference to the imaginary part?
   setSignedBit(reinterpret_cast<double(&)[2]>(state.roots[newRootIndex].value)[1]);
+}
+
+bool QR::compareClusters(const Coefficients &coeffs, Root currentCluster, Root newCluster)
+{
+  PROFILE_FUNCTION();
+
+  // NOTE(ry): the common use case for this function passes currentCluster as
+  // newCluster if the newCluster was better on the previous call; we save
+  // computation by swapping the vectors of remainders and reusing the previous
+  // new cluster remainders as the current cluster remainders in this case. if
+  // remainders cannot be resused and must be recomputed, callers should
+  // invalidate the current remainders by setting the size to zero.
+  if(remaindersCurrent.size() == 0)
+  {
+    remaindersCurrent.resize(size_t(currentCluster.order));
+    dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent);
+  }
+
+  remaindersNew.resize(size_t(newCluster.order));
+  dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
+
+  double const divEps = 1e-12;
+
+  // NOTE(ry): compare remainders of old and new clusters to see if new cluster still divides polynomial
+  size_t orderDiff = remaindersNew.size() - remaindersCurrent.size();
+  double clusterScore = 0.0;
+  for(int i = 0; i < remaindersCurrent.size(); ++i)
+  {
+    // TODO(ry): is it correct to compare remainders in the same position but
+    // corresponding to different points directly, or is there some
+    // normalization necessary to map them to the same space?
+    double remCurrent = std::abs(remaindersCurrent[i]);
+    double remNew = std::abs(remaindersNew[i + orderDiff]);
+    DBG("remCurrent = " << remCurrent);
+    DBG("remNew = " << remNew);
+    clusterScore = std::max(clusterScore, remNew / (remCurrent + divEps));
+    DBG("clusterScore = " << clusterScore);
+  }
+
+  double const tolNewCurrent = 1300;
+  bool newClusterBetter = clusterScore < tolNewCurrent;
+
+  // NOTE(ry): compare higher-order remainders of new cluster to see if new
+  // cluster divides polynomial in its full order.
+  // it is possible the current cluster and new root are distinct, but their
+  // average lies at another true root.
+  // this check covers this edge case when the other true root order is less
+  // than the order of the new cluster.
+  // if the other true root order is at least the new cluster's order, this
+  // check will fail and we will overcount that root.
+  if(newClusterBetter)
+  {
+    double const tolHiLo = 200000;
+    for(int i = 0; newClusterBetter && (i < orderDiff); ++i)
+    {
+      // TODO(ry): is it correct to compare remainders in different positions
+      // directly, or is there some normalization necessary to map them to the
+      // same space?
+      double remHi = std::abs(remaindersNew[i]);
+      double remLo = std::abs(remaindersNew[i+1]);
+      DBG("remHi = " << remHi);
+      DBG("remLo = " << remLo);
+      double rat = remHi / (remLo + divEps);
+      DBG("rat = " << rat);
+      newClusterBetter = rat < tolHiLo;
+    }
+  }
+
+  return newClusterBetter;
 }
 
 void QR::decompUpdateGramSchmidtExplicit(Matrix &A, size_t degree, size_t shift_idx)
@@ -699,60 +783,6 @@ void QR::unshiftRayleigh(Matrix &A, size_t degree, size_t shift_idx, double shif
     A[i * degree + i] += shift;
 }
 
-bool QR::compareRemainders(void)
-{
-  PROFILE_FUNCTION();
-
-  double const divEps = 1e-12;
-
-  // NOTE(ry): compare remainders of old and new clusters to see if new cluster still divides polynomial
-  size_t orderDiff = remaindersNew.size() - remaindersCurrent.size();
-  double clusterScore = 0.0;
-  for(int i = 0; i < remaindersCurrent.size(); ++i)
-  {
-    // TODO(ry): is it correct to compare remainders in the same position but
-    // corresponding to different points directly, or is there some
-    // normalization necessary to map them to the same space?
-    double remCurrent = std::abs(remaindersCurrent[i]);
-    double remNew = std::abs(remaindersNew[i + orderDiff]);
-    DBG("remCurrent = " << remCurrent);
-    DBG("remNew = " << remNew);
-    clusterScore = std::max(clusterScore, remNew / (remCurrent + divEps));
-    DBG("clusterScore = " << clusterScore);
-  }
-
-  double const tolNewCurrent = 1300;
-  bool clusterDividesPoly = clusterScore < tolNewCurrent;
-
-  // NOTE(ry): compare higher-order remainders of new cluster to see if new
-  // cluster divides polynomial in its full order.
-  // it is possible the current cluster and new root are distinct, but their
-  // average lies at another true root.
-  // this check covers this edge case when the other true root order is less
-  // than the order of the new cluster.
-  // if the other true root order is at least the new cluster's order, this
-  // check will fail and we will overcount that root.
-  if(clusterDividesPoly)
-  {
-    double const tolHiLo = 200000;
-    for(int i = 0; clusterDividesPoly && (i < orderDiff); ++i)
-    {
-      // TODO(ry): is it correct to compare remainders in different positions
-      // directly, or is there some normalization necessary to map them to the
-      // same space?
-      double remHi = std::abs(remaindersNew[i]);
-      double remLo = std::abs(remaindersNew[i+1]);
-      DBG("remHi = " << remHi);
-      DBG("remLo = " << remLo);
-      double rat = remHi / (remLo + divEps);
-      DBG("rat = " << rat);
-      clusterDividesPoly = rat < tolHiLo;
-    }
-  }
-
-  return clusterDividesPoly;
-}
-
 Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root currentCluster, Root newRoot)
 {
   PROFILE_FUNCTION();
@@ -773,20 +803,7 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
   DBG("newRoot = (" << newRoot.value.real() << ", " << newRoot.value.imag() << ")^" << newRoot.order);
   DBG("newCluster = (" << newCluster.value.real() << ", " << newCluster.value.imag() << ")^" << newCluster.order);
 
-  if(remaindersCurrent.size() == 0)
-  {
-    remaindersCurrent.resize(size_t(currentCluster.order));
-    dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent);
-  }
-
-  //ComplexCoefficients remaindersCurrent(size_t(currentCluster.order));
-  //ComplexCoefficients remaindersNew(size_t(newCluster.order));
-  //dividePolynomialByRoot(coeffs, currentCluster, remaindersCurrent); // TODO(ry): if we kept last call's newCluster, we already computed this, so we should keep `remaindersNew` to save computation
-  //dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
-  remaindersNew.resize(size_t(newCluster.order));
-  dividePolynomialByRoot(coeffs, newCluster, remaindersNew);
-
-  bool clusterDividesPoly = compareRemainders();
+  bool clusterDividesPoly = compareClusters(coeffs, currentCluster, newCluster);
 
   std::swap(remaindersCurrent, remaindersNew);
   if(clusterDividesPoly)

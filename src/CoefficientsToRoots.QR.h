@@ -73,7 +73,7 @@ private:
   static void clusterSolutions(ClusterSolutionsState &state);
 
   static ComplexCoefficients remaindersCurrent, remaindersNew;
-  static bool compareRemainders(void);
+  static bool compareClusters(const Coefficients &coeffs, Root currentCluster, Root newCluster);
 
   // NOTE(ry): tries adding new root to cluster. if it still divides and is
   // better guess, returns updated root; else adds old cluster to solns and
