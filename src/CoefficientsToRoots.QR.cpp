@@ -49,6 +49,7 @@ SolutionSet QR::Solve(Coefficients coefs)
 	}
 	else
 	{
+	    remaindersCurrent.resize(0);
 	    auto sln0 = c128(-b + std::sqrt(disc), 0)/(2.0*a);
 	    auto sln1 = c128(-b - std::sqrt(disc), 0)/(2.0*a);
 	    auto root0 = Root{sln0, 1};
