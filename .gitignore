@@ -11,3 +11,4 @@ src/out
 tests/.vs
 additional.cmake
 tests/generator/root_distance_tests.h
+tests/generator/root_order_tests.h
