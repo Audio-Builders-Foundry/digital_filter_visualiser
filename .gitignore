@@ -10,3 +10,4 @@ src/out
 .vs
 tests/.vs
 additional.cmake
+tests/generator/root_distance_tests.h
