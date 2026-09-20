@@ -90,29 +90,38 @@ function(add_console_app target)
   endif()
 endfunction()
 
-add_console_app(DigitalFilterVisualizer_Tests
-  PRODUCT_NAME "DigitalFilterVisualizer_Tests"
-)
+  add_executable(TestGenerator ../tests/generator/generate.cpp)
+  add_custom_target(
+    GenerateTests ALL
+    COMMAND TestGenerator ../tests/generator/
+    DEPENDS TestGenerator
+  )
 
-set_target_properties(DigitalFilterVisualizer_Tests PROPERTIES
-  OUTPUT_NAME "DigitalFilterVisualizer_Tests"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/DigitalFilterVisualizer_Tests_artefacts/$<CONFIG>"
-)
+  add_console_app(DigitalFilterVisualizer_Tests
+    PRODUCT_NAME "DigitalFilterVisualizer_Tests"
+  )
 
-target_sources(DigitalFilterVisualizer_Tests
-	PRIVATE
-	../tests/Main.cpp
-)
+  add_dependencies(DigitalFilterVisualizer_Tests GenerateTests)
 
-target_link_libraries(DigitalFilterVisualizer_Tests
+  set_target_properties(DigitalFilterVisualizer_Tests PROPERTIES
+    OUTPUT_NAME "DigitalFilterVisualizer_Tests"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/DigitalFilterVisualizer_Tests_artefacts/$<CONFIG>"
+  )
+
+  target_sources(DigitalFilterVisualizer_Tests
     PRIVATE
-        ${PROJECT_NAME}
-        juce::juce_core
-        juce::juce_events
-        juce::juce_data_structures
-        juce::juce_audio_basics
-        juce::juce_audio_processors
-        juce::juce_audio_utils
-        juce::juce_gui_basics
-        juce::juce_dsp
-)
+    ../tests/Main.cpp
+  )
+
+  target_link_libraries(DigitalFilterVisualizer_Tests
+      PRIVATE
+          ${PROJECT_NAME}
+          juce::juce_core
+          juce::juce_events
+          juce::juce_data_structures
+          juce::juce_audio_basics
+          juce::juce_audio_processors
+          juce::juce_audio_utils
+          juce::juce_gui_basics
+          juce::juce_dsp
+  )
