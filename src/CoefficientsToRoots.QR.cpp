@@ -76,7 +76,6 @@ SolutionSet QR::Solve(Coefficients coefs)
 
     // QR algorithm
 
-    double const eps = 2.0*std::numeric_limits<double>::epsilon();
     size_t iter {0};
     size_t startIdx{0}, endIdx{degree-1};
     while(endIdx > 1)
@@ -105,7 +104,7 @@ SolutionSet QR::Solve(Coefficients coefs)
 		double diag2 = A[(endIdx-2)*degree + (endIdx-2)];
 		double subdiag0 = A[endIdx*degree + (endIdx-1)];
 		double subdiag1 = A[(endIdx-1)*degree + (endIdx-2)];
-		if(std::abs(subdiag0) <= eps*(std::abs(diag0) + std::abs(diag1)))
+		if(std::abs(subdiag0) <= Epsilon*(std::abs(diag0) + std::abs(diag1)))
 		{
 		    roots.push_back({c128(diag0, 0.0), 1});
 
@@ -114,7 +113,7 @@ SolutionSet QR::Solve(Coefficients coefs)
 		    endIdx -= 1;
 		    iter = 0;
 		}
-		else if(std::abs(subdiag1) <= eps*(std::abs(diag1) + std::abs(diag2)))
+		else if(std::abs(subdiag1) <= Epsilon*(std::abs(diag1) + std::abs(diag2)))
 		{
 		    double tr = diag0 + diag1;
 		    double det = diag0*diag1 - subdiag0*A[(endIdx-1)*degree + endIdx];
@@ -152,7 +151,7 @@ SolutionSet QR::Solve(Coefficients coefs)
 		    double diag0 = A[startIdx*degree + startIdx];
 		    double diag1 = A[(startIdx-1)*degree + (startIdx-1)];
 		    double subdiag = A[startIdx*degree + (startIdx-1)];
-		    if(std::abs(subdiag) <= eps*(std::abs(diag0) + std::abs(diag1)))
+		    if(std::abs(subdiag) <= Epsilon*(std::abs(diag0) + std::abs(diag1)))
 		    {
 			A[startIdx*degree + (startIdx-1)] = 0.0;
 			break;
@@ -818,181 +817,4 @@ Root QR::updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root cu
     remaindersCurrent.resize(0);
     return newRoot;
   }
-}
-
-void QR::extractRoots(SolutionSet& roots, const std::vector<double>& M, size_t degree, const Coefficients &coeffs)
-{
-    PROFILE_FUNCTION();
-
-#if 0
-  // DEBUG:
-  bool firstrun = 1;
-  int clusterCount = 1;
-  Root oldSolution{};
-  c128 lastrem{};
-  ComplexCoefficients remainders(degree);
-  remainders.resize(1);
-
-    auto addRoot = [&](c128 newVal) {
-      // DEBUG:
-      Root newSolution;
-      if(firstrun)
-      {
-	newSolution = Root{newVal, 1};
-      }
-      else
-      {
-	newSolution = mergeRoot(oldSolution, Root{newVal, 1});
-      }
-      if(degree >= 32)
-      { int breakme = 1; }
-
-      if(!firstrun)
-      {
-	const Root &betterSoln = betterDivisorOfPolynomial(coeffs, oldSolution, newSolution);
-	if(&betterSoln == &oldSolution)
-	{
-	  DBG("old solution better, start of new cluster");
-	  roots.push_back(oldSolution);
-	  newSolution = Root{newVal, 1};
-	  ++clusterCount;
-	}
-	else
-	{
-	  DBG("new solution better, same cluster (" << newSolution.order << ")");
-	}
-      }
-
-      c128 rem = evaluatePolynomialAtRoot(coeffs, newSolution);
-      lastrem = rem;
-      c128 newRem = evaluatePolynomial(coeffs, newVal);
-      DBG("poly evaluated at (" << newVal.real() << ", " << newVal.imag() << ")" << " = " << "(" << newRem.real() << ", " << newRem.imag() << ")");
-
-      DBG("(" << newSolution.value.real() << ", " << newSolution.value.imag() << ")^" << newSolution.order << ((rootDividesPolynomial(coeffs, newSolution)) ? " divides" : " does not divide") << " polynomial");
-
-      firstrun = 0;
-      oldSolution = newSolution;
-
-#if 0
-        for (auto& [val, order] : roots)
-        {
-#if 0
-            double diff_re = std::abs(val.real() - newVal.real());
-            double diff_im = std::abs(val.imag() - newVal.imag());
-            double scale = std::abs(val) + std::abs(newVal) + 1e-7; // + 1e-7 to avoid division with zero
-	    if (diff_re / scale < tolerance && diff_im / scale < tolerance)
-            {
-                order++;
-                val += (newVal - val) / static_cast<double>(order);
-                return;
-            }
-#else
-	    if ((juce::exactlyEqual(val.imag(), 0.0)) != (juce::exactlyEqual(newVal.imag(), 0.0)))
-	    {
-	      // NOTE(ry): comparing real with complex root
-	      double x = juce::exactlyEqual(val.imag(), 0.0) ? val.real() : newVal.real(); // real
-	      int x_order = juce::exactlyEqual(val.imag(), 0.0) ? order : 1;
-	      c128 z = juce::exactlyEqual(val.imag(), 0.0) ? newVal : val; // complex
-	      int z_order = juce::exactlyEqual(val.imag(), 0.0) ? 2 : 2*order;
-
-	      double diff = std::abs(z.real() - x);
-	      double err = diff / std::abs(val.real());
-	      if (err < tolerance && z.imag() < tolerance)
-	      {
-		// NOTE(ry): merge the complex with the real root, creating real root
-		// set order to twice the complex order plus the real order
-		// set val to the weighted average of the two roots
-		order = x_order + z_order;
-		val = c128((x_order*x + z_order*z.real()) / double(order), 0);
-		return;
-	      }
-	    }
-	    else
-	    {
-	      // NOTE(ry): comparing real with real complex with complex
-	      double diff_mag = std::abs(val - newVal);
-	      double err = diff_mag / (std::abs(val) + 1e-7);
-	      if (err < tolerance)
-	      {
-		// NOTE(ry): merge the roots
-		// set val to the weighted average of the two roots
-		// increment order by 1
-		double val_re = (order*val.real() + newVal.real()) / double(order + 1);
-		double val_im = (order*val.imag() + newVal.imag()) / double(order + 1);
-
-		val = c128(val_re, val_im);
-		order++;
-		return;
-	      }
-	    }
-#endif
-        }
-        roots.emplace_back(newVal, 1);
-#endif
-    };
-#endif
-
-    Root currentCluster{};
-    remaindersCurrent.resize(0);
-    //remaindersNew.resize(0);
-    size_t i = 0;
-    while (i < degree)
-    {
-        if ( i == degree - 1 || std::abs(M[(i+1) * degree + i]) < Epsilon )
-        {
-            // Real eigenvalue on diagonal
-            c128 newRoot (M[i * degree + i], 0.0);
-            //addRoot(newRoot);
-	    currentCluster = updateSolutions(roots, coeffs, currentCluster, {newRoot, 1});
-            ++i;
-        }
-        else
-        {
-            // check if conjugate by solving the equation which instantiates by the 2x2 cell:
-            // https://www.physicsforums.com/threads/how-do-i-estimate-complex-eigenvalues.170108/post-1330547
-            // https://www.mosismath.com/Eigenvalues/EigenvalsQR.html
-            // det(A - λI) = 0
-            // =>  det| a-λ    b |
-            //        |   c  d-λ | = 0
-            // => (a-λ)(d-λ) - bc = 0
-            // => λ^2 - (a+d)λ + (ad-bc) = 0
-            // => λ^2 - (a+d)λ + detA = 0 --> solve with discriminant
-            const double a = M[i * degree + i];
-            const double b = M[i * degree + i+1];
-            const double c = M[(i+1) * degree + i];
-            const double d = M[(i+1) * degree + i+1];
-            const double det  = a*d - b*c;
-            // solve with discriminant
-            const double discriminant = (a+d)*(a+d) - 4.0*det;
-
-            const double halfSum = 0.5 * (a + d);
-            const double halfSqrt = 0.5 * std::sqrt(std::abs(discriminant));
-
-            if ( discriminant >= 0.0)
-            {
-                // two real roots
-                //addRoot(c128(halfSum + halfSqrt, 0.0));
-                //addRoot(c128(halfSum - halfSqrt, 0.0));
-		auto r0 = c128(halfSum + halfSqrt, 0.0);
-		auto r1 = c128(halfSum - halfSqrt, 0.0);
-		currentCluster = updateSolutions(roots, coeffs, currentCluster, {r0, 1});
-		currentCluster = updateSolutions(roots, coeffs, currentCluster, {r1, 1});
-            }
-            else
-            {
-                // Complex conjugate pair
-                const double re = halfSum;
-                const double im = halfSqrt;
-		auto r = c128(re, im);
-		currentCluster = updateSolutions(roots, coeffs, currentCluster, {r, 1});
-                //addRoot(c128(re,im));
-                // addRoot(c128(re,-im)); // Note: this is added automatically later using FilterState::add method. Commenting this, removes the bug of overlapping roots.
-            }
-            i += 2;
-        }
-    }
-
-    //roots.push_back(oldSolution);
-    roots.push_back(currentCluster);
-    DBG("counted " << roots.size() << " clusters");
 }

@@ -80,22 +80,11 @@ private:
   // returns newRoot as cluster state.
   static Root updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root currentCluster, Root newRoot);
 
-  // TODO Finetune these parameters
-
   /*	Threshold for detecting convergence (near-zero) of the subdiagonal elements in QR iteration.*/
-  static constexpr double Epsilon = 1e-10;//1e-6;//1e-12;
+  static constexpr double Epsilon = 2.0*std::numeric_limits<double>::epsilon();
 
   /*	Maximum QR iterations per eigenvalue block to prevent infinite loops.*/
   static constexpr size_t MaxIterations = 100;
-
-  /* 	Threshold for considering two roots with negligible diff the same.
-	Expressed in % after scaling differences, since zeros may lie outside the unit circle. */
-  static constexpr double tolerance = 5e-2;
-
-  /*	Extracts roots from the eigenvalues of the converged quasi-triangular QR matrix and merges duplicates.
-	For more details see description of QR method */
-  //static void extractRoots(std::vector<std::pair<c128, int>> &, const std::vector<double>&, size_t);
-  static void extractRoots(SolutionSet&, const std::vector<double>&, size_t, const Coefficients &coeffs);
 };
 
 SOLVER_DEFINE(QR)
