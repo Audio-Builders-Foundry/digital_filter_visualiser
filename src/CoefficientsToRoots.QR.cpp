@@ -331,9 +331,10 @@ bool QR::compareClusters(const Coefficients &coeffs, Root currentCluster, Root n
   double const divEps = 1e-12;
 
   // NOTE(ry): compare remainders of old and new clusters to see if new cluster still divides polynomial
+  jassert(remaindersNew.size() >= remaindersCurrent.size());
   size_t orderDiff = remaindersNew.size() - remaindersCurrent.size();
   double clusterScore = 0.0;
-  for(int i = 0; i < remaindersCurrent.size(); ++i)
+  for(size_t i = 0; i < remaindersCurrent.size(); ++i)
   {
     // TODO(ry): is it correct to compare remainders in the same position but
     // corresponding to different points directly, or is there some
@@ -360,7 +361,7 @@ bool QR::compareClusters(const Coefficients &coeffs, Root currentCluster, Root n
   if(newClusterBetter)
   {
     double const tolHiLo = 200000;
-    for(int i = 0; newClusterBetter && (i < orderDiff); ++i)
+    for(size_t i = 0; newClusterBetter && (i < orderDiff); ++i)
     {
       // TODO(ry): is it correct to compare remainders in different positions
       // directly, or is there some normalization necessary to map them to the

@@ -54,8 +54,12 @@ namespace CoefficientsToRoots
   */
   [[maybe_unused]] static void dividePolynomialByRoot(const Coefficients &coeffs, Root pt, ComplexCoefficients &remainders);
 
-
-  static const Root &betterDivisorOfPolynomial(const Coefficients &coeffs, const Root &pt0, const Root &pt1);
+  /** determines which root is a better divisor of the polynomial whose
+      coefficients are given by coeffs.
+      returns the root whose sequence of remainders when dividing the polynomial
+      has smaller values.
+   */
+  [[maybe_unused]] static const Root &betterDivisorOfPolynomial(const Coefficients &coeffs, const Root &pt0, const Root &pt1);
 
   /** returns the weighted average of `oldRoot` and `addedRoot`, adding their
       orders.
