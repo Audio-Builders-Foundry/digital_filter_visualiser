@@ -27,25 +27,64 @@ public:
 	Returns complex roots paired with their corresponding order.
   */
   //static std::vector<std::pair<c128, int>> QR(std::vector<double> coefs);
-  static CoefficientsToRoots::SolutionSet Solve(CoefficientsToRoots::Coefficients coeffs);
+  static SolutionSet Solve(Coefficients coeffs);
 private:
 
-  // TODO Finetune these parameters
+  using Matrix = std::vector<double>;
+  static Matrix Q, R;
+
+  using DecompFn = void(*)(Matrix &, size_t, size_t, size_t);
+  static void decompUpdateGramSchmidtExplicit(Matrix &A, size_t degree, size_t shift_idx);
+  static void decompUpdateHouseholderExplicit(Matrix &A, size_t degree, size_t shift_idx);
+  static void decompUpdateHouseholderImplicit(Matrix &A, size_t degree, size_t startIdx, size_t endIdx);
+  static constexpr DecompFn decompUpdate = &decompUpdateHouseholderImplicit;
+
+  static double shiftRayleigh(Matrix &A, size_t degree, size_t shift_idx);
+  static void unshiftRayleigh(Matrix &A, size_t degree, size_t shift_idx, double shift);
+
+  static bool signedBitSet(double num)
+  { return *reinterpret_cast<u64*>(&num) & (1ULL << 63); }
+
+  static void setSignedBit(double &num)
+  { *reinterpret_cast<u64*>(&num) |= (1ULL << 63); }
+
+  struct ClusterSolutionsState
+  {
+    ClusterSolutionsState(const Coefficients &_coeffs, SolutionSet &_roots, SolutionSet &_clusters)
+      :coeffs(_coeffs)
+      ,roots(_roots)
+      ,clusters(_clusters)
+    {
+      if(clusters.size() == 0)
+      {
+	clusters.push_back(roots[0]);
+	// NOTE(ry): why can't I just get a reference to the imaginary part?
+	setSignedBit(reinterpret_cast<double(&)[2]>(roots[0].value)[1]);
+	firstUnclusteredIndex = 1;
+      }
+    }
+
+    const Coefficients &coeffs;
+    SolutionSet &roots;
+    SolutionSet &clusters;
+    size_t firstUnclusteredIndex = 0;
+  };
+
+  static void clusterSolutions(ClusterSolutionsState &state);
+
+  static ComplexCoefficients remaindersCurrent, remaindersNew;
+  static bool compareClusters(const Coefficients &coeffs, Root currentCluster, Root newCluster);
+
+  // NOTE(ry): tries adding new root to cluster. if it still divides and is
+  // better guess, returns updated root; else adds old cluster to solns and
+  // returns newRoot as cluster state.
+  static Root updateSolutions(SolutionSet &solns, const Coefficients &coeffs, Root currentCluster, Root newRoot);
 
   /*	Threshold for detecting convergence (near-zero) of the subdiagonal elements in QR iteration.*/
-  static constexpr double Epsilon = 1e-12;
+  static constexpr double Epsilon = 2.0*std::numeric_limits<double>::epsilon();
 
   /*	Maximum QR iterations per eigenvalue block to prevent infinite loops.*/
   static constexpr size_t MaxIterations = 100;
-
-  /* 	Threshold for considering two roots with negligible diff the same.
-	Expressed in % after scaling differences, since zeros may lie outside the unit circle. */
-  static constexpr double tolerance = 5e-2;
-
-  /*	Extracts roots from the eigenvalues of the converged quasi-triangular QR matrix and merges duplicates.
-	For more details see description of QR method */
-  //static void extractRoots(std::vector<std::pair<c128, int>> &, const std::vector<double>&, size_t);
-  static void extractRoots(CoefficientsToRoots::SolutionSet&, const std::vector<double>&, size_t);
 };
 
 SOLVER_DEFINE(QR)

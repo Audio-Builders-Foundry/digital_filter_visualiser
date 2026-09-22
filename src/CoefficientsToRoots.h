@@ -4,6 +4,7 @@
 #include <float.h>
 #include <vector>
 #include <utility>
+#include <limits>
 
 namespace CoefficientsToRoots
 {
@@ -53,13 +54,20 @@ namespace CoefficientsToRoots
   */
   [[maybe_unused]] static void dividePolynomialByRoot(const Coefficients &coeffs, Root pt, ComplexCoefficients &remainders);
 
+  /** determines which root is a better divisor of the polynomial whose
+      coefficients are given by coeffs.
+      returns the root whose sequence of remainders when dividing the polynomial
+      has smaller values.
+   */
+  [[maybe_unused]] static const Root &betterDivisorOfPolynomial(const Coefficients &coeffs, const Root &pt0, const Root &pt1);
+
   /** returns the weighted average of `oldRoot` and `addedRoot`, adding their
       orders.
       if one is complex and the other is real, will treat the complex root as a
       pair of conjugates being combined with the real root (counts the complex
       order as double).
    */
-  [[maybe_unused]] static Root mergeRoot(Root oldRoot, Root addedRoot);
+  [[maybe_unused]] static Root mergeRoots(Root oldRoot, Root addedRoot);
 
   /** returns the center of the unique circle passing through 3 complex points */
   [[maybe_unused]] static c128 centerOfCircleThroughPoints(c128 z0, c128 z1, c128 z2);
