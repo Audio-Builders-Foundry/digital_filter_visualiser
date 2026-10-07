@@ -1,4 +1,5 @@
 #include "PhaseFrequencyResponseCalculator.h"
+#include <complex>
 #include <cmath>
 
 void PhaseFrequencyResponseCalculator::calculate(
@@ -74,12 +75,18 @@ void PhaseFrequencyResponseCalculator::calculateForAngle(
     }
 
     amplitude = juce::Decibels::gainToDecibels(amplitude);
+    phase *= phaseUnitCoeff;
+}
 
-    const double phaseAmplitude2 = phaseAmplitude * 2;
-    double ph = phase * phaseUnitCoeff;
-    ph = std::fmod(ph + phaseAmplitude, phaseAmplitude2);
-    ph += ph >= 0 ? 0 : phaseAmplitude2;
-    phase = ph - phaseAmplitude;
+double PhaseFrequencyResponseCalculator::calculateUnwrappedPhase(
+    double angle, 
+    std::complex<double>& point, 
+    std::complex<double>& root)
+{ // unwrapped version of std::arg(point - root)
+    return 
+        std::abs(root) < 1.0 ?
+        angle + std::arg(1.0 - root * std::conj(point)) :
+        std::arg(-root) + std::arg(1.0 - point / root);
 }
 
 void PhaseFrequencyResponseCalculator::calculateCoefficients(
@@ -88,15 +95,14 @@ void PhaseFrequencyResponseCalculator::calculateCoefficients(
     double& ampCoeff,
     double& phaseCoeff)
 {
+    std::complex<double> rootVal = root->value.get();
     std::complex<double> point(std::cos(angle), std::sin(angle));
-    std::complex<double> v = point - root->value.get();
-    ampCoeff = std::abs(v);
-    phaseCoeff = std::arg(v);
+    ampCoeff = std::abs(point - rootVal);
+    phaseCoeff = calculateUnwrappedPhase(angle, point, rootVal);
     if (!root->isReal())
     {
-        std::complex<double> conj(root->value.re, -root->value.im);
-        v = point - conj;
-        ampCoeff *= std::abs(v);
-        phaseCoeff += std::arg(v);
+        std::complex<double> conj = std::conj(rootVal);
+        ampCoeff *= std::abs(point - conj);
+        phaseCoeff += calculateUnwrappedPhase(angle, point, conj);
     }
 }

@@ -22,6 +22,10 @@ public:
         double& amplitude,
         double& phase);
 private:
+    inline static double calculateUnwrappedPhase(
+        double angle, 
+        std::complex<double>& point,
+        std::complex<double>& root);
     inline static void calculateCoefficients(
         double angle,
         FilterRoot* root,

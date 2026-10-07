@@ -21,7 +21,8 @@ private:
         float yAmplitude,
         juce::String unitText,
         int top,
-        int bottom);
+        int bottom,
+        bool areValuesAngular);
 
     const juce::Colour
         backgroundColor = juce::Colour(0x08, 0x0C, 0x1C),

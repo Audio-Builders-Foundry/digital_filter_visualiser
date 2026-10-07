@@ -141,9 +141,9 @@ void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
         isLogScale, true, width, angles, amplitudes, phases);
 
     if (!phaseButton.getToggleState())
-        paintPlot(g, amplitudes, isLogScale, ampDb, " dB", topFreq, bottomFreq);
+        paintPlot(g, amplitudes, isLogScale, ampDb, " dB", topFreq, bottomFreq, false);
     if (!freqButton.getToggleState())
-        paintPlot(g, phases, isLogScale, 180., " deg.", topPhase, bottomPhase);
+        paintPlot(g, phases, isLogScale, 180., " deg.", topPhase, bottomPhase, true);
 }
 
 void PhaseFrequencyResponseViewer::changePlotsSet()
@@ -160,7 +160,8 @@ void PhaseFrequencyResponseViewer::paintPlot(
     float yAmplitude,
     juce::String unitText,
     int top,
-    int bottom)
+    int bottom,
+    bool areValuesAngular)
 {
     const auto width = getWidth() - plotPaddingLeft - plotPaddingRight;
     const auto height = bottom - top;
@@ -197,6 +198,9 @@ void PhaseFrequencyResponseViewer::paintPlot(
         plotPaddingLeft - 3 * padding,
         textHeight,
         juce::Justification::centredRight);
+    g.setColour(gridColour);
+    int y = plotPaddingTop + height / 2;
+    g.drawLine(xLeft, y, xRight, y);
 
     // X grid
     const int hzTextY = static_cast<int>(yBottom) + padding;
@@ -294,26 +298,86 @@ void PhaseFrequencyResponseViewer::paintPlot(
         const juce::Graphics::ScopedSaveState state(g);
         g.reduceClipRegion(rect);
 
-        juce::ColourGradient gradient(
-            juce::Colours::red.withAlpha(0.75f), 0.0f, rect.getY(),
-            juce::Colours::green.withAlpha(0.75f), 0.0f, rect.getBottom(),
-            false);
-        gradient.addColour(0.5, juce::Colours::yellow.withAlpha(0.75f));
-        g.setGradientFill(gradient);
-
+        const float period = 2 * yAmplitude;
         juce::Path path;
         auto x = xLeft;
-        auto y = juce::jmap(static_cast<float>(yValues[0]), -yAmplitude, yAmplitude, yBottom, yTop);
-        g.drawLine(x, rect.getCentreY(), x, y);
-        path.startNewSubPath(x, y);
-        for (int i = 1; i < width; i++)
-        {
-            x++;
-            y = juce::jmap(static_cast<float>(yValues[static_cast<size_t>(i)]), -yAmplitude, yAmplitude, yBottom, yTop);
-            g.drawLine(x, rect.getCentreY(), x, y);
-            path.lineTo(x, y);
-        }
 
+        auto wrapPhase = [&](double value)
+            {
+                double result = std::fmod(value + yAmplitude, period);
+                return result < 0.0 ? result + yAmplitude : result - yAmplitude;
+            };
+
+        auto mapY = [&](double value)
+            {
+                return juce::jmap(static_cast<float>(value), -yAmplitude, yAmplitude, yBottom, yTop);
+            };
+
+        auto drawPhaseSegment = [&](float x0, float x1, double y0, double y1)
+            {
+                const double delta = y1 - y0;
+                if (juce::approximatelyEqual(delta, 0.0))
+                {
+                    path.lineTo(x1, mapY(wrapPhase(y1)));
+                    return;
+                }
+
+                if (delta > 0.0)
+                {
+                    auto boundary = std::ceil((y0 - yAmplitude) / period) * period + yAmplitude;
+                    while (boundary < y1)
+                    {
+                        const auto t = (boundary - y0) / delta;
+                        const auto crossingX = x0 + (x1 - x0) * static_cast<float>(t);
+                        path.lineTo(crossingX, mapY(yAmplitude));
+                        path.startNewSubPath(crossingX, mapY(-yAmplitude));
+                        boundary += period;
+                    }
+                }
+                else
+                {
+                    auto boundary = std::floor((y0 + yAmplitude) / period) * period - yAmplitude;
+                    while (boundary > y1)
+                    {
+                        const auto t = (boundary - y0) / delta;
+                        const auto crossingX = x0 + (x1 - x0) * static_cast<float>(t);
+                        path.lineTo(crossingX, mapY(-yAmplitude));
+                        path.startNewSubPath(crossingX, mapY(yAmplitude));
+                        boundary -= period;
+                    }
+                }
+                path.lineTo(x1, mapY(wrapPhase(y1)));
+            };
+
+        if (areValuesAngular)
+        {
+            path.startNewSubPath(x, mapY(wrapPhase(yValues[0])));
+            for (int i = 1; i < width; i++)
+            {
+                drawPhaseSegment(x, x + 1, yValues[static_cast<size_t>(i - 1)], yValues[static_cast<size_t>(i)]);
+                x++;
+            }
+        }
+        else
+        {
+            juce::ColourGradient gradient(
+                juce::Colours::red.withAlpha(0.75f), 0.0f, rect.getY(),
+                juce::Colours::green.withAlpha(0.75f), 0.0f, rect.getBottom(),
+                false);
+            gradient.addColour(0.5, juce::Colours::yellow.withAlpha(0.75f));
+            g.setGradientFill(gradient);
+
+            auto y = mapY(yValues[0]);
+            g.drawLine(x, rect.getCentreY(), x, y);
+            path.startNewSubPath(x, y);
+            for (int i = 1; i < width; i++)
+            {
+                x++;
+                y = mapY(yValues[static_cast<size_t>(i)]);
+                g.drawLine(x, rect.getCentreY(), x, y);
+                path.lineTo(x, y);
+            }
+        }
         g.setColour(lineColour);
         g.strokePath(path, strokeType);
         //g.restoreState();
