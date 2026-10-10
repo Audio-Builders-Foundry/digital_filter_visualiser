@@ -26,6 +26,11 @@ CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
     processor->filterState->syncListener(this);
 }
 
+CoefficientsComponent::~CoefficientsComponent()
+{
+    coeffTable.setModel(nullptr);
+}
+
 void CoefficientsComponent::paint(juce::Graphics& g)
 {
     auto labelBounds = titleLabel.getBounds().toFloat();

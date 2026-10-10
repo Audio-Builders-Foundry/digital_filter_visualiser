@@ -15,6 +15,7 @@ class CoefficientsComponent final
 {
     public:
         CoefficientsComponent(AudioPluginAudioProcessor*);
+        ~CoefficientsComponent();
         void paint(juce::Graphics& g) override;
         void resized() override;
 
