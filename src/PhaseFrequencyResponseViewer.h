@@ -23,11 +23,8 @@ private:
         int top,
         int bottom,
         bool areValuesAngular);
+    void setZoomButtonsBounds();
 
-    const juce::Colour
-        backgroundColor = juce::Colour(0x08, 0x0C, 0x1C),
-        lineColour = juce::Colours::white,
-        gridColour = juce::Colours::darkgrey;
     const juce::PathStrokeType strokeType{ 3.f };
     const int
         padding = 5,

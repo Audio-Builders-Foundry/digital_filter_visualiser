@@ -33,6 +33,7 @@ RootTooltip(ComplexPlaneEditor *e)
 
   orderLabel.setInterceptsMouseClicks(false, false);
 
+
   addAndMakeVisible(destroy);
   addAndMakeVisible(orderInc);
   addAndMakeVisible(orderDec);
@@ -78,7 +79,7 @@ paint(juce::Graphics &g)
   PROFILE_FUNCTION();
 
   g.fillAll(juce::Colours::black);
-  g.setColour(juce::Colours::white);
+  g.setColour(findColour(juce::TextButton::ColourIds::textColourOffId));
   g.drawRect(getLocalBounds(), 1);
 }
 
@@ -602,12 +603,12 @@ paint(juce::Graphics &g)
 {
   PROFILE_FUNCTION();
 
-  auto const backgroundColor = juce::Colour(0x08, 0x0C, 0x1C);
-  auto const axisColor = juce::Colours::navajowhite;
+  auto const backgroundColor = findColour(DFVLookAndFeel::plotBackgroundColourId);
+  auto const axisColor = findColour(DFVLookAndFeel::plotAxesColourId);
   auto const axisHighlightColor = juce::Colours::cadetblue;
-  auto const lineColor = juce::Colours::snow;
+  auto const lineColor = findColour(DFVLookAndFeel::plotGridColourId);
   auto const circleColor = juce::Colours::goldenrod;
-  auto const textColor = juce::Colours::white;
+  auto const textColor = findColour(DFVLookAndFeel::plotAxesColourId);
 
   auto constexpr axisLabelFontHeightPixels = 32.0;
   auto constexpr gridLineLabelFontHeightPixels = 24.0;

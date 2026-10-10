@@ -14,8 +14,6 @@ public:
 	void updateButtons(PlayerState playerState);
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 	
-	const int buttonsCount = 4;
-	
 private:
 
 #if JUCE_WINDOWS

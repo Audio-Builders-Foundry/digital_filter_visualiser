@@ -19,46 +19,62 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
   ,equationViewer(&p)
   ,tooltipWindow(this)
 {
+  juce::LookAndFeel::setDefaultLookAndFeel(&lnf);
+  buttonPanel.updateSliderTextBoxColours();
+
   addAndMakeVisible(complexPlaneEditor);
   addAndMakeVisible(coefficients);
   addAndMakeVisible(phaseFrequencyResponseViewer);
   addAndMakeVisible(buttonPanel);
   addAndMakeVisible(equationViewer);
 
-  setSize(960, 520);
+  setSize(960, 640);
   setResizable(true, true);
 }
 
-AudioPluginAudioProcessorEditor::
-~AudioPluginAudioProcessorEditor()
+AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
 }
 
 //==============================================================================
-void AudioPluginAudioProcessorEditor::
-paint(juce::Graphics& g)
+void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g)
 {
-  juce::ignoreUnused(g);
-  // (Our component is opaque, so we must completely fill the background with a solid colour)
-  //g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+  const float cornerSize = 7.f;
+  const float rectCornerSize = 3.f;
+  const float lineThickness = 1.5f;
+  auto bounds = getLocalBounds().toFloat();
+  const float w = bounds.getWidth();
+  const float h = bounds.getHeight();
+  g.fillAll(findColour(juce::ResizableWindow::ColourIds::backgroundColourId));
 
-  // g.setColour (juce::Colours::white);
-  // g.setFont (15.0f);
-  // g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+  bounds.reduce(0.01f * w, 0.01f * h);
+  g.setColour(findColour(DFVLookAndFeel::controlBackgroundColourId));
+  g.fillRoundedRectangle(bounds, cornerSize);
+  g.setColour(findColour(DFVLookAndFeel::controlFrameColourId));
+  g.drawRoundedRectangle(bounds, cornerSize, lineThickness);
+
+  bounds.reduce(0.01f * w, 0);
+  bounds.removeFromBottom(0.02f * h);
+  const auto titleBounds = bounds.removeFromTop(0.06f * h);
+  g.setColour(findColour(DFVLookAndFeel::titleTextColourId));
+  g.setFont(std::clamp(titleBounds.getHeight() - 2.f, 2.f, 18.f));
+  g.drawFittedText("DIGITAL FILTER VISUALIZER", titleBounds.toNearestInt(), juce::Justification::centred, 1);
+
+  const auto rect1 = bounds.removeFromTop(0.03f * h);
+  const auto rect2 = bounds.removeFromBottom(0.03f * h);
+  g.setColour(findColour(DFVLookAndFeel::controlHeaderBackgroundColourId));
+  g.fillRoundedRectangle(rect1, rectCornerSize);
+  g.fillRoundedRectangle(rect2, rectCornerSize);
+  g.setColour(findColour(DFVLookAndFeel::controlHeaderFrameColourId));
+  g.drawRoundedRectangle(rect1, rectCornerSize, lineThickness);
+  g.drawRoundedRectangle(rect2, rectCornerSize, lineThickness);
 }
 
-void AudioPluginAudioProcessorEditor::
-resized()
+void AudioPluginAudioProcessorEditor::resized()
 {
-    constexpr int padding = 5;
-    auto bounds = getLocalBounds();
-    auto buttonPanelBounds = bounds.removeFromTop(40);
-    auto equationViewerBounds = bounds.removeFromTop(120);
-    auto phaseFrequencyResponseViewerBounds = bounds.removeFromRight(bounds.getWidth() / 3);
-    auto complexPlaneEditorBounds = bounds.removeFromRight(bounds.getWidth() / 2);
-    buttonPanel.setBounds(buttonPanelBounds);
-    equationViewer.setBounds(equationViewerBounds.reduced(padding));
-    phaseFrequencyResponseViewer.setBounds(phaseFrequencyResponseViewerBounds.reduced(padding));
-    complexPlaneEditor.setBounds(complexPlaneEditorBounds.reduced(padding));
-    coefficients.setBounds(bounds.reduced(padding));
+    buttonPanel.setBoundsRelative(0.02f, 0.12f, 0.96f, 0.05f);
+    equationViewer.setBoundsRelative(0.02f, 0.185f, 0.96f, 0.165f);
+    coefficients.setBoundsRelative(0.02f, 0.365f, 0.26f, 0.555f);
+    complexPlaneEditor.setBoundsRelative(0.29f, 0.365f, 0.37f, 0.555f);
+    phaseFrequencyResponseViewer.setBoundsRelative(0.67f, 0.365f, 0.31f, 0.555f);
 }

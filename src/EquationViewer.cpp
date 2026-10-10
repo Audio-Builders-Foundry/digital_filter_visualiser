@@ -48,7 +48,7 @@ paint(juce::Graphics &g)
 {
   auto constexpr margin = 5;
   auto constexpr barThicknessPixels = 2;
-  g.setColour(juce::Colours::white);
+  g.setColour(findColour(DFVLookAndFeel::equationTextColourId));
   g.fillRect(margin, int(0.5*getHeight()), getWidth() - margin, barThicknessPixels);
 }
 
@@ -121,8 +121,8 @@ mouseWheelMove(juce::MouseEvent const &e, juce::MouseWheelDetails const &w)
 void EquationViewer::EquationText::
 paint(juce::Graphics &g)
 {
-  auto constexpr fontHeightPixels = 24.0;
-  g.setColour(juce::Colours::white);
+  auto const fontHeightPixels = std::clamp(getHeight() - 2.0, 2.0, 24.0);
+  g.setColour(findColour(DFVLookAndFeel::equationTextColourId));
   g.setFont(fontHeightPixels);
   auto font = g.getCurrentFont();
 
@@ -157,7 +157,7 @@ paint(juce::Graphics &g)
   }
 
   // NOTE(ry): shift exponent glyphs
-  auto constexpr deltaY = -fontHeightPixels/3.0;
+  auto const deltaY = -fontHeightPixels/3.0;
   for(auto run : expRuns)
   {
     arr.moveRangeOfGlyphs(run.start, run.count, 0, deltaY);

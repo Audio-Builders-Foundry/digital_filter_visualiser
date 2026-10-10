@@ -55,6 +55,8 @@ juce_add_binary_data(
     "Assets/Pause.png"
     "Assets/Stop.png"
     "Assets/Loop.png"
+    "Assets/Add.png"
+    "Assets/Delete.png"
 )
 
 target_link_libraries(

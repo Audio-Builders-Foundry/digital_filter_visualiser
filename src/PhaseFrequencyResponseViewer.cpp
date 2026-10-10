@@ -7,11 +7,11 @@ PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProce
     sampleRate(processor->getSampleRate()),
     zoomInButton("+"),
     zoomOutButton("-"),
-    linearScaleButton("Linear"),
-    logScaleButton("Log"),
-	freqButton("Freq."),
-    phaseButton("Phase"),
-    bothButton("Both")
+    linearScaleButton("LINEAR"),
+    logScaleButton("LOG"),
+	freqButton("FREQ."),
+    phaseButton("PHASE"),
+    bothButton("BOTH")
 {
     this->processor->addChangeListener(this);
     this->processor->filterState->um->addChangeListener(this);
@@ -101,9 +101,7 @@ void PhaseFrequencyResponseViewer::resized()
 
     logScaleButton.setBounds(getWidth() - padding - scaleButtonsWidth, padding, scaleButtonsWidth, zoomButtonsSize);
     linearScaleButton.setBounds(logScaleButton.getX() - padding - scaleButtonsWidth, padding, scaleButtonsWidth, zoomButtonsSize);
-
-    zoomOutButton.setBounds(padding, logScaleButton.getBottom() + padding, zoomButtonsSize, zoomButtonsSize);
-    zoomInButton.setBounds(2 * padding + zoomButtonsSize, logScaleButton.getBottom() + padding, zoomButtonsSize, zoomButtonsSize);
+    setZoomButtonsBounds();
 
     repaint();
 }
@@ -112,7 +110,7 @@ void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
 {
     //PROFILE_FUNCTION();
 
-    g.fillAll(backgroundColor);
+    g.fillAll(findColour(DFVLookAndFeel::plotBackgroundColourId));
 
     const auto width = getWidth() - plotPaddingLeft - plotPaddingRight;
     const auto height = getHeight() - plotPaddingTop - plotPaddingBottom;
@@ -148,6 +146,7 @@ void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
 
 void PhaseFrequencyResponseViewer::changePlotsSet()
 {
+    setZoomButtonsBounds();
     zoomInButton.setVisible(!phaseButton.getToggleState());
     zoomOutButton.setVisible(!phaseButton.getToggleState());
     repaint();
@@ -163,6 +162,10 @@ void PhaseFrequencyResponseViewer::paintPlot(
     int bottom,
     bool areValuesAngular)
 {
+    const auto axesColour = findColour(DFVLookAndFeel::plotAxesColourId);
+    const auto gridColour = findColour(DFVLookAndFeel::plotGridColourId);
+    const auto chartColour = findColour(DFVLookAndFeel::plotChartColourId);
+
     const auto width = getWidth() - plotPaddingLeft - plotPaddingRight;
     const auto height = bottom - top;
 
@@ -172,11 +175,11 @@ void PhaseFrequencyResponseViewer::paintPlot(
     const float yBottom = static_cast<float>(yTop + height);
 
     juce::Rectangle<int> rect(plotPaddingLeft, top, width, height);
-    g.setColour(gridColour);
-    g.drawRect(rect, 1);
+    //g.setColour(gridColour);
+    //g.drawRect(rect, 1);
 
     // Y grid
-    g.setColour(lineColour);
+    g.setColour(axesColour);
     g.drawText(
         juce::String(static_cast<int>(yAmplitude)) + unitText,
         padding,
@@ -198,15 +201,18 @@ void PhaseFrequencyResponseViewer::paintPlot(
         plotPaddingLeft - 3 * padding,
         textHeight,
         juce::Justification::centredRight);
+    g.drawLine(xLeft, bottom, xRight, bottom);
     g.setColour(gridColour);
-    int y = plotPaddingTop + height / 2;
+    int y = top + height / 2;
     g.drawLine(xLeft, y, xRight, y);
 
     // X grid
     const int hzTextY = static_cast<int>(yBottom) + padding;
+    g.setColour(axesColour);
+    g.drawLine(plotPaddingLeft, top, plotPaddingLeft, top + height);
     if (isLogScale)
     {
-        g.setColour(lineColour);
+        g.setColour(axesColour);
         g.drawText(
             juce::String(static_cast<int>(minFreq)),
             plotPaddingLeft - textWidth / 2,
@@ -242,7 +248,7 @@ void PhaseFrequencyResponseViewer::paintPlot(
             g.drawLine(x, yTop, x, yBottom);
             if (xRight - x > textWidth)
             {
-                g.setColour(lineColour);
+                g.setColour(axesColour);
                 g.drawText(
                     juce::String(freq),
                     x - textWidth / 2,
@@ -256,7 +262,7 @@ void PhaseFrequencyResponseViewer::paintPlot(
     }
     else
     {
-        g.setColour(lineColour);
+        g.setColour(axesColour);
         g.drawText(
             "0",
             plotPaddingLeft - textWidth / 2,
@@ -349,6 +355,7 @@ void PhaseFrequencyResponseViewer::paintPlot(
                 path.lineTo(x1, mapY(wrapPhase(y1)));
             };
 
+        g.setColour(chartColour);
         if (areValuesAngular)
         {
             path.startNewSubPath(x, mapY(wrapPhase(yValues[0])));
@@ -378,10 +385,22 @@ void PhaseFrequencyResponseViewer::paintPlot(
                 path.lineTo(x, y);
             }
         }
-        g.setColour(lineColour);
+        g.setColour(chartColour);
         g.strokePath(path, strokeType);
         //g.restoreState();
     }
+}
+
+void PhaseFrequencyResponseViewer::setZoomButtonsBounds()
+{
+    const auto height = getHeight() - plotPaddingTop - plotPaddingBottom;
+    const int bottomFreq =
+        bothButton.getToggleState() ? 
+        plotPaddingTop + (height - distanceBetweenPlots) / 2 :
+        plotPaddingTop + height;
+    const int plotHeight = bottomFreq - plotPaddingTop;
+    zoomOutButton.setBounds(20, plotPaddingTop + (plotHeight + padding) / 2, zoomButtonsSize, zoomButtonsSize);
+    zoomInButton.setBounds(20, plotPaddingTop + (plotHeight - padding) / 2 - zoomButtonsSize, zoomButtonsSize, zoomButtonsSize);
 }
 
 // NOTE(ry): I need to put this here so my editor doesn't screw with the style of this file

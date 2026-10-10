@@ -6,17 +6,19 @@
 
 ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
   :processorRef(p)
-  ,addRootButton("+")
-  ,delRootButton("-")
   ,player(p)
 {
     saveImage = juce::ImageCache::getFromMemory(BinaryData::Save_png, BinaryData::Save_pngSize);
     undoImage = juce::ImageCache::getFromMemory(BinaryData::Undo_png, BinaryData::Undo_pngSize);
     redoImage = juce::ImageCache::getFromMemory(BinaryData::Redo_png, BinaryData::Redo_pngSize);
+    addImage = juce::ImageCache::getFromMemory(BinaryData::Add_png, BinaryData::Add_pngSize);
+    delImage = juce::ImageCache::getFromMemory(BinaryData::Delete_png, BinaryData::Delete_pngSize);
 
     Utilities::setButtonImage(&exportButton, saveImage);
     Utilities::setButtonImage(&undoButton, undoImage);
     Utilities::setButtonImage(&redoButton, redoImage);
+    Utilities::setButtonImage(&addRootButton, addImage);
+    Utilities::setButtonImage(&delRootButton, delImage);
 
     exportButton.setTooltip("Export");
     undoButton.setTooltip("Undo");
@@ -49,9 +51,7 @@ ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
 
     // NOTE(ry): gain slider setup
     gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-    gainSlider.setColour(juce::Slider::thumbColourId, juce::Colours::orange);
-    gainSlider.setColour(juce::Slider::trackColourId, juce::Colours::white);
-    gainSlider.setRange(-90.f, 6.f);
+    gainSlider.setRange(-90.f, 6.f, 0.01f);
     gainSlider.setTextValueSuffix(" dB");
     gainSlider.onValueChange = [this]{
       auto const dB = gainSlider.getValue();
@@ -80,23 +80,51 @@ ButtonPanel::~ButtonPanel()
 
 void ButtonPanel::resized()
 {
-  auto area = getLocalBounds();
-  auto const height = area.getHeight();
-  auto constexpr padding = 5;
+    constexpr int padding = 5;
+    constexpr int maxButtonSize = 30;
+    const bool needPlayer =
+        processorRef.wrapperType == juce::AudioProcessor::WrapperType::wrapperType_Standalone;
+    auto area = getLocalBounds();
+    const int height = area.getHeight();
+    const int width = area.getWidth();
+    const int buttonGroupWidth =
+        needPlayer ? (width - 4 * padding) / 3 : (width - 3 * padding) / 2;
+    const int buttonSize = 
+        std::min((buttonGroupWidth - 4 * padding) / 5, std::min(height, maxButtonSize));
+    const int buttonY = (height - buttonSize) / 2;
+
   //auto constexpr buttonWidth_PercentOfParent = 0.1;
   //auto const buttonWidth = getWidth() * buttonWidth_PercentOfParent;
-  undoButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  redoButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  exportButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  addRootButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  delRootButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  if (processorRef.wrapperType == juce::AudioProcessor::WrapperType::wrapperType_Standalone)
+  undoButton.setBounds(padding, buttonY, buttonSize, buttonSize);
+  redoButton.setBounds(2 * padding + buttonSize, buttonY, buttonSize, buttonSize);
+  exportButton.setBounds(3 * padding + 2 * buttonSize, buttonY, buttonSize, buttonSize);
+  addRootButton.setBounds(4 * padding + 3 * buttonSize, buttonY, buttonSize, buttonSize);
+  delRootButton.setBounds(5 * padding + 4 * buttonSize, buttonY, buttonSize, buttonSize);
+  
+  //undoButton.setBounds(area.removeFromLeft(height).reduced(padding));
+  //redoButton.setBounds(area.removeFromLeft(height).reduced(padding));
+  //exportButton.setBounds(area.removeFromLeft(height).reduced(padding));
+  //addRootButton.setBounds(area.removeFromLeft(height).reduced(padding));
+  //delRootButton.setBounds(area.removeFromLeft(height).reduced(padding));
+  if (needPlayer)
   {
-    area.removeFromLeft(height);
-    player.setBounds(area.removeFromLeft(player.buttonsCount * (height - padding) + padding).reduced(padding));
-    area.removeFromLeft(height);
+      player.setBounds(2 * padding + buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
+      gainSlider.setBounds(3 * padding + 2 * buttonGroupWidth, 0, buttonGroupWidth, height);
+  //  area.removeFromLeft(height);
+    //player.setBounds(area.removeFromLeft(player.buttonsCount * (height - padding) + padding).reduced(padding));
+  //  area.removeFromLeft(height);
   }
-  gainSlider.setBounds(area.reduced(padding));
+  else
+    gainSlider.setBounds(2 * padding + buttonGroupWidth, 0, buttonGroupWidth, height);
+}
+
+void ButtonPanel::updateSliderTextBoxColours()
+{
+    gainSlider.setColour(juce::Slider::textBoxBackgroundColourId, findColour(juce::Slider::textBoxBackgroundColourId));
+    gainSlider.setColour(juce::Slider::textBoxOutlineColourId, findColour(juce::Slider::textBoxOutlineColourId));
+    gainSlider.setColour(juce::Slider::textBoxTextColourId, findColour(juce::Slider::textBoxTextColourId));
+    gainSlider.setColour(juce::Slider::textBoxHighlightColourId, findColour(juce::Slider::textBoxHighlightColourId));
+
 }
 
 void ButtonPanel::chooseFileAndSave(std::shared_ptr<juce::XmlElement> xml)
