@@ -3,6 +3,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "PluginProcessor.h"
+#include "DFVLookAndFeel.h"
 #include "FilterState.h"
 
 #include "ComplexPlaneEditor.h"
@@ -30,6 +31,7 @@ private:
   ButtonPanel buttonPanel;
   EquationViewer equationViewer;
   juce::TooltipWindow tooltipWindow;
+  DFVLookAndFeel lnf;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };

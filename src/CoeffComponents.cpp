@@ -8,10 +8,6 @@
 CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
     : processor(p)
 {
-    titleLabel.setText(TABLE_TITLE, juce::dontSendNotification);
-    titleLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(titleLabel);
-
     //setupCoefficient's table
     coeffTable.setModel(this); // pass ownership to the class.
     addAndMakeVisible(coeffTable);
@@ -33,11 +29,13 @@ CoefficientsComponent::~CoefficientsComponent()
 
 void CoefficientsComponent::paint(juce::Graphics& g)
 {
-    auto labelBounds = titleLabel.getBounds().toFloat();
-    g.setColour(coeffTable.findColour(coeffTable.backgroundColourId));
-    g.fillRoundedRectangle(labelBounds, 7);
-    g.setColour(juce::Colours::grey);
-    g.drawRoundedRectangle(labelBounds, 7, 1.5);
+    g.setColour(findColour(DFVLookAndFeel::controlHeaderBackgroundColourId));
+    g.fillRoundedRectangle(headerRect, 7);
+    g.setColour(findColour(DFVLookAndFeel::controlHeaderFrameColourId));
+    g.drawRoundedRectangle(headerRect, 7, 1.5);
+    g.setColour(findColour(DFVLookAndFeel::controlHeaderTextColourId));
+    g.drawFittedText("FILTER COEFFICIENTS", headerRect.toNearestInt(), juce::Justification::centred, 1);
+
     juce::Component::paint(g);
 }
 
@@ -52,11 +50,11 @@ void CoefficientsComponent::resized()
 	PROFILE_FUNCTION();
 
     // TODO adjust dims and position based on area or neighbor components --> should call something like getChildren() + getName() but seems fragile quering approach
+    constexpr int headerHeight = 30;
+    constexpr int offsetFromBottom = 35;
     auto area = getLocalBounds();
-    constexpr int height {30};
-    titleLabel.setBounds(0, 0, getWidth(), height);
-    constexpr int offsetFromBottom {35};
-    coeffTable.setBounds(0, height, getWidth(), area.getHeight()-offsetFromBottom);
+    headerRect.setBounds(0.f, 0.f, static_cast<float>(area.getWidth()), headerHeight);
+    coeffTable.setBounds(0, headerHeight, area.getWidth(), area.getHeight() - offsetFromBottom);
 }
 
 int CoefficientsComponent::getNumRows()
@@ -75,7 +73,7 @@ void CoefficientsComponent::paintRowBackground(juce::Graphics& g, int row, int w
     // TODO fix line can t become unselected, but only when other line is selected
     if (rowIsSelected)
     {
-        g.fillAll(juce::Colours::lightblue);
+        g.fillAll(findColour(DFVLookAndFeel::tableSelectedRowBackgroundId));
     }
 }
 
@@ -85,7 +83,7 @@ void CoefficientsComponent::paintCell(juce::Graphics& g, int row, int col, int w
 
     if (row >= getNumRows()) return;
 
-    g.setColour(juce::Colours::white);
+    g.setColour(findColour(juce::TableListBox::ColourIds::outlineColourId));
     g.drawRect(0, 0, w, h);
 
     juce::String text;
@@ -109,8 +107,6 @@ juce::Component* CoefficientsComponent::refreshComponentForCell(int row, int col
         // Create a new editable Label restricting user from invalid input
 
         label = new juce::Label();
-        label->setEditable(true, true, false);
-		label->setColour(juce::Label::outlineColourId, juce::Colours::white);
 
         label->onEditorShow = [label] {
             // restrict input when editor apears
@@ -124,6 +120,10 @@ juce::Component* CoefficientsComponent::refreshComponentForCell(int row, int col
             updateFilterStateOnCoefEdit(row, col, value);
         };
     }
+
+    label->setEditable(true, true, false);
+    label->setColour(juce::Label::outlineColourId, findColour(juce::TableListBox::ColourIds::outlineColourId));
+    label->setColour(juce::Label::textColourId, findColour(juce::TableListBox::ColourIds::textColourId));
 
     // update value prevernting dump data from appearing in case of a vector size mismatch
     double value;

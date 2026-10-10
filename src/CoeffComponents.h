@@ -6,8 +6,6 @@
 #include <vector>
 #include <string>
 
-#define TABLE_TITLE "Coefficients"
-
 class CoefficientsComponent final
     : public juce::Component
     , private juce::TableListBoxModel
@@ -24,7 +22,7 @@ class CoefficientsComponent final
 
         std::vector<double> ffcoeffs;
         std::vector<double> fbcoeffs;
-        juce::Label titleLabel;
+        juce::Rectangle<float> headerRect;
         juce::TableListBox coeffTable;
         AudioPluginAudioProcessor *processor;
 

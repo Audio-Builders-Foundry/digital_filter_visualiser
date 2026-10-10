@@ -10,6 +10,7 @@ public:
     ButtonPanel(AudioPluginAudioProcessor& p);
     ~ButtonPanel();
     void resized() override;
+    void updateSliderTextBoxColours();
 
 private:
     void valueTreePropertyChanged(juce::ValueTree &node, juce::Identifier const &property) override;
@@ -19,12 +20,12 @@ private:
     juce::PopupMenu exportPopupMenu;
     std::unique_ptr<juce::FileChooser> chooser;
 
-    juce::Image saveImage, undoImage, redoImage;
+    juce::Image saveImage, undoImage, redoImage, addImage, delImage;
     juce::ImageButton exportButton;
     juce::ImageButton undoButton;
     juce::ImageButton redoButton;
-    juce::TextButton addRootButton;
-    juce::TextButton delRootButton;
+    juce::ImageButton addRootButton;
+    juce::ImageButton delRootButton;
     PlayerComponent player;
     juce::Slider gainSlider;
 
