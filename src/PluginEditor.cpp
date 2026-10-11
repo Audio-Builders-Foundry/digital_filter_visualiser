@@ -39,7 +39,7 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g)
 {
-  const float cornerSize = 7.f;
+  const float cornerSize = 20.f;
   const float rectCornerSize = 3.f;
   const float lineThickness = 1.5f;
   auto bounds = getLocalBounds().toFloat();
@@ -61,7 +61,7 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g)
   g.drawFittedText("DIGITAL FILTER VISUALIZER", titleBounds.toNearestInt(), juce::Justification::centred, 1);
 
   const auto rect1 = bounds.removeFromTop(0.03f * h);
-  const auto rect2 = bounds.removeFromBottom(0.03f * h);
+  const auto rect2 = bounds.removeFromBottom(0.03f * h).reduced(10.f, 0.f);
   g.setColour(findColour(DFVLookAndFeel::controlHeaderBackgroundColourId));
   g.fillRoundedRectangle(rect1, rectCornerSize);
   g.fillRoundedRectangle(rect2, rectCornerSize);
@@ -72,9 +72,9 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    buttonPanel.setBoundsRelative(0.02f, 0.12f, 0.96f, 0.05f);
-    equationViewer.setBoundsRelative(0.02f, 0.185f, 0.96f, 0.165f);
-    coefficients.setBoundsRelative(0.02f, 0.365f, 0.26f, 0.555f);
-    complexPlaneEditor.setBoundsRelative(0.29f, 0.365f, 0.37f, 0.555f);
-    phaseFrequencyResponseViewer.setBoundsRelative(0.67f, 0.365f, 0.31f, 0.555f);
+  buttonPanel.setBoundsRelative(0.02f, 0.12f, 0.96f, 0.06f);
+  equationViewer.setBoundsRelative(0.02f, 0.195f, 0.96f, 0.165f);
+  coefficients.setBoundsRelative(0.02f, 0.375f, 0.26f, 0.555f);
+  complexPlaneEditor.setBoundsRelative(0.29f, 0.375f, 0.37f, 0.555f);
+  phaseFrequencyResponseViewer.setBoundsRelative(0.67f, 0.375f, 0.31f, 0.555f);
 }

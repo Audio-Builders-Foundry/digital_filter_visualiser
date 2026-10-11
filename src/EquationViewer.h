@@ -1,5 +1,7 @@
+#include "DFVComponent.h"
+
 class EquationViewer
-  :public juce::Component
+  :public DFVComponent
   ,private juce::ValueTree::Listener
 {
 public:
@@ -35,5 +37,7 @@ private:
   EquationText numeratorText, denominatorText;
   juce::Viewport numeratorView, denominatorView;
 
+  static auto constexpr margin = 2;
+  static auto constexpr labelWidth = 100;
   static auto constexpr scrollBarHeightPixels = 5;
 };

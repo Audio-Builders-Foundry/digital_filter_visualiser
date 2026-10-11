@@ -80,26 +80,28 @@ ButtonPanel::~ButtonPanel()
 
 void ButtonPanel::resized()
 {
+    DFVComponent::resized();
+    reducedBounds = reducedBounds.reduced(static_cast<int>(outerFrameCornerSize), 0);
+
     constexpr int padding = 5;
     constexpr int maxButtonSize = 30;
     const bool needPlayer =
         processorRef.wrapperType == juce::AudioProcessor::WrapperType::wrapperType_Standalone;
-    auto area = getLocalBounds();
-    const int height = area.getHeight();
-    const int width = area.getWidth();
+    const int height = reducedBounds.getHeight();
+    const int width = reducedBounds.getWidth();
     const int buttonGroupWidth =
         needPlayer ? (width - 4 * padding) / 3 : (width - 3 * padding) / 2;
     const int buttonSize = 
         std::min((buttonGroupWidth - 4 * padding) / 5, std::min(height, maxButtonSize));
-    const int buttonY = (height - buttonSize) / 2;
+    const int buttonY = reducedBounds.getY() + (height - buttonSize) / 2;
 
   //auto constexpr buttonWidth_PercentOfParent = 0.1;
   //auto const buttonWidth = getWidth() * buttonWidth_PercentOfParent;
-  undoButton.setBounds(padding, buttonY, buttonSize, buttonSize);
-  redoButton.setBounds(2 * padding + buttonSize, buttonY, buttonSize, buttonSize);
-  exportButton.setBounds(3 * padding + 2 * buttonSize, buttonY, buttonSize, buttonSize);
-  addRootButton.setBounds(4 * padding + 3 * buttonSize, buttonY, buttonSize, buttonSize);
-  delRootButton.setBounds(5 * padding + 4 * buttonSize, buttonY, buttonSize, buttonSize);
+  undoButton.setBounds(reducedBounds.getX(), buttonY, buttonSize, buttonSize);
+  redoButton.setBounds(undoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+  exportButton.setBounds(redoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+  addRootButton.setBounds(exportButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+  delRootButton.setBounds(addRootButton.getRight() + padding, buttonY, buttonSize, buttonSize);
   
   //undoButton.setBounds(area.removeFromLeft(height).reduced(padding));
   //redoButton.setBounds(area.removeFromLeft(height).reduced(padding));
@@ -109,13 +111,13 @@ void ButtonPanel::resized()
   if (needPlayer)
   {
       player.setBounds(2 * padding + buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
-      gainSlider.setBounds(3 * padding + 2 * buttonGroupWidth, 0, buttonGroupWidth, height);
+      gainSlider.setBounds(3 * padding + 2 * buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
   //  area.removeFromLeft(height);
     //player.setBounds(area.removeFromLeft(player.buttonsCount * (height - padding) + padding).reduced(padding));
   //  area.removeFromLeft(height);
   }
   else
-    gainSlider.setBounds(2 * padding + buttonGroupWidth, 0, buttonGroupWidth, height);
+    gainSlider.setBounds(2 * padding + buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
 }
 
 void ButtonPanel::updateSliderTextBoxColours()

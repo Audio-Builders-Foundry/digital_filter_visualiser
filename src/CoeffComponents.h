@@ -2,19 +2,19 @@
 
 #include "FilterState.h"
 #include "CoefficientsToRoots.h"
+#include "DFVComponent.h"
 
 #include <vector>
 #include <string>
 
 class CoefficientsComponent final
-    : public juce::Component
+    : public DFVComponent
     , private juce::TableListBoxModel
     , private juce::ValueTree::Listener
 {
     public:
         CoefficientsComponent(AudioPluginAudioProcessor*);
         ~CoefficientsComponent();
-        void paint(juce::Graphics& g) override;
         void resized() override;
 
     private:
@@ -22,7 +22,6 @@ class CoefficientsComponent final
 
         std::vector<double> ffcoeffs;
         std::vector<double> fbcoeffs;
-        juce::Rectangle<float> headerRect;
         juce::TableListBox coeffTable;
         AudioPluginAudioProcessor *processor;
 

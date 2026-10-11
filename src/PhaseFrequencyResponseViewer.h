@@ -1,7 +1,7 @@
 #pragma once
 
 class PhaseFrequencyResponseViewer final :
-    public juce::Component,
+    public DFVComponent,
     juce::ChangeListener
 {
 public:
@@ -27,12 +27,12 @@ private:
 
     const juce::PathStrokeType strokeType{ 3.f };
     const int
-        padding = 5,
+        padding = 7,
         distanceBetweenPlots = 30,
-        plotPaddingLeft = 72,
-        plotPaddingRight = 45,
-        plotPaddingTop = 65,
-        plotPaddingBottom = 20;
+        plotPaddingLeft = 80,
+        plotPaddingRight = 30,
+        plotPaddingTop = 10,
+        plotPaddingBottom = 25;
     const int
         zoomButtonsSize = 20,
         plotButtonsWidth = 45,
@@ -49,6 +49,11 @@ private:
     float ampDb;
     double sampleRate;
 
+    int plotsWidth, plotsHeight, 
+        freqPlotTop, freqPlotBottom, 
+        phasePlotTop, phasePlotBottom;
+    
+    juce::Rectangle<int> plotsRect;
     juce::TextButton
         zoomInButton, zoomOutButton,
         linearScaleButton, logScaleButton,

@@ -1,8 +1,8 @@
 #pragma once
-
+#include "DFVComponent.h"
 
 class ComplexPlaneEditor final
-  :public juce::Component
+  :public DFVComponent
   ,private juce::ValueTree::Listener
 {
   /** TODO(ry):
@@ -250,6 +250,7 @@ private:
 
   juce::Point<double> worldCenter; // NOTE(ry): the center of the drawable region in world coordinates
   juce::Point<double> worldCenterAtDragStart;
+  juce::Rectangle<int> plotRect;
 
   juce::OwnedArray<RootPoint> points;
 

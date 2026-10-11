@@ -1,9 +1,10 @@
 #pragma once
 #include "PluginProcessor.h"
 #include "PlayerComponent.h"
+#include "DFVComponent.h"
 
 class ButtonPanel final
-  :public juce::Component
+  :public DFVComponent
   ,private juce::ValueTree::Listener
 {
 public:
