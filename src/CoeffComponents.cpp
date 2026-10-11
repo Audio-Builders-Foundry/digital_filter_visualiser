@@ -9,11 +9,12 @@ CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
     : processor(p)
 {
     //setupCoefficient's table
+    setName("FILTER COEFFICIENTS");
     coeffTable.setModel(this); // pass ownership to the class.
     addAndMakeVisible(coeffTable);
     coeffTable.setHeader(std::make_unique<CoeffTableHeader>());
     juce::TableHeaderComponent& tbComp = coeffTable.getHeader();
-    tbComp.addColumn("Delay", 1, int(COL_WIDTH/3));
+    tbComp.addColumn("Delay", 1, int(COL_WIDTH/2.5));
     tbComp.addColumn("FeedForward", 2, int(COL_WIDTH));
     tbComp.addColumn("FeedBack", 3, int(COL_WIDTH));
     tbComp.setStretchToFitActive(true); // expand columns to fill the entire width of the component
@@ -27,18 +28,6 @@ CoefficientsComponent::~CoefficientsComponent()
     coeffTable.setModel(nullptr);
 }
 
-void CoefficientsComponent::paint(juce::Graphics& g)
-{
-    g.setColour(findColour(DFVLookAndFeel::controlHeaderBackgroundColourId));
-    g.fillRoundedRectangle(headerRect, 7);
-    g.setColour(findColour(DFVLookAndFeel::controlHeaderFrameColourId));
-    g.drawRoundedRectangle(headerRect, 7, 1.5);
-    g.setColour(findColour(DFVLookAndFeel::controlHeaderTextColourId));
-    g.drawFittedText("FILTER COEFFICIENTS", headerRect.toNearestInt(), juce::Justification::centred, 1);
-
-    juce::Component::paint(g);
-}
-
 // Note:    Apart from any other reasons that may occur throughout future dev updates,..
 //          ..in case that the labels created at refreshComponentForCell have to be properly deallocated,..
 //          ..(See JUCE doc: https://docs.juce.com/master/classjuce_1_1TableListBoxModel.html#a873b2b84429f026ea046528af1f4fe81)..
@@ -49,12 +38,11 @@ void CoefficientsComponent::resized()
 {
 	PROFILE_FUNCTION();
 
+    DFVComponent::resized();
     // TODO adjust dims and position based on area or neighbor components --> should call something like getChildren() + getName() but seems fragile quering approach
-    constexpr int headerHeight = 30;
     constexpr int offsetFromBottom = 35;
-    auto area = getLocalBounds();
-    headerRect.setBounds(0.f, 0.f, static_cast<float>(area.getWidth()), headerHeight);
-    coeffTable.setBounds(0, headerHeight, area.getWidth(), area.getHeight() - offsetFromBottom);
+    //headerRect.setBounds(area.getX(), area.getY(), static_cast<float>(area.getWidth()), headerHeight);
+    coeffTable.setBounds(reducedBounds.getX(), reducedBounds.getY(), reducedBounds.getWidth(), reducedBounds.getHeight() - offsetFromBottom);
 }
 
 int CoefficientsComponent::getNumRows()

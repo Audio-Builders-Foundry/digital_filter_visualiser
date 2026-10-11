@@ -29,10 +29,11 @@ EquationViewer::
 void EquationViewer::
 resized(void)
 {
-  auto area = getLocalBounds();
-  auto constexpr margin = 5;
-  auto numeratorBounds = area.removeFromTop(int(0.5*getHeight())).reduced(margin);
-  auto denominatorBounds = area.removeFromTop(int(0.5*getHeight())).reduced(margin);
+  DFVComponent::resized();
+  auto area = reducedBounds;
+  area.removeFromLeft(labelWidth);
+  auto numeratorBounds = area.removeFromTop(int(0.5* reducedBounds.getHeight())).reduced(margin);
+  auto denominatorBounds = area.removeFromTop(int(0.5* reducedBounds.getHeight())).reduced(margin);
   numeratorView.setBounds(numeratorBounds);
   denominatorView.setBounds(denominatorBounds);
 
@@ -46,10 +47,14 @@ resized(void)
 void EquationViewer::
 paint(juce::Graphics &g)
 {
-  auto constexpr margin = 5;
+  DFVComponent::paint(g);
   auto constexpr barThicknessPixels = 2;
+  g.setFont(18.f);
+  g.setColour(findColour(juce::TableHeaderComponent::textColourId));
+  g.drawFittedText("FeedForward", reducedBounds.getX(), numeratorView.getY(), labelWidth, numeratorView.getHeight(), juce::Justification::centred, 1);
+  g.drawFittedText("FeedBack", reducedBounds.getX(), denominatorView.getY(), labelWidth, denominatorView.getHeight(), juce::Justification::centred, 1);
   g.setColour(findColour(DFVLookAndFeel::equationTextColourId));
-  g.fillRect(margin, int(0.5*getHeight()), getWidth() - margin, barThicknessPixels);
+  g.fillRect(reducedBounds.getX() + margin + labelWidth, (numeratorView.getBottom() + denominatorView.getY()) / 2, std::max(reducedBounds.getWidth() - 2 * margin - labelWidth, 0), barThicknessPixels);
 }
 
 void EquationViewer::

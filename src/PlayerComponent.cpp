@@ -42,7 +42,7 @@ void PlayerComponent::resized()
     constexpr int padding = 5;
     const int height = getHeight();
     const int width = getWidth();
-    const int buttonSize = std::clamp((width - 5 * padding) / 4, 1, height);
+    const int buttonSize = std::clamp((width - 5 * padding) / 4, 0, height);
     const int x = (width - 3 * padding - 4 * buttonSize) / 2;
     const int y = (height - buttonSize) / 2;
 

@@ -13,6 +13,7 @@ PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProce
     phaseButton("PHASE"),
     bothButton("BOTH")
 {
+    setName("RESPONSE");
     this->processor->addChangeListener(this);
     this->processor->filterState->um->addChangeListener(this);
 
@@ -95,12 +96,18 @@ void PhaseFrequencyResponseViewer::changeListenerCallback(juce::ChangeBroadcaste
 void PhaseFrequencyResponseViewer::resized()
 {
     //PROFILE_FUNCTION();
-    freqButton.setBounds(padding, padding, plotButtonsWidth, zoomButtonsSize);
-    phaseButton.setBounds(freqButton.getRight() + padding, padding, plotButtonsWidth, zoomButtonsSize);
-    bothButton.setBounds(phaseButton.getRight() + padding, padding, plotButtonsWidth, zoomButtonsSize);
+    DFVComponent::resized();
+    int y = reducedBounds.getY();
+    freqButton.setBounds(reducedBounds.getX(), y, plotButtonsWidth, zoomButtonsSize);
+    phaseButton.setBounds(freqButton.getRight() + padding, y, plotButtonsWidth, zoomButtonsSize);
+    bothButton.setBounds(phaseButton.getRight() + padding, y, plotButtonsWidth, zoomButtonsSize);
 
-    logScaleButton.setBounds(getWidth() - padding - scaleButtonsWidth, padding, scaleButtonsWidth, zoomButtonsSize);
-    linearScaleButton.setBounds(logScaleButton.getX() - padding - scaleButtonsWidth, padding, scaleButtonsWidth, zoomButtonsSize);
+    plotsRect = reducedBounds;
+    plotsRect.removeFromTop(zoomButtonsSize + padding);
+    plotsRect = plotsRect.reduced(padding, padding);
+    
+    logScaleButton.setBounds(plotsRect.getRight() - scaleButtonsWidth, y, scaleButtonsWidth, zoomButtonsSize);
+    linearScaleButton.setBounds(logScaleButton.getX() - padding - scaleButtonsWidth, y, scaleButtonsWidth, zoomButtonsSize);
     setZoomButtonsBounds();
 
     repaint();
@@ -109,24 +116,36 @@ void PhaseFrequencyResponseViewer::resized()
 void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
 {
     //PROFILE_FUNCTION();
+    DFVComponent::paint(g);
 
-    g.fillAll(findColour(DFVLookAndFeel::plotBackgroundColourId));
+    auto bounds = reducedBounds;
+    bounds.removeFromTop(zoomButtonsSize + padding);
+    g.setColour(findColour(DFVLookAndFeel::blackBackgroundColourId));
+    g.fillRoundedRectangle(bounds.toFloat(), 10.f);
+    g.setColour(findColour(DFVLookAndFeel::controlFrameColourId));
+    g.drawRoundedRectangle(bounds.toFloat(), 10.f, 0.25f);
+    g.setColour(findColour(DFVLookAndFeel::plotBackgroundColourId));
+    g.fillRoundedRectangle(plotsRect.toFloat(), 10.f);
+    g.setColour(findColour(DFVLookAndFeel::plotAxesColourId));
+    g.drawRoundedRectangle(plotsRect.toFloat(), 10.f, 0.25f);
 
-    const auto width = getWidth() - plotPaddingLeft - plotPaddingRight;
-    const auto height = getHeight() - plotPaddingTop - plotPaddingBottom;
+    //const auto width = plotsRect.getWidth() - plotPaddingLeft - plotPaddingRight;
+    //const auto height = plotsRect.getHeight() - plotPaddingTop - plotPaddingBottom;
 
-    int topFreq = plotPaddingTop;
-    int topPhase = topFreq;
-    int bottomFreq = plotPaddingTop + height;
-    int bottomPhase = bottomFreq;
+    //int topFreq = plotsRect.getY() + plotPaddingTop;
+    //int topPhase = topFreq;
+    //int bottomFreq = plotsRect.getBottom() - plotPaddingBottom;
+    //int bottomPhase = bottomFreq;
 
-    if (bothButton.getToggleState())
-    {
-        bottomFreq = plotPaddingTop + (height - distanceBetweenPlots) / 2;
-        topPhase = plotPaddingTop + (height + distanceBetweenPlots) / 2;
-    }
+    //if (bothButton.getToggleState())
+    //{
+    //    bottomFreq = plotsRect.getY() + plotPaddingTop + (height - distanceBetweenPlots) / 2;
+    //    topPhase = plotsRect.getY() + plotPaddingTop + (height + distanceBetweenPlots) / 2;
+    //}
 
-    if (width <= 0 || bottomFreq <= topFreq || bottomPhase <= topPhase)
+    if (plotsWidth <= 0 || 
+        freqPlotBottom <= freqPlotTop || 
+        phasePlotBottom <= phasePlotTop)
         return;
 
     // angles, amplitudes & phases
@@ -136,12 +155,12 @@ void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
         processor->filterState.get(),
         minFreq,
         sampleRate,
-        isLogScale, true, width, angles, amplitudes, phases);
+        isLogScale, true, plotsWidth, angles, amplitudes, phases);
 
     if (!phaseButton.getToggleState())
-        paintPlot(g, amplitudes, isLogScale, ampDb, " dB", topFreq, bottomFreq, false);
+        paintPlot(g, amplitudes, isLogScale, ampDb, " dB", freqPlotTop, freqPlotBottom, false);
     if (!freqButton.getToggleState())
-        paintPlot(g, phases, isLogScale, 180., " deg.", topPhase, bottomPhase, true);
+        paintPlot(g, phases, isLogScale, 180., " deg.", phasePlotTop, phasePlotBottom, true);
 }
 
 void PhaseFrequencyResponseViewer::changePlotsSet()
@@ -166,7 +185,7 @@ void PhaseFrequencyResponseViewer::paintPlot(
     const auto gridColour = findColour(DFVLookAndFeel::plotGridColourId);
     const auto chartColour = findColour(DFVLookAndFeel::plotChartColourId);
 
-    const auto width = getWidth() - plotPaddingLeft - plotPaddingRight;
+    const auto width = plotsRect.getWidth() - plotPaddingLeft - plotPaddingRight;
     const auto height = bottom - top;
 
     const float xLeft = static_cast<float>(plotPaddingLeft);
@@ -184,21 +203,21 @@ void PhaseFrequencyResponseViewer::paintPlot(
         juce::String(static_cast<int>(yAmplitude)) + unitText,
         padding,
         top - textHeight / 2,
-        plotPaddingLeft - 3 * padding,
+        plotPaddingLeft - 2 * padding,
         textHeight,
         juce::Justification::centredRight);
     g.drawText(
         "0",
         padding,
         top + (height - textHeight) / 2,
-        plotPaddingLeft - 3 * padding,
+        plotPaddingLeft - 2 * padding,
         textHeight,
         juce::Justification::centredRight);
     g.drawText(
         juce::String(static_cast<int>(-yAmplitude)) + unitText,
         padding,
         top + height - textHeight / 2,
-        plotPaddingLeft - 3 * padding,
+        plotPaddingLeft - 2 * padding,
         textHeight,
         juce::Justification::centredRight);
     g.drawLine(xLeft, bottom, xRight, bottom);
@@ -387,20 +406,26 @@ void PhaseFrequencyResponseViewer::paintPlot(
         }
         g.setColour(chartColour);
         g.strokePath(path, strokeType);
-        //g.restoreState();
     }
 }
 
 void PhaseFrequencyResponseViewer::setZoomButtonsBounds()
 {
-    const auto height = getHeight() - plotPaddingTop - plotPaddingBottom;
-    const int bottomFreq =
-        bothButton.getToggleState() ? 
-        plotPaddingTop + (height - distanceBetweenPlots) / 2 :
-        plotPaddingTop + height;
-    const int plotHeight = bottomFreq - plotPaddingTop;
-    zoomOutButton.setBounds(20, plotPaddingTop + (plotHeight + padding) / 2, zoomButtonsSize, zoomButtonsSize);
-    zoomInButton.setBounds(20, plotPaddingTop + (plotHeight - padding) / 2 - zoomButtonsSize, zoomButtonsSize, zoomButtonsSize);
+    plotsWidth = plotsRect.getWidth() - plotPaddingLeft - plotPaddingRight;
+    plotsHeight = plotsRect.getHeight() - plotPaddingTop - plotPaddingBottom;
+
+    freqPlotTop = phasePlotTop = plotsRect.getY() + plotPaddingTop;
+    freqPlotBottom = phasePlotBottom = plotsRect.getBottom() - plotPaddingBottom;
+
+    if (bothButton.getToggleState())
+    {
+        freqPlotBottom = plotsRect.getY() + plotPaddingTop + (plotsHeight - distanceBetweenPlots) / 2;
+        phasePlotTop = plotsRect.getY() + plotPaddingTop + (plotsHeight + distanceBetweenPlots) / 2;
+    }
+
+    const int freqPlotHeight = freqPlotBottom - freqPlotTop;
+    zoomOutButton.setBounds(40, freqPlotTop + (freqPlotHeight + padding) / 2, zoomButtonsSize, zoomButtonsSize);
+    zoomInButton.setBounds(40, freqPlotTop + (freqPlotHeight - padding) / 2 - zoomButtonsSize, zoomButtonsSize, zoomButtonsSize);
 }
 
 // NOTE(ry): I need to put this here so my editor doesn't screw with the style of this file

@@ -401,6 +401,7 @@ ComplexPlaneEditor(AudioPluginAudioProcessor *p)
   ,constantMagnitudeInteractionButton("mag")
   ,constantAngleInteractionButton("arg")
 {
+  setName("PLOT");
   processor->filterState->addListener(this);
 
   RootPoint::editor = this;
@@ -578,7 +579,9 @@ resized(void)
 {
   PROFILE_FUNCTION();
 
-  auto area = getLocalBounds();
+  DFVComponent::resized();
+  plotRect = reducedBounds.reduced(padding, padding);
+  auto area = plotRect;
   {
     auto thirdWidth = area.getWidth() / 3;
     auto seventhHeight = area.getHeight() / 7;
@@ -603,6 +606,17 @@ paint(juce::Graphics &g)
 {
   PROFILE_FUNCTION();
 
+  const float innerCornerSize = 9;
+  g.setColour(findColour(DFVLookAndFeel::blackBackgroundColourId));
+  g.fillRoundedRectangle(reducedBounds.toFloat(), innerCornerSize);
+  g.setColour(findColour(DFVLookAndFeel::controlFrameColourId));
+  g.drawRoundedRectangle(reducedBounds.toFloat(), innerCornerSize, 0.25f);
+  g.setColour(findColour(DFVLookAndFeel::plotBackgroundColourId));
+  g.fillRoundedRectangle(plotRect.toFloat(), innerCornerSize);
+  g.setColour(findColour(DFVLookAndFeel::plotAxesColourId));
+  g.drawRoundedRectangle(plotRect.toFloat(), innerCornerSize, 0.25f);
+
+  DFVComponent::paint(g);
   auto const backgroundColor = findColour(DFVLookAndFeel::plotBackgroundColourId);
   auto const axisColor = findColour(DFVLookAndFeel::plotAxesColourId);
   auto const axisHighlightColor = juce::Colours::cadetblue;
@@ -622,10 +636,10 @@ paint(juce::Graphics &g)
   auto const textRightOffsetPixels = 50.0;
 
   // NOTE(ry): draw background
-  g.fillAll(backgroundColor);
+  //g.fillAll(backgroundColor);
 
   // NOTE(ry): what a shit api this is
-  auto localBounds = getLocalBounds().toDouble();
+  auto localBounds = plotRect.toDouble();
   auto leftWorld = localBounds.getX();
   auto topWorld = localBounds.getY();
   auto rightWorld = localBounds.getRight();
@@ -633,10 +647,13 @@ paint(juce::Graphics &g)
   worldUnitsFromPixels.transformPoint(leftWorld, topWorld);
   worldUnitsFromPixels.transformPoint(rightWorld, bottomWorld);
 
+  const int sub = static_cast<int>(std::ceil(std::sqrt(innerCornerSize)));
+  auto reducedPlotRect = plotRect.reduced(sub, sub);
   {
     PROFILE_SCOPE("draw lines");
 
     juce::Graphics::ScopedSaveState savedGraphicsState(g);
+    g.reduceClipRegion(reducedPlotRect);
     g.addTransform(pixelsFromWorldUnits);
 
     // NOTE(ry): draw axes
@@ -694,6 +711,9 @@ paint(juce::Graphics &g)
   // NOTE(ry): draw axis and grid line labels
   {
     PROFILE_SCOPE("draw labels");
+
+    juce::Graphics::ScopedSaveState savedGraphicsState(g);
+    g.reduceClipRegion(reducedPlotRect);
 
     g.setColour(textColor);
     g.setFont(juce::Font(juce::FontOptions(axisLabelFontHeightPixels)));
@@ -792,7 +812,7 @@ void ComplexPlaneEditor::
 updateTransforms(void)
 {
   // NOTE(ry): compute transforms between screen space and world space
-  auto localBounds = getLocalBounds().toDouble();
+  auto localBounds = plotRect.toDouble();
   auto regionCenter = localBounds.getCentre();
   pixelsFromWorldUnits = juce::AffineTransform()
     .translated(float(-worldCenter.x), float(-worldCenter.y))

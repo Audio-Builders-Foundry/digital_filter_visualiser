@@ -16,6 +16,7 @@ public:
         plotChartColourId,
         equationTextColourId,
         tableSelectedRowBackgroundId,
+        blackBackgroundColourId,
     };
 
     DFVLookAndFeel()
@@ -26,6 +27,7 @@ public:
         const auto tableColour = juce::Colour(0xfff7e862);
         const auto buttonAndTableHeaderColour = juce::Colour(0xffcabc91);
         const auto buttonBackgroundColour = juce::Colour(0xff1a1713);
+        const auto almostBlackColour = juce::Colour(0xff0e0e0e);
 
         setColour(juce::ResizableWindow::ColourIds::backgroundColourId, juce::Colour(0xff151411));
         setColour(juce::ScrollBar::ColourIds::thumbColourId, juce::Colour(0xffa88860));
@@ -45,7 +47,7 @@ public:
         setColour(juce::Label::textColourId, tableColour);
         setColour(juce::Slider::thumbColourId, juce::Colour(0xffa44d01));
         setColour(juce::Slider::trackColourId, juce::Colour(0xfffcc559));
-        setColour(juce::Slider::backgroundColourId, juce::Colours::black);
+        setColour(juce::Slider::backgroundColourId, almostBlackColour);
         setColour(juce::Slider::textBoxBackgroundColourId, buttonBackgroundColour);
         setColour(juce::Slider::textBoxOutlineColourId, outlineColour);
         setColour(juce::Slider::textBoxTextColourId, tableColour);
@@ -63,6 +65,7 @@ public:
         setColour(ColourIds::plotChartColourId, juce::Colour(0xffe8e29a));
         setColour(ColourIds::equationTextColourId, axesAndEquationColour);
         setColour(ColourIds::tableSelectedRowBackgroundId, juce::Colour(0xffa08058));
+        setColour(ColourIds::blackBackgroundColourId, almostBlackColour);
     }
 
     void drawButtonBackground(
