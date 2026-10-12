@@ -11,7 +11,7 @@ public:
     ButtonPanel(AudioPluginAudioProcessor& p);
     ~ButtonPanel();
     void resized() override;
-    void updateSliderTextBoxColours();
+    void updateColours();
 
 private:
     void valueTreePropertyChanged(juce::ValueTree &node, juce::Identifier const &property) override;
