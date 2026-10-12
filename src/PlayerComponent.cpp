@@ -52,6 +52,14 @@ void PlayerComponent::resized()
     loopButton.setBounds(x + 3 * (buttonSize + padding), y, buttonSize, buttonSize);
 }
 
+void PlayerComponent::updateButtonColours()
+{
+    Utilities::updateButtonColours(&openButton);
+    Utilities::updateButtonColours(&playButton);
+    Utilities::updateButtonColours(&stopButton);
+    Utilities::updateButtonColours(&loopButton);
+}
+
 void PlayerComponent::updateButtons(PlayerState playerState)
 {
     openButton.setEnabled(playerState == PlayerState::Empty || playerState == PlayerState::Stopped);

@@ -13,7 +13,7 @@ public:
     void paint(juce::Graphics& g) override
     {
         auto bounds = getLocalBounds();
-        g.setColour(findColour(DFVLookAndFeel::controlFrameColourId));
+        g.setColour(findColour(DFVLookAndFeel::controlOutlineColourId));
         g.drawRoundedRectangle(bounds.toFloat(), outerFrameCornerSize, 1.5f);
         bounds = bounds.reduced(padding, padding);
         const auto name = getName();
@@ -21,7 +21,7 @@ public:
         {
             g.setColour(findColour(DFVLookAndFeel::controlHeaderBackgroundColourId));
             g.fillRoundedRectangle(headerRect, 10.f);
-            g.setColour(findColour(DFVLookAndFeel::controlHeaderFrameColourId));
+            g.setColour(findColour(DFVLookAndFeel::controlHeaderOutlineColourId));
             g.drawRoundedRectangle(headerRect, 10.f, 1.5f);
             g.setColour(findColour(DFVLookAndFeel::controlHeaderTextColourId));
             g.drawFittedText(name, headerRect.toNearestInt(), juce::Justification::centred, 1);

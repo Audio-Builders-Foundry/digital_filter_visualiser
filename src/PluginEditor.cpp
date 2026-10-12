@@ -20,7 +20,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
   ,tooltipWindow(this)
 {
   juce::LookAndFeel::setDefaultLookAndFeel(&lnf);
-  buttonPanel.updateSliderTextBoxColours();
+  buttonPanel.updateColours();
 
   addAndMakeVisible(complexPlaneEditor);
   addAndMakeVisible(coefficients);
@@ -50,7 +50,7 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g)
   bounds.reduce(0.01f * w, 0.01f * h);
   g.setColour(findColour(DFVLookAndFeel::controlBackgroundColourId));
   g.fillRoundedRectangle(bounds, cornerSize);
-  g.setColour(findColour(DFVLookAndFeel::controlFrameColourId));
+  g.setColour(findColour(DFVLookAndFeel::controlOutlineColourId));
   g.drawRoundedRectangle(bounds, cornerSize, lineThickness);
 
   bounds.reduce(0.01f * w, 0);
@@ -65,16 +65,16 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g)
   g.setColour(findColour(DFVLookAndFeel::controlHeaderBackgroundColourId));
   g.fillRoundedRectangle(rect1, rectCornerSize);
   g.fillRoundedRectangle(rect2, rectCornerSize);
-  g.setColour(findColour(DFVLookAndFeel::controlHeaderFrameColourId));
+  g.setColour(findColour(DFVLookAndFeel::controlHeaderOutlineColourId));
   g.drawRoundedRectangle(rect1, rectCornerSize, lineThickness);
   g.drawRoundedRectangle(rect2, rectCornerSize, lineThickness);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-  buttonPanel.setBoundsRelative(0.02f, 0.12f, 0.96f, 0.06f);
-  equationViewer.setBoundsRelative(0.02f, 0.195f, 0.96f, 0.165f);
-  coefficients.setBoundsRelative(0.02f, 0.375f, 0.26f, 0.555f);
-  complexPlaneEditor.setBoundsRelative(0.29f, 0.375f, 0.37f, 0.555f);
-  phaseFrequencyResponseViewer.setBoundsRelative(0.67f, 0.375f, 0.31f, 0.555f);
+  buttonPanel.setBoundsRelative(0.02f, 0.12f, 0.96f, 0.07f);
+  equationViewer.setBoundsRelative(0.02f, 0.205f, 0.96f, 0.165f);
+  coefficients.setBoundsRelative(0.02f, 0.385f, 0.26f, 0.535f);
+  complexPlaneEditor.setBoundsRelative(0.29f, 0.385f, 0.37f, 0.535f);
+  phaseFrequencyResponseViewer.setBoundsRelative(0.67f, 0.385f, 0.31f, 0.535f);
 }

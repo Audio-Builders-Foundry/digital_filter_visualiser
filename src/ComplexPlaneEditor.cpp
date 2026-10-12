@@ -609,7 +609,7 @@ paint(juce::Graphics &g)
   const float innerCornerSize = 9;
   g.setColour(findColour(DFVLookAndFeel::blackBackgroundColourId));
   g.fillRoundedRectangle(reducedBounds.toFloat(), innerCornerSize);
-  g.setColour(findColour(DFVLookAndFeel::controlFrameColourId));
+  g.setColour(findColour(DFVLookAndFeel::controlOutlineColourId));
   g.drawRoundedRectangle(reducedBounds.toFloat(), innerCornerSize, 0.25f);
   g.setColour(findColour(DFVLookAndFeel::plotBackgroundColourId));
   g.fillRoundedRectangle(plotRect.toFloat(), innerCornerSize);

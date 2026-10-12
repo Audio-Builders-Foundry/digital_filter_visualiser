@@ -122,7 +122,7 @@ void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
     bounds.removeFromTop(zoomButtonsSize + padding);
     g.setColour(findColour(DFVLookAndFeel::blackBackgroundColourId));
     g.fillRoundedRectangle(bounds.toFloat(), 10.f);
-    g.setColour(findColour(DFVLookAndFeel::controlFrameColourId));
+    g.setColour(findColour(DFVLookAndFeel::controlOutlineColourId));
     g.drawRoundedRectangle(bounds.toFloat(), 10.f, 0.25f);
     g.setColour(findColour(DFVLookAndFeel::plotBackgroundColourId));
     g.fillRoundedRectangle(plotsRect.toFloat(), 10.f);

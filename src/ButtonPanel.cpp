@@ -95,38 +95,35 @@ void ButtonPanel::resized()
         std::min((buttonGroupWidth - 4 * padding) / 5, std::min(height, maxButtonSize));
     const int buttonY = reducedBounds.getY() + (height - buttonSize) / 2;
 
-  //auto constexpr buttonWidth_PercentOfParent = 0.1;
-  //auto const buttonWidth = getWidth() * buttonWidth_PercentOfParent;
   undoButton.setBounds(reducedBounds.getX(), buttonY, buttonSize, buttonSize);
   redoButton.setBounds(undoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
   exportButton.setBounds(redoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
   addRootButton.setBounds(exportButton.getRight() + padding, buttonY, buttonSize, buttonSize);
   delRootButton.setBounds(addRootButton.getRight() + padding, buttonY, buttonSize, buttonSize);
   
-  //undoButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  //redoButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  //exportButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  //addRootButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  //delRootButton.setBounds(area.removeFromLeft(height).reduced(padding));
   if (needPlayer)
   {
       player.setBounds(2 * padding + buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
       gainSlider.setBounds(3 * padding + 2 * buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
-  //  area.removeFromLeft(height);
-    //player.setBounds(area.removeFromLeft(player.buttonsCount * (height - padding) + padding).reduced(padding));
-  //  area.removeFromLeft(height);
   }
   else
     gainSlider.setBounds(2 * padding + buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
 }
 
-void ButtonPanel::updateSliderTextBoxColours()
+void ButtonPanel::updateColours()
 {
     gainSlider.setColour(juce::Slider::textBoxBackgroundColourId, findColour(juce::Slider::textBoxBackgroundColourId));
     gainSlider.setColour(juce::Slider::textBoxOutlineColourId, findColour(juce::Slider::textBoxOutlineColourId));
     gainSlider.setColour(juce::Slider::textBoxTextColourId, findColour(juce::Slider::textBoxTextColourId));
     gainSlider.setColour(juce::Slider::textBoxHighlightColourId, findColour(juce::Slider::textBoxHighlightColourId));
 
+    Utilities::updateButtonColours(&exportButton);
+    Utilities::updateButtonColours(&undoButton);
+    Utilities::updateButtonColours(&redoButton);
+    Utilities::updateButtonColours(&addRootButton);
+    Utilities::updateButtonColours(&delRootButton);
+    
+    player.updateButtonColours();
 }
 
 void ButtonPanel::chooseFileAndSave(std::shared_ptr<juce::XmlElement> xml)

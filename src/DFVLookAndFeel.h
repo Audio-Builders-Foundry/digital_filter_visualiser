@@ -4,11 +4,11 @@ class DFVLookAndFeel : public juce::LookAndFeel_V4
 public:
     enum ColourIds
     {
-        controlFrameColourId = 0x2000001,
+        controlOutlineColourId = 0x2000001,
         controlBackgroundColourId,
         titleTextColourId,
         controlHeaderBackgroundColourId,
-        controlHeaderFrameColourId,
+        controlHeaderOutlineColourId,
         controlHeaderTextColourId,
         plotBackgroundColourId,
         plotAxesColourId,
@@ -17,6 +17,10 @@ public:
         equationTextColourId,
         tableSelectedRowBackgroundId,
         blackBackgroundColourId,
+        imageButtonOutlineColourId,
+        imageButtonNormalColourId,
+        imageButtonOverColourId,
+        imageButtonDownColourId,
     };
 
     DFVLookAndFeel()
@@ -28,6 +32,7 @@ public:
         const auto buttonAndTableHeaderColour = juce::Colour(0xffcabc91);
         const auto buttonBackgroundColour = juce::Colour(0xff1a1713);
         const auto almostBlackColour = juce::Colour(0xff0e0e0e);
+        const auto controlHeaderAndImageButtonBackgroundColour = juce::Colour(0xffa08058);
 
         setColour(juce::ResizableWindow::ColourIds::backgroundColourId, juce::Colour(0xff151411));
         setColour(juce::ScrollBar::ColourIds::thumbColourId, juce::Colour(0xffa88860));
@@ -45,6 +50,7 @@ public:
         setColour(juce::TextButton::ColourIds::textColourOffId, buttonAndTableHeaderColour);
         setColour(juce::TextButton::ColourIds::textColourOnId, juce::Colour(0xfffff141));
         setColour(juce::Label::textColourId, tableColour);
+        setColour(juce::Label::textWhenEditingColourId, tableColour);
         setColour(juce::Slider::thumbColourId, juce::Colour(0xffa44d01));
         setColour(juce::Slider::trackColourId, juce::Colour(0xfffcc559));
         setColour(juce::Slider::backgroundColourId, almostBlackColour);
@@ -53,10 +59,10 @@ public:
         setColour(juce::Slider::textBoxTextColourId, tableColour);
         setColour(juce::Slider::textBoxHighlightColourId, buttonBackgroundColour);
 
-        setColour(ColourIds::controlHeaderBackgroundColourId, juce::Colour(0xffa08058));
-        setColour(ColourIds::controlHeaderFrameColourId, outlineColour);
+        setColour(ColourIds::controlHeaderBackgroundColourId, controlHeaderAndImageButtonBackgroundColour);
+        setColour(ColourIds::controlHeaderOutlineColourId, outlineColour);
         setColour(ColourIds::controlHeaderTextColourId, juce::Colour(0xff151515));
-        setColour(ColourIds::controlFrameColourId, juce::Colour(0xffc5b49f));
+        setColour(ColourIds::controlOutlineColourId, juce::Colour(0xffc5b49f));
         setColour(ColourIds::controlBackgroundColourId, backgroundColour);
         setColour(ColourIds::titleTextColourId, juce::Colour(0xffc9af92));
         setColour(ColourIds::plotBackgroundColourId, juce::Colour(0xff121a10));
@@ -66,6 +72,10 @@ public:
         setColour(ColourIds::equationTextColourId, axesAndEquationColour);
         setColour(ColourIds::tableSelectedRowBackgroundId, juce::Colour(0xffa08058));
         setColour(ColourIds::blackBackgroundColourId, almostBlackColour);
+        setColour(ColourIds::imageButtonOutlineColourId, outlineColour);
+        setColour(ColourIds::imageButtonNormalColourId, juce::Colours::black);
+        setColour(ColourIds::imageButtonOverColourId, juce::Colours::darkgrey);
+        setColour(ColourIds::imageButtonDownColourId, juce::Colours::dimgrey);
     }
 
     void drawButtonBackground(
@@ -81,7 +91,7 @@ public:
             auto intBounds = button.getLocalBounds();
             if (intBounds.getWidth() == 0 || intBounds.getHeight() == 0)
                 return;
-            auto bounds = button.getLocalBounds().toFloat().reduced(0.5f, 0.5f);
+            auto bounds = button.getLocalBounds().toFloat();
             auto centre = bounds.getCentre();
             const float scaleCoeff = bounds.getHeight() / bounds.getWidth();
 
@@ -103,5 +113,77 @@ public:
         }
         else
             LookAndFeel_V4::drawButtonBackground(g, button, backgroundColour, isMouseOverButton, isButtonDown);
+    }
+
+    void drawLabel(juce::Graphics& g, juce::Label& label) override
+    {
+        if (dynamic_cast<juce::Slider*>(label.getParentComponent()) == nullptr)
+            juce::LookAndFeel_V4::drawLabel(g, label);
+        else
+        {
+            auto cornerSize = 6.0f;
+            auto bounds = label.getLocalBounds().toFloat();
+            g.setColour(findColour(juce::Slider::backgroundColourId));
+            g.fillRoundedRectangle(bounds, cornerSize);
+            g.setColour(findColour(juce::Slider::textBoxOutlineColourId));
+            g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
+            g.setColour(findColour(juce::Slider::textBoxTextColourId));
+            g.drawFittedText(
+                label.getText(),
+                label.getLocalBounds(),
+                label.getJustificationType(),
+                1);
+        }
+    }
+    void fillTextEditorBackground(
+        juce::Graphics& g, 
+        int /*width*/, 
+        int /*height*/, 
+        juce::TextEditor& textEditor) override
+    {
+        auto cornerSize = 6.0f;
+        auto bounds = textEditor.getLocalBounds().toFloat();
+        g.setColour(findColour(juce::Slider::backgroundColourId));
+        g.fillRoundedRectangle(bounds, cornerSize);
+    }
+
+    void drawTextEditorOutline(
+        juce::Graphics& g, 
+        int width, 
+        int height, 
+        juce::TextEditor& textEditor) override
+    {
+        auto cornerSize = 6.0f;
+        auto bounds = textEditor.getLocalBounds().toFloat();
+        g.setColour(findColour(juce::Slider::textBoxOutlineColourId));
+        g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
+    }
+
+    void drawImageButton(
+        juce::Graphics& g,
+        juce::Image* image,
+        int imageX, int imageY,
+        int imageW, int imageH,
+        const juce::Colour& overlayColour,
+        float imageOpacity,
+        juce::ImageButton& button) override
+    {
+        const float cornerSize = 9.f;
+        const int sub = 4.f;
+        auto bounds = button.getLocalBounds().toFloat();
+        g.setColour(findColour(ColourIds::controlHeaderBackgroundColourId));
+        g.fillRoundedRectangle(bounds, cornerSize);
+        g.setColour(findColour(juce::Slider::textBoxOutlineColourId));
+        g.drawRoundedRectangle(bounds, cornerSize, 1.5f);
+        juce::LookAndFeel_V2::drawImageButton(
+            g,
+            image,
+            imageX + sub,
+            imageY + sub,
+            imageW - 2 * sub,
+            imageH - 2 * sub,
+            overlayColour,
+            imageOpacity,
+            button);
     }
 };
