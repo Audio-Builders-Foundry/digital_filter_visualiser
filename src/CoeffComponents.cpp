@@ -7,6 +7,7 @@
 
 CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
     : processor(p)
+    , recalculateButton("RECALCULATE")
 {
     //setupCoefficient's table
     setName("FILTER COEFFICIENTS");
@@ -18,6 +19,10 @@ CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
     tbComp.addColumn("FeedForward", 2, int(COL_WIDTH));
     tbComp.addColumn("FeedBack", 3, int(COL_WIDTH));
     tbComp.setStretchToFitActive(true); // expand columns to fill the entire width of the component
+
+    recalculateButton.setEnabled(false);
+    recalculateButton.onClick = [this] { this->updateFilterState(); };
+    addAndMakeVisible(recalculateButton);
 
     processor->filterState->addListener(this);
     processor->filterState->syncListener(this);
@@ -36,13 +41,14 @@ CoefficientsComponent::~CoefficientsComponent()
 
 void CoefficientsComponent::resized()
 {
-	PROFILE_FUNCTION();
+    PROFILE_FUNCTION();
 
     DFVComponent::resized();
     // TODO adjust dims and position based on area or neighbor components --> should call something like getChildren() + getName() but seems fragile quering approach
-    constexpr int offsetFromBottom = 35;
+    constexpr int recalculateButtonHeight = 25;
     //headerRect.setBounds(area.getX(), area.getY(), static_cast<float>(area.getWidth()), headerHeight);
-    coeffTable.setBounds(reducedBounds.getX(), reducedBounds.getY(), reducedBounds.getWidth(), reducedBounds.getHeight() - offsetFromBottom);
+    coeffTable.setBounds(reducedBounds.getX(), reducedBounds.getY(), reducedBounds.getWidth(), reducedBounds.getHeight() - recalculateButtonHeight - 3 * padding);
+    recalculateButton.setBounds(reducedBounds.getX() + 4 * padding, coeffTable.getBottom() + 2 * padding, reducedBounds.getWidth() - 8 * padding, recalculateButtonHeight);
 }
 
 int CoefficientsComponent::getNumRows()
@@ -52,11 +58,11 @@ int CoefficientsComponent::getNumRows()
 
 void CoefficientsComponent::paintRowBackground(juce::Graphics& g, int row, int w, int h, bool rowIsSelected)
 {
-	PROFILE_FUNCTION();
+    PROFILE_FUNCTION();
 
     juce::ignoreUnused(row);
-	juce::ignoreUnused(w);
-	juce::ignoreUnused(h);
+    juce::ignoreUnused(w);
+    juce::ignoreUnused(h);
 
     // TODO fix line can t become unselected, but only when other line is selected
     if (rowIsSelected)
@@ -67,7 +73,7 @@ void CoefficientsComponent::paintRowBackground(juce::Graphics& g, int row, int w
 
 void CoefficientsComponent::paintCell(juce::Graphics& g, int row, int col, int w, int h, bool)
 {
-	PROFILE_FUNCTION();
+    PROFILE_FUNCTION();
 
     if (row >= getNumRows()) return;
 
@@ -100,13 +106,13 @@ juce::Component* CoefficientsComponent::refreshComponentForCell(int row, int col
             // restrict input when editor apears
             if (auto* editor = label->getCurrentTextEditor())
                 editor->setInputRestrictions(0, "0123456789.-");
-        };
+            };
 
         // update data when editing finishes
         label->onTextChange = [this, row, col, label]{
             double value = label->getText().getDoubleValue();
-            updateFilterStateOnCoefEdit(row, col, value);
-        };
+            onCellChanged(row, col, value);
+            };
     }
 
     label->setEditable(true, true, false);
@@ -121,22 +127,33 @@ juce::Component* CoefficientsComponent::refreshComponentForCell(int row, int col
     }
     else // col == 3
     {
-		jassert(col == 3);
+        jassert(col == 3);
         value = fbcoeffs[static_cast<size_t>(row)];
     }
     label->setText(juce::String(value), juce::dontSendNotification );
     return label;
 }
 
-void CoefficientsComponent::updateFilterStateOnCoefEdit(int row, int col, double value)
+void CoefficientsComponent::onCellChanged(int row, int col, double value)
 {
     // calculate roots through the coefficient2roots function && notify other listeners about this change
     if (col == 2)
+    {
         ffcoeffs[static_cast<size_t>(row)] = value;
+        isFeedForwardSynchronized = false;
+        recalculateButton.setEnabled(true);
+    }
     else if (col == 3)
+    {
         fbcoeffs[static_cast<size_t>(row)] = value;
+        isFeedBackSynchronized = false;
+        recalculateButton.setEnabled(true);
+    }
+}
 
-    if (col == 2)
+void CoefficientsComponent::updateFilterState()
+{
+    if (!isFeedForwardSynchronized)
     {
         auto zeros = Solve(this->ffcoeffs);
 
@@ -153,7 +170,7 @@ void CoefficientsComponent::updateFilterStateOnCoefEdit(int row, int col, double
             processor->filterState->add(order, r);
         }
     }
-    else if (col == 3)
+    if (!isFeedBackSynchronized)
     {
         auto poles = Solve(this->fbcoeffs);
 
@@ -168,7 +185,7 @@ void CoefficientsComponent::updateFilterStateOnCoefEdit(int row, int col, double
                     return false;
             }
             return true;
-        };
+            };
 
         if (!filterStable())
         {
@@ -191,7 +208,7 @@ void CoefficientsComponent::updateFilterStateOnCoefEdit(int row, int col, double
         auto isNewPole = [&](c128 val) -> std::pair<bool, int> {
             for (auto& [r, order] : poles)
             {
-				if (val == r)
+                if (val == r)
                     return {true, order};
             }
             return {false, 0};
@@ -215,6 +232,8 @@ void CoefficientsComponent::updateFilterStateOnCoefEdit(int row, int col, double
             }
         }
     }
+    isFeedBackSynchronized = isFeedForwardSynchronized = true;
+    recalculateButton.setEnabled(false);
 }
 
 void CoefficientsComponent::valueTreePropertyChanged (juce::ValueTree& node, const juce::Identifier& property)
@@ -235,17 +254,17 @@ void CoefficientsComponent::valueTreePropertyChanged (juce::ValueTree& node, con
 
 void CoefficientsComponent::valueTreeChildAdded (juce::ValueTree& node, juce::ValueTree& child)
 {
-	juce::ignoreUnused(node);
-	juce::ignoreUnused(child);
+    juce::ignoreUnused(node);
+    juce::ignoreUnused(child);
 
     updateCoeffTable();
 }
 
 void CoefficientsComponent::valueTreeChildRemoved (juce::ValueTree& node, juce::ValueTree& child, int idx)
 {
-	juce::ignoreUnused(node);
-	juce::ignoreUnused(child);
-	juce::ignoreUnused(idx);
+    juce::ignoreUnused(node);
+    juce::ignoreUnused(child);
+    juce::ignoreUnused(idx);
 
     if (processor->filterState->totalOrder==0) // if filter is cleaned out by erasing the last root
     {
@@ -262,7 +281,7 @@ void CoefficientsComponent::updateCoeffTable()
     fbcoeffs = RootsToCoefficients::CalculatePolynomialCoefficientsFrom(
         processor->filterState->poles);
     ffcoeffs = RootsToCoefficients::CalculatePolynomialCoefficientsFrom(
-		processor->filterState->zeros, static_cast<int>(fbcoeffs.size()));
+        processor->filterState->zeros, static_cast<int>(fbcoeffs.size()));
     coeffTable.updateContent();
 }
 
