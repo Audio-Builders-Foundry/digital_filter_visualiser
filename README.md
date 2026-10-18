@@ -42,7 +42,7 @@ A method to convert coefficients to roots is provided using the Francis implicit
 
 ## Building from Source
 
-To build Filterlyco **CMake** is required.
+Build supports both Standalone and VST3 binaries. To build Filterlyco **CMake** is required.
 
 To download the source code:
 
@@ -63,7 +63,7 @@ To build on MacOS & Linux, run:
 
 ## Usage
 
-**Digital Filter Visualizer** is a tool with room for future development (see [Future Work](#future-work)), and despite the build supports both Standalone and VST3 binaries, for now it can only be used as a plugin from within your DAW.
+**Digital Filter Visualiser** can be used either as a standalone application or as a VST3 plugin from within your DAW.
 
 Before using the application, have in mind the following. Drawing from theory, for an IIR filter to be stable, all poles must lie strictly inside the unit circle in the complex plane. The **Digital Filter Visualizer** automatically enforces this constraint after every change, preventing poles from being placed on or outside the unit circle.
 
@@ -73,26 +73,27 @@ The following sections describe the available controls and their functionality.
 
 Controls | Description
 :-- | --:
+Options | Export, load or reset filter state and Audio/MIDI settings
 Undo | Revert the last change
 Redo | Restore the last undone change
-Export | Export the current filter value tree
+Export | Export the current **Filter Coeffiicients** or **Processor Chain Parameters**
 Add root | Add a new pole or zero to the filter (see note below)
 Delete root	| Remove the selected pole or zero
-Import | Load a filter value tree
-Playback | Start audio playback (through the filter?)
+Import | Load an audio file
+Playback | Start audio playback
 Stop | Stop audio playback
-Shuffle? | ?
+Loop | Repeat playback when it finishess
 Level slider | Adjust the audio playback level
 
-> Note: Adding a new root adds a new zero at (1,0), corresponding to 0 ddegrees on the polar axis. If the number of poles becomes smaller than the number of zeros, a new pole is also added at the centre of the unit circle, that is at (0,0). In general, the number of zeros can never exceed the number of poles.
-
-#### Coefficients Table Editor 
-
-The **Coefficients Table Editor** allows users to have an overview and edit filter coefficients by double-clicking the corresponding cells. Pressing the **Recalculate** button updates the filter state.
+> Note: Adding a new root adds a new zero at (1,0), corresponding to 0 degrees on the polar axis. If the number of poles becomes smaller than the number of zeros, a new pole is also added at the centre of the unit circle, that is at (0,0). In general, the number of zeros can never exceed the number of poles.
 
 #### Complex Plane Editor
 
-The **Complex Plane Editor** allows users to move poles and zeros by dragging them. Poles and zeros can also be merged by dropping them onto one another.
+The **Complex Plane Editor** allows users to move poles and zeros by dragging them. Poles and zeros can also be merged by dropping them onto one another. Zeros can be dragged outside the unit circle, but poles cannot.
+
+#### Coefficients Table Editor 
+
+The **Coefficients Table Editor** allows users to have an overview and edit filter coefficients by double-clicking the corresponding cells. Pressing the **Recalculate** button updates the filter state. If the changes result in an unstable filter, the changes are aborted and automatically reverted back to the previous state.
 
 #### Frequency and Phase Viewer
 
@@ -108,14 +109,18 @@ Zoom Out | Reduce the magnification of the response plot
 
 ## Future Work
 
+**Digital Filter Visualizer** is a tool with room for future development. The followinng are some potential areas for future work:
+
 - Implement audio loading support for Standalone application.
 - Implement message display (i.e. informing user when changes resulted in unstable filter)
 - [Acessibility support](https://github.com/Audio-Builders-Foundry/digital_filter_visualiser/discussions/2s)
 
 ## Become Contributor
 
-Contributions to the project are welcome. Feel free to open an issue, submit a pull request, suggest features, to help improve the project and get involved.
+Contributions to the project are welcome. Feel free to open an issue, submit a pull request, suggest features, to help improve the project and get involved. 
 
 ## Acknowledgments
 
 Born from connections made at [ADC 24](https://audio.dev/archive/adc24-bristol/), this project exists thanks to the [Audio-Builders-Foundry's](https://github.com/Audio-Builders-Foundry) initiative to unite developers with shared interests under the scope of music and IT. Special appreciation to all the people who contributed their time to it.
+### Mac & Linux
+- run `./build.sh`
