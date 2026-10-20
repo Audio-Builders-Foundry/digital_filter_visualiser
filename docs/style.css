@@ -1,0 +1,181 @@
+body {
+    background: linear-gradient(#21150D, #21150D);
+
+    font-size: 24px;
+    font-family: Helvetica, Calibri, sans-serif;
+
+    text-align: center;
+
+    min-height: 100vh;
+
+    padding-left: 0.4em;
+    padding-right: 0.4em;
+
+}
+
+ .container {
+  margin-left: 0 env(safe-area-inset-left);
+  margin-right: 0 env(safe-area-inset-right);
+}
+
+@media (pointer:coarse) {
+    /* custom css for "touch targets" */
+    body { font-size: 17px;
+    }
+}
+
+
+
+
+h1 {
+    display: flex;
+    justify-content: center;
+    flex-flow: column wrap;
+
+    color: #ffeef2;
+    font-size: 1.7em;
+
+    padding-bottom: 0.5em;
+    padding-top: 0;
+    margin-bottom: 0;
+
+}
+
+
+h2 {
+    display: flex;
+    justify-content: center;
+    flex-flow: column wrap;
+
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: 0;
+
+    color: #ffeef2;
+
+    font-weight: 600;
+    font-size: 1.2em;
+
+    margin-top: 0;
+    margin-bottom: 2em;
+}
+
+
+h3 {
+    display: flex;
+    justify-content: center;
+    flex-flow: column wrap;
+
+    padding-left: 1em;
+    padding-right: 1em;
+
+    margin: 0.4em auto;
+
+    color: #edd3c4;
+
+    font-weight: 400;
+    font-size: 1.3em;
+
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+
+    min-width: 7em;
+    max-width: 10em;
+
+    margin-top: 2em;
+    margin-bottom: -0.3em;
+}
+
+
+
+#abstract {
+    display: flex;
+    justify-content: center;
+    flex-flow: column wrap;
+
+    text-align: left;
+
+    background-color: #000;
+
+    padding-left: 1em;
+    padding-right: 1em;
+
+    margin: 0.4em auto;
+
+    color: #CEBDA7;
+
+    font-weight: 200;
+    font-size: 1.1em;
+
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+
+    min-width: 7em;
+    max-width: 33em;
+
+    margin-top: 0.4em;
+    margin-bottom: 2em;
+}
+
+
+
+
+/* ============================================================= */
+
+/* Stylink links */
+
+
+
+
+a {
+    display: inline-block;
+}
+a:link {
+    color: #FFEEF2;
+    text-decoration: none;
+}
+a:visited {
+    color: #FFEEF2;
+    text-decoration: none;
+}
+a:hover {
+    color: #FFEEF2;
+    text-decoration: none;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+a:active {
+    color: #FFEEF2;
+    text-decoration: none;
+    font-weight: 400;
+}
+
+
+/* End of:  Stylink links */
+/* ============================================================= */
+
+
+
+
+
+
+
+
+footer {
+
+    color: rgba(237, 211, 196, 0.4);
+
+    margin-top: auto;
+
+    padding: 2em 0 1.5em;
+    vertical-align: middle;
+
+    font-weight: lighter;
+
+    bottom: 0;
+    width: 100%;
+    height: 2.5em;   /* Height of the footer */
+    text-align: center;
+
+    clear:  both;
+}
