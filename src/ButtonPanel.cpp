@@ -112,11 +112,6 @@ void ButtonPanel::resized()
 
 void ButtonPanel::updateColours()
 {
-    gainSlider.setColour(juce::Slider::textBoxBackgroundColourId, findColour(juce::Slider::textBoxBackgroundColourId));
-    gainSlider.setColour(juce::Slider::textBoxOutlineColourId, findColour(juce::Slider::textBoxOutlineColourId));
-    gainSlider.setColour(juce::Slider::textBoxTextColourId, findColour(juce::Slider::textBoxTextColourId));
-    gainSlider.setColour(juce::Slider::textBoxHighlightColourId, findColour(juce::Slider::textBoxHighlightColourId));
-
     Utilities::updateButtonColours(&exportButton);
     Utilities::updateButtonColours(&undoButton);
     Utilities::updateButtonColours(&redoButton);

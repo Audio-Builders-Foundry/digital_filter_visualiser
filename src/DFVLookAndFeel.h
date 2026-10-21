@@ -21,6 +21,9 @@ public:
         imageButtonNormalColourId,
         imageButtonOverColourId,
         imageButtonDownColourId,
+        sliderThumbOutlineColourId,
+        sliderBackgroundMinColourId,
+        sliderBackgroundMaxColourId,
     };
 
     DFVLookAndFeel()
@@ -76,6 +79,9 @@ public:
         setColour(ColourIds::imageButtonNormalColourId, juce::Colours::black);
         setColour(ColourIds::imageButtonOverColourId, juce::Colours::darkgrey);
         setColour(ColourIds::imageButtonDownColourId, juce::Colours::dimgrey);
+        setColour(ColourIds::sliderThumbOutlineColourId, juce::Colour(0xff9f5e01));
+        setColour(ColourIds::sliderBackgroundMinColourId, juce::Colour(0xfffcc559));
+        setColour(ColourIds::sliderBackgroundMaxColourId, juce::Colour(0xffde9300));
     }
 
     void drawButtonBackground(
@@ -101,7 +107,7 @@ public:
                 juce::Colour(findColour(juce::TextButton::ColourIds::buttonColourId)),
                 bounds.getTopLeft(),
                 true);
-            
+
             auto transform = juce::AffineTransform::scale(
                 1.0f, scaleCoeff, centre.x, centre.y);
             auto fill = juce::FillType(gradient).transformed(transform);
@@ -136,9 +142,9 @@ public:
         }
     }
     void fillTextEditorBackground(
-        juce::Graphics& g, 
-        int /*width*/, 
-        int /*height*/, 
+        juce::Graphics& g,
+        int /*width*/,
+        int /*height*/,
         juce::TextEditor& textEditor) override
     {
         auto cornerSize = 6.0f;
@@ -148,9 +154,9 @@ public:
     }
 
     void drawTextEditorOutline(
-        juce::Graphics& g, 
-        int width, 
-        int height, 
+        juce::Graphics& g,
+        int width,
+        int height,
         juce::TextEditor& textEditor) override
     {
         auto cornerSize = 6.0f;
@@ -185,5 +191,56 @@ public:
             overlayColour,
             imageOpacity,
             button);
+    }
+
+    void drawLinearSlider(
+        juce::Graphics& g,
+        int x, int y,
+        int width, int height,
+        float sliderPos,
+        float minSliderPos,
+        float maxSliderPos,
+        const juce::Slider::SliderStyle style,
+        juce::Slider& slider) override
+    {
+        auto trackWidth = juce::jmin(6.0f, (float)height * 0.25f);
+        juce::Point<float> startPoint((float)x, (float)y + (float)height * 0.5f);
+        juce::Point<float> endPoint((float)(width + x), startPoint.y);
+
+        const float d = 4.f;
+        auto outerRect = juce::Rectangle<float>(
+            startPoint.getX() - d,
+            startPoint.getY() - 0.5f * trackWidth - d,
+            endPoint.getX() - startPoint.getX() + 2.f * d,
+            trackWidth + 2.f * d);
+        g.setColour(findColour(ColourIds::controlOutlineColourId));
+        g.drawRoundedRectangle(outerRect, d, 0.5f);
+
+        auto trackRect = juce::Rectangle<float>(
+            startPoint.getX(),
+            startPoint.getY() - 0.5f * trackWidth,
+            endPoint.getX() - startPoint.getX(),
+            trackWidth);
+        auto gradient = juce::ColourGradient(
+            juce::Colour(findColour(ColourIds::sliderBackgroundMinColourId)),
+            startPoint,
+            juce::Colour(findColour(ColourIds::sliderBackgroundMaxColourId)),
+            endPoint,
+            false);
+        auto fill = juce::FillType(gradient);
+        g.setFillType(fill);
+        g.fillRoundedRectangle(trackRect, 0.5f * trackWidth);
+
+        // thumb
+        juce::Point<float> thumbPoint(sliderPos, (float)y + (float)height * 0.5f);
+        auto thumbWidth = getSliderThumbRadius(slider);
+        auto thumbRect = juce::Rectangle<float>(
+            static_cast<float>(thumbWidth) * 0.5f, static_cast<float>(trackWidth + 2.f * d))
+            .withCentre(thumbPoint);
+        auto corner = static_cast<float>(thumbWidth) * 0.25f;
+        g.setColour(slider.findColour(juce::Slider::thumbColourId));
+        g.fillRoundedRectangle(thumbRect, corner);
+        g.setColour(slider.findColour(ColourIds::sliderThumbOutlineColourId));
+        g.drawRoundedRectangle(thumbRect, corner, 1.f);
     }
 };
