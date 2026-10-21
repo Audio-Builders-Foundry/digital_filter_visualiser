@@ -6,7 +6,7 @@
 #include "DFVLookAndFeel.h"
 #include "FilterState.h"
 
-#include "ComplexPlaneEditor.h"
+#include "ComplexPlaneComponent.h"
 #include "PhaseFrequencyResponseViewer.h"
 #include "CoeffComponents.h"
 #include "ButtonPanel.h"
@@ -25,7 +25,7 @@ public:
   void resized() override;
 
 private:
-  ComplexPlaneEditor complexPlaneEditor;
+  ComplexPlaneComponent complexPlaneComponent;
   PhaseFrequencyResponseViewer phaseFrequencyResponseViewer;
   CoefficientsComponent coefficients;
   ButtonPanel buttonPanel;

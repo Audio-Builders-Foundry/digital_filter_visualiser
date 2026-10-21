@@ -1,6 +1,6 @@
 #include "PluginEditor.h"
-
 #include "ComplexPlaneEditor.cpp"
+#include "ComplexPlaneComponent.cpp"
 #include "PhaseFrequencyResponseCalculator.cpp"
 #include "PhaseFrequencyResponseViewer.cpp"
 #include "CoeffComponents.cpp"
@@ -12,7 +12,7 @@
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
   :AudioProcessorEditor (&p)
-  ,complexPlaneEditor(&p)
+  ,complexPlaneComponent(&p)
   ,phaseFrequencyResponseViewer(&p)
   ,coefficients(&p)
   ,buttonPanel(p)
@@ -22,7 +22,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
   juce::LookAndFeel::setDefaultLookAndFeel(&lnf);
   buttonPanel.updateColours();
 
-  addAndMakeVisible(complexPlaneEditor);
+  addAndMakeVisible(complexPlaneComponent);
   addAndMakeVisible(coefficients);
   addAndMakeVisible(phaseFrequencyResponseViewer);
   addAndMakeVisible(buttonPanel);
@@ -75,6 +75,6 @@ void AudioPluginAudioProcessorEditor::resized()
   buttonPanel.setBoundsRelative(0.02f, 0.12f, 0.96f, 0.07f);
   equationViewer.setBoundsRelative(0.02f, 0.205f, 0.96f, 0.165f);
   coefficients.setBoundsRelative(0.02f, 0.385f, 0.26f, 0.535f);
-  complexPlaneEditor.setBoundsRelative(0.29f, 0.385f, 0.37f, 0.535f);
+  complexPlaneComponent.setBoundsRelative(0.29f, 0.385f, 0.37f, 0.535f);
   phaseFrequencyResponseViewer.setBoundsRelative(0.67f, 0.385f, 0.31f, 0.535f);
 }
