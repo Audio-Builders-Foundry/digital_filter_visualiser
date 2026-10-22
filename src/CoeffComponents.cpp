@@ -73,29 +73,15 @@ void CoefficientsComponent::paintRowBackground(juce::Graphics& g, int row, int w
 
 void CoefficientsComponent::paintCell(juce::Graphics& g, int row, int col, int w, int h, bool)
 {
-    PROFILE_FUNCTION();
-
-    if (row >= getNumRows()) return;
-
-    g.setColour(findColour(juce::TableListBox::ColourIds::outlineColourId));
-    g.drawRect(0, 0, w, h);
-
-    juce::String text;
-    if (col == 1) text = juce::String(row);
-    if (col == 2) text = juce::String(ffcoeffs[static_cast<size_t>(row)]);
-    if (col == 3) text = juce::String(fbcoeffs[static_cast<size_t>(row)]);
-
-    constexpr int padding = 5;
-    g.setFont(15.f);
-    g.drawText(text, padding, 0, w - 2 * padding, h, juce::Justification::centredLeft);
 }
 
 juce::Component* CoefficientsComponent::refreshComponentForCell(int row, int col, bool, juce::Component* existing)
 {
-
-    if (col !=2 && col !=3 )
+    if (col < 1 && col > 3)
         return nullptr;
 
+    bool isEditable = col != 1;
+ 
     // creating new cells
     auto* label = static_cast<juce::Label*>(existing);
     if (!label)
@@ -104,34 +90,31 @@ juce::Component* CoefficientsComponent::refreshComponentForCell(int row, int col
 
         label = new juce::Label();
 
-        label->onEditorShow = [label] {
-            // restrict input when editor apears
-            if (auto* editor = label->getCurrentTextEditor())
-                editor->setInputRestrictions(0, "0123456789.-");
-            };
+        if (isEditable)
+        {
+            label->onEditorShow = [label] {
+                // restrict input when editor apears
+                if (auto* editor = label->getCurrentTextEditor())
+                    editor->setInputRestrictions(0, "0123456789.-");
+                };
 
-        // update data when editing finishes
-        label->onTextChange = [this, row, col, label]{
-            double value = label->getText().getDoubleValue();
-            onCellChanged(row, col, value);
-            };
+            // update data when editing finishes
+            label->onTextChange = [this, row, col, label] {
+                double value = label->getText().getDoubleValue();
+                onCellChanged(row, col, value);
+                };
+        }
     }
 
-    label->setEditable(true, true, false);
+    label->setEditable(isEditable, isEditable, false);
     label->setColour(juce::Label::outlineColourId, findColour(juce::TableListBox::ColourIds::outlineColourId));
     label->setColour(juce::Label::textColourId, findColour(juce::TableListBox::ColourIds::textColourId));
 
     // update value prevernting dump data from appearing in case of a vector size mismatch
-    double value;
-    if (col == 2)
-    {
-        value = ffcoeffs[static_cast<size_t>(row)];
-    }
-    else // col == 3
-    {
-        jassert(col == 3);
-        value = fbcoeffs[static_cast<size_t>(row)];
-    }
+    double value = 
+        col == 3 ? fbcoeffs[static_cast<size_t>(row)] :
+        col == 2 ? ffcoeffs[static_cast<size_t>(row)] :
+        row;
     label->setText(juce::String(value), juce::dontSendNotification );
     return label;
 }
