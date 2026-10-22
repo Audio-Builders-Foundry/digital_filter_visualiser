@@ -1,4 +1,6 @@
 #pragma once
+#include <BinaryData.h>
+
 class DFVLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
@@ -243,4 +245,53 @@ public:
         g.setColour(slider.findColour(ColourIds::sliderThumbOutlineColourId));
         g.drawRoundedRectangle(thumbRect, corner, 1.f);
     }
+
+    void drawTableHeaderColumn(
+        juce::Graphics& g, juce::TableHeaderComponent& header,
+        const juce::String& columnName, int columnId,
+        int width, int height, bool isMouseOver, bool isMouseDown,
+        int columnFlags) override
+    {
+        auto highlightColour = header.findColour(juce::TableHeaderComponent::highlightColourId);
+
+        if (isMouseDown)
+            g.fillAll(highlightColour);
+        else if (isMouseOver)
+            g.fillAll(highlightColour.withMultipliedAlpha(0.625f));
+
+        juce::Rectangle<int> area(width, height);
+        area.reduce(4, 0);
+
+        if ((columnFlags & (juce::TableHeaderComponent::sortedForwards | juce::TableHeaderComponent::sortedBackwards)) != 0)
+        {
+            juce::Path sortArrow;
+            sortArrow.addTriangle(0.0f, 0.0f,
+                0.5f, (columnFlags & juce::TableHeaderComponent::sortedForwards) != 0 ? -0.8f : 0.8f,
+                1.0f, 0.0f);
+
+            g.setColour(juce::Colour(0x99000000));
+            g.fillPath(sortArrow, sortArrow.getTransformToScaleToFit(area.removeFromRight(height / 2).reduced(2).toFloat(), true));
+        }
+
+        g.setColour(header.findColour(juce::TableHeaderComponent::textColourId));
+        g.setFont(withDefaultMetrics(juce::FontOptions(16.f, juce::Font::plain)));
+        g.drawFittedText(columnName, area, juce::Justification::centredLeft, 1);
+    }
+    
+    juce::Typeface::Ptr getTypefaceForFont(const juce::Font& font) override
+    {
+        return 
+            font.getTypefaceName() != juce::Font::getDefaultSansSerifFontName() ? LookAndFeel_V4::getTypefaceForFont(font) :
+            font.isBold() ? semiBold : 
+            font.getTypefaceStyle() == "Medium" ? medium : 
+            regular;
+    }
+
+private:
+    juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor(BinaryData::TekturRegular_ttf,
+        BinaryData::TekturRegular_ttfSize);
+    juce::Typeface::Ptr medium = juce::Typeface::createSystemTypefaceFor(BinaryData::TekturMedium_ttf,
+        BinaryData::TekturMedium_ttfSize);
+    juce::Typeface::Ptr semiBold = juce::Typeface::createSystemTypefaceFor(BinaryData::TekturSemiBold_ttf,
+        BinaryData::TekturSemiBold_ttfSize);
 };

@@ -24,6 +24,7 @@ public:
             g.setColour(findColour(DFVLookAndFeel::controlHeaderOutlineColourId));
             g.drawRoundedRectangle(headerRect, 10.f, 1.5f);
             g.setColour(findColour(DFVLookAndFeel::controlHeaderTextColourId));
+            g.setFont(juce::FontOptions(std::min(headerRect.getHeight() - 2.f, 18.f), juce::Font::bold));
             g.drawFittedText(name, headerRect.toNearestInt(), juce::Justification::centred, 1);
         }
     }

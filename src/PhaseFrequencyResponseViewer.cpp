@@ -194,8 +194,7 @@ void PhaseFrequencyResponseViewer::paintPlot(
     const float yBottom = static_cast<float>(yTop + height);
 
     juce::Rectangle<int> rect(plotPaddingLeft, top, width, height);
-    //g.setColour(gridColour);
-    //g.drawRect(rect, 1);
+    g.setFont(juce::FontOptions(15.f, juce::Font::plain));
 
     // Y grid
     g.setColour(axesColour);

@@ -57,7 +57,7 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g)
   bounds.removeFromBottom(0.02f * h);
   const auto titleBounds = bounds.removeFromTop(0.06f * h);
   g.setColour(findColour(DFVLookAndFeel::titleTextColourId));
-  g.setFont(std::clamp(titleBounds.getHeight() - 2.f, 2.f, 18.f));
+  g.setFont(juce::FontOptions(std::clamp(titleBounds.getHeight() - 2.f, 2.f, 20.f)).withStyle("Medium"));
   g.drawFittedText("DIGITAL FILTER VISUALIZER", titleBounds.toNearestInt(), juce::Justification::centred, 1);
 
   const auto rect1 = bounds.removeFromTop(0.03f * h);

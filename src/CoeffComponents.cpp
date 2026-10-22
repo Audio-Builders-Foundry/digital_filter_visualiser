@@ -15,7 +15,7 @@ CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
     addAndMakeVisible(coeffTable);
     coeffTable.setHeader(std::make_unique<CoeffTableHeader>());
     juce::TableHeaderComponent& tbComp = coeffTable.getHeader();
-    tbComp.addColumn("Delay", 1, int(COL_WIDTH/2.5));
+    tbComp.addColumn("Delay", 1, int(COL_WIDTH/2));
     tbComp.addColumn("FeedForward", 2, int(COL_WIDTH));
     tbComp.addColumn("FeedBack", 3, int(COL_WIDTH));
     tbComp.setStretchToFitActive(true); // expand columns to fill the entire width of the component
@@ -85,7 +85,9 @@ void CoefficientsComponent::paintCell(juce::Graphics& g, int row, int col, int w
     if (col == 2) text = juce::String(ffcoeffs[static_cast<size_t>(row)]);
     if (col == 3) text = juce::String(fbcoeffs[static_cast<size_t>(row)]);
 
-    g.drawText(text, 0, 0, w, h, juce::Justification::centredLeft);
+    constexpr int padding = 5;
+    g.setFont(15.f);
+    g.drawText(text, padding, 0, w - 2 * padding, h, juce::Justification::centredLeft);
 }
 
 juce::Component* CoefficientsComponent::refreshComponentForCell(int row, int col, bool, juce::Component* existing)
