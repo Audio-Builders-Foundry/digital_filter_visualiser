@@ -29,7 +29,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
   addAndMakeVisible(equationViewer);
 
   setSize(960, 640);
-  setResizable(true, true);
+  setResizeLimits(900, 600, 2000, 2000);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -73,8 +73,8 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g)
 void AudioPluginAudioProcessorEditor::resized()
 {
   buttonPanel.setBoundsRelative(0.02f, 0.12f, 0.96f, 0.07f);
-  equationViewer.setBoundsRelative(0.02f, 0.205f, 0.96f, 0.165f);
-  coefficients.setBoundsRelative(0.02f, 0.385f, 0.26f, 0.535f);
-  complexPlaneComponent.setBoundsRelative(0.29f, 0.385f, 0.37f, 0.535f);
-  phaseFrequencyResponseViewer.setBoundsRelative(0.67f, 0.385f, 0.31f, 0.535f);
+  equationViewer.setBoundsRelative(0.02f, 0.205f, 0.96f, 0.14f);
+  coefficients.setBoundsRelative(0.02f, 0.36f, 0.26f, 0.56f);
+  complexPlaneComponent.setBoundsRelative(0.29f, 0.36f, 0.37f, 0.56f);
+  phaseFrequencyResponseViewer.setBoundsRelative(0.67f, 0.36f, 0.31f, 0.56f);
 }

@@ -2,14 +2,14 @@
 #include "PhaseFrequencyResponseCalculator.h"
 
 PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProcessor* p) :
-	processor(p),
+    processor(p),
     ampDb(minAmpDb * 4),
     sampleRate(processor->getSampleRate()),
     zoomInButton("+"),
     zoomOutButton("-"),
     linearScaleButton("LINEAR"),
     logScaleButton("LOG"),
-	freqButton("FREQ."),
+    freqButton("FREQ."),
     phaseButton("PHASE"),
     bothButton("BOTH")
 {
@@ -98,16 +98,12 @@ void PhaseFrequencyResponseViewer::resized()
     //PROFILE_FUNCTION();
     DFVComponent::resized();
     int y = reducedBounds.getY();
-    freqButton.setBounds(reducedBounds.getX(), y, plotButtonsWidth, zoomButtonsSize);
-    phaseButton.setBounds(freqButton.getRight() + padding, y, plotButtonsWidth, zoomButtonsSize);
-    bothButton.setBounds(phaseButton.getRight() + padding, y, plotButtonsWidth, zoomButtonsSize);
+    freqButton.setBounds(reducedBounds.getX(), y, plotButtonsWidth, buttonsHeight);
+    phaseButton.setBounds(freqButton.getRight() + padding, y, plotButtonsWidth, buttonsHeight);
+    bothButton.setBounds(phaseButton.getRight() + padding, y, plotButtonsWidth, buttonsHeight);
 
-    plotsRect = reducedBounds;
-    plotsRect.removeFromTop(zoomButtonsSize + padding);
-    plotsRect = plotsRect.reduced(padding, padding);
-    
-    logScaleButton.setBounds(plotsRect.getRight() - scaleButtonsWidth, y, scaleButtonsWidth, zoomButtonsSize);
-    linearScaleButton.setBounds(logScaleButton.getX() - padding - scaleButtonsWidth, y, scaleButtonsWidth, zoomButtonsSize);
+    logScaleButton.setBounds(reducedBounds.getRight() - padding - scaleButtonsWidth, y, scaleButtonsWidth, buttonsHeight);
+    linearScaleButton.setBounds(logScaleButton.getX() - padding - scaleButtonsWidth, y, scaleButtonsWidth, buttonsHeight);
     setZoomButtonsBounds();
 
     repaint();
@@ -118,34 +114,11 @@ void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
     //PROFILE_FUNCTION();
     DFVComponent::paint(g);
 
-    auto bounds = reducedBounds;
-    bounds.removeFromTop(zoomButtonsSize + padding);
-    g.setColour(findColour(DFVLookAndFeel::blackBackgroundColourId));
-    g.fillRoundedRectangle(bounds.toFloat(), 10.f);
-    g.setColour(findColour(DFVLookAndFeel::controlOutlineColourId));
-    g.drawRoundedRectangle(bounds.toFloat(), 10.f, 0.25f);
-    g.setColour(findColour(DFVLookAndFeel::plotBackgroundColourId));
-    g.fillRoundedRectangle(plotsRect.toFloat(), 10.f);
-    g.setColour(findColour(DFVLookAndFeel::plotAxesColourId));
-    g.drawRoundedRectangle(plotsRect.toFloat(), 10.f, 0.25f);
+    const int plotsWidth = singleRect.getWidth() - plotPaddingLeft - plotPaddingRight;
 
-    //const auto width = plotsRect.getWidth() - plotPaddingLeft - plotPaddingRight;
-    //const auto height = plotsRect.getHeight() - plotPaddingTop - plotPaddingBottom;
-
-    //int topFreq = plotsRect.getY() + plotPaddingTop;
-    //int topPhase = topFreq;
-    //int bottomFreq = plotsRect.getBottom() - plotPaddingBottom;
-    //int bottomPhase = bottomFreq;
-
-    //if (bothButton.getToggleState())
-    //{
-    //    bottomFreq = plotsRect.getY() + plotPaddingTop + (height - distanceBetweenPlots) / 2;
-    //    topPhase = plotsRect.getY() + plotPaddingTop + (height + distanceBetweenPlots) / 2;
-    //}
-
-    if (plotsWidth <= 0 || 
-        freqPlotBottom <= freqPlotTop || 
-        phasePlotBottom <= phasePlotTop)
+    if (plotsWidth <= 0 ||
+        frequencyRect.getHeight() <= plotTitleHeight ||
+        phaseRect.getHeight() <= plotTitleHeight)
         return;
 
     // angles, amplitudes & phases
@@ -158,9 +131,9 @@ void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
         isLogScale, true, plotsWidth, angles, amplitudes, phases);
 
     if (!phaseButton.getToggleState())
-        paintPlot(g, amplitudes, isLogScale, ampDb, " dB", freqPlotTop, freqPlotBottom, false);
+        paintPlot(g, amplitudes, isLogScale, ampDb, frequencyRect, false);
     if (!freqButton.getToggleState())
-        paintPlot(g, phases, isLogScale, 180., " deg.", phasePlotTop, phasePlotBottom, true);
+        paintPlot(g, phases, isLogScale, 180., phaseRect, true);
 }
 
 void PhaseFrequencyResponseViewer::changePlotsSet()
@@ -176,24 +149,41 @@ void PhaseFrequencyResponseViewer::paintPlot(
     std::vector<double>& yValues,
     bool isLogScale,
     float yAmplitude,
-    juce::String unitText,
-    int top,
-    int bottom,
-    bool areValuesAngular)
+    juce::Rectangle<int> rect,
+    bool isPhase)
 {
+    const juce::String title = isPhase ? "PHASE RESPONSE" : "FREQUENCY RESPONSE";
+    const juce::String unitText = isPhase ? " deg." : " dB";
+
     const auto axesColour = findColour(DFVLookAndFeel::plotAxesColourId);
     const auto gridColour = findColour(DFVLookAndFeel::plotGridColourId);
     const auto chartColour = findColour(DFVLookAndFeel::plotChartColourId);
 
-    const auto width = plotsRect.getWidth() - plotPaddingLeft - plotPaddingRight;
-    const auto height = bottom - top;
+    g.setColour(findColour(DFVLookAndFeel::blackBackgroundColourId));
+    g.fillRoundedRectangle(rect.toFloat(), 10.f);
+    g.setColour(findColour(DFVLookAndFeel::controlOutlineColourId));
+    g.drawRoundedRectangle(rect.toFloat(), 10.f, 0.25f);
 
-    const float xLeft = static_cast<float>(plotPaddingLeft);
-    const float xRight = static_cast<float>(xLeft + width);
-    const float yTop = static_cast<float>(top);
-    const float yBottom = static_cast<float>(yTop + height);
+    g.setColour(findColour(juce::TableHeaderComponent::textColourId));
+    g.setFont(juce::FontOptions(std::min(plotTitleHeight - 2.f, 16.f), juce::Font::plain));
+    g.drawFittedText(title, rect.getX() + padding, rect.getY(), rect.getWidth() - 2 * padding, plotTitleHeight, juce::Justification::centredLeft, 1);
 
-    juce::Rectangle<int> rect(plotPaddingLeft, top, width, height);
+    auto innerRect = rect;
+    innerRect.removeFromTop(plotTitleHeight - padding);
+    innerRect.reduce(padding, padding);
+
+    g.setColour(findColour(DFVLookAndFeel::plotBackgroundColourId));
+    g.fillRoundedRectangle(innerRect.toFloat(), 10.f);
+    g.setColour(findColour(DFVLookAndFeel::plotAxesColourId));
+    g.drawRoundedRectangle(innerRect.toFloat(), 10.f, 0.25f);
+
+    juce::Rectangle<int> plotRect(
+        innerRect.getX() + plotPaddingLeft,
+        innerRect.getY() + plotPaddingTop,
+        innerRect.getWidth() - plotPaddingLeft - plotPaddingRight,
+        innerRect.getHeight() - plotPaddingTop - plotPaddingBottom);
+    juce::Rectangle<float> plotRectFloat = plotRect.toFloat();
+
     g.setFont(juce::FontOptions(15.f, juce::Font::plain));
 
     // Y grid
@@ -201,53 +191,52 @@ void PhaseFrequencyResponseViewer::paintPlot(
     g.drawText(
         juce::String(static_cast<int>(yAmplitude)) + unitText,
         padding,
-        top - textHeight / 2,
-        plotPaddingLeft - 2 * padding,
+        plotRect.getY() - textHeight / 2,
+        plotRect.getX() - 2 * padding,
         textHeight,
         juce::Justification::centredRight);
     g.drawText(
         "0",
         padding,
-        top + (height - textHeight) / 2,
-        plotPaddingLeft - 2 * padding,
+        plotRect.getY() + (plotRect.getHeight() - textHeight) / 2,
+        plotRect.getX() - 2 * padding,
         textHeight,
         juce::Justification::centredRight);
     g.drawText(
         juce::String(static_cast<int>(-yAmplitude)) + unitText,
         padding,
-        top + height - textHeight / 2,
-        plotPaddingLeft - 2 * padding,
+        plotRect.getY() + plotRect.getHeight() - textHeight / 2,
+        plotRect.getX() - 2 * padding,
         textHeight,
         juce::Justification::centredRight);
-    g.drawLine(xLeft, bottom, xRight, bottom);
+    g.drawLine(plotRectFloat.getX(), plotRectFloat.getBottom(), plotRectFloat.getRight(), plotRectFloat.getBottom());
     g.setColour(gridColour);
-    int y = top + height / 2;
-    g.drawLine(xLeft, y, xRight, y);
+    g.drawLine(plotRectFloat.getX(), plotRectFloat.getCentreY(), plotRectFloat.getRight(), plotRectFloat.getCentreY());
 
     // X grid
-    const int hzTextY = static_cast<int>(yBottom) + padding;
+    const int hzTextY = static_cast<int>(plotRectFloat.getBottom()) + padding;
     g.setColour(axesColour);
-    g.drawLine(plotPaddingLeft, top, plotPaddingLeft, top + height);
+    g.drawLine(plotRectFloat.getX(), plotRectFloat.getY(), plotRectFloat.getX(), plotRectFloat.getBottom());
     if (isLogScale)
     {
         g.setColour(axesColour);
         g.drawText(
             juce::String(static_cast<int>(minFreq)),
-            plotPaddingLeft - textWidth / 2,
+            plotRect.getX() - textWidth / 2,
             hzTextY,
             textWidth,
             textHeight,
             juce::Justification::centred);
         g.drawText(
             juce::String(static_cast<int>(sampleRate / 2)),
-            static_cast<int>(xRight) - textWidth / 2,
+            plotRect.getRight() - textWidth / 2,
             hzTextY,
             textWidth,
             textHeight,
             juce::Justification::centred);
         g.drawText(
             " Hz",
-            static_cast<int>(xRight) + textWidth / 2,
+            plotRect.getRight() + textWidth / 2,
             hzTextY,
             textWidth,
             textHeight,
@@ -256,20 +245,20 @@ void PhaseFrequencyResponseViewer::paintPlot(
         const float maxFreq = static_cast<float>(sampleRate / 2.0);
         const float logMaxFreq = std::log10(maxFreq);
         const float logMinFreq = std::log10(minFreq);
-        const float freqCoeff = width / (logMaxFreq - logMinFreq);
+        const float freqCoeff = plotRect.getWidth() / (logMaxFreq - logMinFreq);
 
         int freq = static_cast<int>(minFreq * 10);
         while (freq < maxFreq)
         {
-            int x = static_cast<int>(freqCoeff * (std::log10(freq) - logMinFreq) + plotPaddingLeft);
+            float x = freqCoeff * (std::log10(freq) - logMinFreq) + plotRectFloat.getX();
             g.setColour(gridColour);
-            g.drawLine(x, yTop, x, yBottom);
-            if (xRight - x > textWidth)
+            g.drawLine(x, plotRectFloat.getY(), x, plotRectFloat.getBottom());
+            if (plotRectFloat.getRight() - x > static_cast<float>(textWidth))
             {
                 g.setColour(axesColour);
                 g.drawText(
                     juce::String(freq),
-                    x - textWidth / 2,
+                    static_cast<int>(x) - textWidth / 2,
                     hzTextY,
                     textWidth,
                     textHeight,
@@ -283,21 +272,21 @@ void PhaseFrequencyResponseViewer::paintPlot(
         g.setColour(axesColour);
         g.drawText(
             "0",
-            plotPaddingLeft - textWidth / 2,
+            plotRect.getX() - textWidth / 2,
             hzTextY,
             textWidth,
             textHeight,
             juce::Justification::centred);
         g.drawText(
             juce::exactlyEqual(sampleRate, 0.0) ? "pi/2" : juce::String(static_cast<int>(sampleRate / 4)),
-            plotPaddingLeft + (width - textWidth) / 2,
+            plotRect.getX() + (plotRect.getWidth() - textWidth) / 2,
             hzTextY,
             textWidth,
             textHeight,
             juce::Justification::centred);
         g.drawText(
             juce::exactlyEqual(sampleRate, 0.0) ? "pi" : juce::String(static_cast<int>(sampleRate / 2)),
-            static_cast<int>(xRight) - textWidth / 2,
+            plotRect.getRight() - textWidth / 2,
             hzTextY,
             textWidth,
             textHeight,
@@ -305,26 +294,25 @@ void PhaseFrequencyResponseViewer::paintPlot(
         if (!juce::exactlyEqual(sampleRate, 0.0))
             g.drawText(
                 " Hz",
-                static_cast<int>(xRight) + textWidth / 2,
+                plotRect.getRight() + textWidth / 2,
                 hzTextY,
                 textWidth,
                 textHeight,
                 juce::Justification::centredLeft);
 
         g.setColour(gridColour);
-        int x = plotPaddingLeft + width / 2;
-        g.drawLine(x, yTop, x, yBottom);
+        g.drawLine(plotRectFloat.getCentreX(), plotRectFloat.getY(), plotRectFloat.getCentreX(), plotRectFloat.getBottom());
     }
 
     // drawing values
     {
         // clipping inside curly brackets
         const juce::Graphics::ScopedSaveState state(g);
-        g.reduceClipRegion(rect);
+        g.reduceClipRegion(plotRect);
 
         const float period = 2 * yAmplitude;
         juce::Path path;
-        auto x = xLeft;
+        auto x = plotRectFloat.getX();
 
         auto wrapPhase = [&](double value)
             {
@@ -334,7 +322,7 @@ void PhaseFrequencyResponseViewer::paintPlot(
 
         auto mapY = [&](double value)
             {
-                return juce::jmap(static_cast<float>(value), -yAmplitude, yAmplitude, yBottom, yTop);
+                return juce::jmap(static_cast<float>(value), -yAmplitude, yAmplitude, plotRectFloat.getBottom(), plotRectFloat.getY());
             };
 
         auto drawPhaseSegment = [&](float x0, float x1, double y0, double y1)
@@ -374,10 +362,10 @@ void PhaseFrequencyResponseViewer::paintPlot(
             };
 
         g.setColour(chartColour);
-        if (areValuesAngular)
+        if (isPhase)
         {
             path.startNewSubPath(x, mapY(wrapPhase(yValues[0])));
-            for (int i = 1; i < width; i++)
+            for (int i = 1; i < plotRect.getWidth(); i++)
             {
                 drawPhaseSegment(x, x + 1, yValues[static_cast<size_t>(i - 1)], yValues[static_cast<size_t>(i)]);
                 x++;
@@ -386,20 +374,20 @@ void PhaseFrequencyResponseViewer::paintPlot(
         else
         {
             juce::ColourGradient gradient(
-                juce::Colours::red.withAlpha(0.75f), 0.0f, rect.getY(),
-                juce::Colours::green.withAlpha(0.75f), 0.0f, rect.getBottom(),
+                juce::Colours::red.withAlpha(0.75f), 0.0f, plotRect.getY(),
+                juce::Colours::green.withAlpha(0.75f), 0.0f, plotRect.getBottom(),
                 false);
             gradient.addColour(0.5, juce::Colours::yellow.withAlpha(0.75f));
             g.setGradientFill(gradient);
 
             auto y = mapY(yValues[0]);
-            g.drawLine(x, rect.getCentreY(), x, y);
+            g.drawLine(x, plotRect.getCentreY(), x, y);
             path.startNewSubPath(x, y);
-            for (int i = 1; i < width; i++)
+            for (int i = 1; i < plotRect.getWidth(); i++)
             {
                 x++;
                 y = mapY(yValues[static_cast<size_t>(i)]);
-                g.drawLine(x, rect.getCentreY(), x, y);
+                g.drawLine(x, plotRect.getCentreY(), x, y);
                 path.lineTo(x, y);
             }
         }
@@ -410,21 +398,22 @@ void PhaseFrequencyResponseViewer::paintPlot(
 
 void PhaseFrequencyResponseViewer::setZoomButtonsBounds()
 {
-    plotsWidth = plotsRect.getWidth() - plotPaddingLeft - plotPaddingRight;
-    plotsHeight = plotsRect.getHeight() - plotPaddingTop - plotPaddingBottom;
+    singleRect = reducedBounds;
+    singleRect.removeFromTop(buttonsHeight + padding);
+    topRect = singleRect;
+    bottomRect = topRect.removeFromBottom((singleRect.getHeight() - distanceBetweenRects)/ 2);
+    topRect.removeFromBottom(distanceBetweenRects);
 
-    freqPlotTop = phasePlotTop = plotsRect.getY() + plotPaddingTop;
-    freqPlotBottom = phasePlotBottom = plotsRect.getBottom() - plotPaddingBottom;
+    const bool areBoth = bothButton.getToggleState();
+    frequencyRect = areBoth ? topRect : singleRect;
+    phaseRect = areBoth ? bottomRect : singleRect;
 
-    if (bothButton.getToggleState())
-    {
-        freqPlotBottom = plotsRect.getY() + plotPaddingTop + (plotsHeight - distanceBetweenPlots) / 2;
-        phasePlotTop = plotsRect.getY() + plotPaddingTop + (plotsHeight + distanceBetweenPlots) / 2;
-    }
+    const int freqPlotRectTop = frequencyRect.getY() + plotTitleHeight + plotPaddingTop;
+    const int freqPlotRectBottom = frequencyRect.getBottom() - padding - plotPaddingBottom;
+    const int freqPlotCentreY = (freqPlotRectTop + freqPlotRectBottom) / 2;
 
-    const int freqPlotHeight = freqPlotBottom - freqPlotTop;
-    zoomOutButton.setBounds(40, freqPlotTop + (freqPlotHeight + padding) / 2, zoomButtonsSize, zoomButtonsSize);
-    zoomInButton.setBounds(40, freqPlotTop + (freqPlotHeight - padding) / 2 - zoomButtonsSize, zoomButtonsSize, zoomButtonsSize);
+    zoomOutButton.setBounds(30, freqPlotCentreY + distanceBetweenRects / 2, buttonsHeight, buttonsHeight);
+    zoomInButton.setBounds(30, freqPlotCentreY - distanceBetweenRects / 2 - buttonsHeight, buttonsHeight, buttonsHeight);
 }
 
 // NOTE(ry): I need to put this here so my editor doesn't screw with the style of this file
