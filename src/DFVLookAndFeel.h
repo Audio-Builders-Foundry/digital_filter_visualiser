@@ -246,6 +246,32 @@ public:
         g.drawRoundedRectangle(thumbRect, corner, 1.f);
     }
 
+    void drawTableHeaderBackground(juce::Graphics& g, juce::TableHeaderComponent& header) override
+    {
+        auto r = header.getLocalBounds();
+        auto outlineColour = header.findColour(juce::TableHeaderComponent::outlineColourId);
+        const int lineWidth = juce::jmin(header.getWidth(), header.getTotalWidth());
+
+        g.setColour(outlineColour);
+        g.fillRect(r.removeFromBottom(1).withRight(lineWidth + r.getX()));
+
+        g.setColour(header.findColour(juce::TableHeaderComponent::backgroundColourId));
+        g.fillRect(r);
+
+        g.setColour(outlineColour);
+
+        g.drawLine(r.getX(), r.getY(), lineWidth + r.getX(), r.getY(), 2);
+        g.drawLine(r.getX(), r.getY(), r.getX(), r.getBottom(), 2);
+
+        auto n = header.getNumColumns(true);
+        for (int i = 0; i < n - 1; i++)
+        {
+            auto pos = header.getColumnPosition(i);
+            g.drawLine(pos.getRight(), pos.getY(), pos.getRight(), pos.getBottom(), 2);
+        }
+        g.fillRect(header.getColumnPosition(n - 1).removeFromRight(1));
+    }
+    
     void drawTableHeaderColumn(
         juce::Graphics& g, juce::TableHeaderComponent& header,
         const juce::String& columnName, int columnId,
