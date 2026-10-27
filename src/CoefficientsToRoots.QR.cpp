@@ -8,9 +8,13 @@ SolutionSet QR::Solve(Coefficients coefs)
 
     // filter out leading zeros, increasing counter until the leading 1.0 is found.
     size_t degree = 0;
-    while( degree < coefs.size() && coefs[degree] != 1.0)
-        degree++;
-    degree = coefs.size() - degree -1; // subtract 1 for the leading 1.0
+    while(degree < coefs.size() && coefs[degree] == 0)
+    { degree++; }
+
+    degree = std::max(int(coefs.size()) - int(degree) - 1, int(0)); // subtract 1 for the leading 1.0
+
+    if(degree == 0)
+    { return {}; }
 
    // filter out trailing zeros increasing the order of root at Zero (usually for default poles)
     size_t orderAtZero = 0;
