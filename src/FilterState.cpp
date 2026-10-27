@@ -100,16 +100,18 @@ add(s32 newOrder, c128 newValue)
   {
     if(p->value == newValue)
     {
+      FilterRoot::Ptr pW(p);
       p->order += newOrder;
-      return p;
+      return pW.wasObjectDeleted() ? nullptr : p;
     }
   }
   for(auto *z : zeros)
   {
     if(z->value == newValue)
     {
+      FilterRoot::Ptr zW(z);
       z->order += newOrder;
-      return z;
+      return zW.wasObjectDeleted() ? nullptr : z;
     }
   }
 
