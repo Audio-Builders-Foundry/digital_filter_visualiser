@@ -1,7 +1,7 @@
 #pragma once
 
 class PhaseFrequencyResponseViewer final :
-    public juce::Component,
+    public DFVComponent,
     juce::ChangeListener
 {
 public:
@@ -19,39 +19,34 @@ private:
         std::vector<double>& yValues,
         bool isLogScale,
         float yAmplitude,
-        juce::String unitText,
-        int top,
-        int bottom,
-        bool areValuesAngular);
+        juce::Rectangle<int> rect,
+        bool isPhase);
+    void setZoomButtonsBounds();
 
-    const juce::Colour
-        backgroundColor = juce::Colour(0x08, 0x0C, 0x1C),
-        lineColour = juce::Colours::white,
-        gridColour = juce::Colours::darkgrey;
     const juce::PathStrokeType strokeType{ 3.f };
     const int
-        padding = 5,
-        distanceBetweenPlots = 30,
-        plotPaddingLeft = 72,
-        plotPaddingRight = 45,
-        plotPaddingTop = 65,
-        plotPaddingBottom = 20;
-    const int
-        zoomButtonsSize = 20,
+        distanceBetweenRects = 4,
+        plotPaddingLeft = 60,
+        plotPaddingRight = 40,
+        plotPaddingTop = 10,
+        plotPaddingBottom = 25,
+        buttonsHeight = 20,
         plotButtonsWidth = 45,
         scaleButtonsWidth = 45,
         textWidth = 40,
-        textHeight = 10;
+        textHeight = 10,
+        plotTitleHeight = 25;
     const float
         minAmpDb = 6.f,
         maxAmpDb = 96.f,
         minFreq = 20.f;
 
-	AudioPluginAudioProcessor* processor;
+    AudioPluginAudioProcessor* processor;
 
     float ampDb;
     double sampleRate;
 
+    juce::Rectangle<int> singleRect, topRect, bottomRect, frequencyRect, phaseRect;
     juce::TextButton
         zoomInButton, zoomOutButton,
         linearScaleButton, logScaleButton,

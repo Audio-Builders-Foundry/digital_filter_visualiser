@@ -29,10 +29,11 @@ EquationViewer::
 void EquationViewer::
 resized(void)
 {
-  auto area = getLocalBounds();
-  auto constexpr margin = 5;
-  auto numeratorBounds = area.removeFromTop(int(0.5*getHeight())).reduced(margin);
-  auto denominatorBounds = area.removeFromTop(int(0.5*getHeight())).reduced(margin);
+  DFVComponent::resized();
+  auto area = reducedBounds;
+  area.removeFromLeft(labelWidth);
+  auto numeratorBounds = area.removeFromTop(int(0.5* reducedBounds.getHeight())).reduced(margin);
+  auto denominatorBounds = area.removeFromTop(int(0.5* reducedBounds.getHeight())).reduced(margin);
   numeratorView.setBounds(numeratorBounds);
   denominatorView.setBounds(denominatorBounds);
 
@@ -46,10 +47,14 @@ resized(void)
 void EquationViewer::
 paint(juce::Graphics &g)
 {
-  auto constexpr margin = 5;
+  DFVComponent::paint(g);
   auto constexpr barThicknessPixels = 2;
-  g.setColour(juce::Colours::white);
-  g.fillRect(margin, int(0.5*getHeight()), getWidth() - margin, barThicknessPixels);
+  g.setFont(18.f);
+  g.setColour(findColour(juce::TableHeaderComponent::textColourId));
+  g.drawFittedText("FeedForward", reducedBounds.getX(), numeratorView.getY(), labelWidth, numeratorView.getHeight(), juce::Justification::centred, 1);
+  g.drawFittedText("FeedBack", reducedBounds.getX(), denominatorView.getY(), labelWidth, denominatorView.getHeight(), juce::Justification::centred, 1);
+  g.setColour(findColour(DFVLookAndFeel::equationTextColourId));
+  g.fillRect(reducedBounds.getX() + margin + labelWidth, (numeratorView.getBottom() + denominatorView.getY()) / 2, std::max(reducedBounds.getWidth() - 2 * margin - labelWidth, 0), barThicknessPixels);
 }
 
 void EquationViewer::
@@ -121,8 +126,8 @@ mouseWheelMove(juce::MouseEvent const &e, juce::MouseWheelDetails const &w)
 void EquationViewer::EquationText::
 paint(juce::Graphics &g)
 {
-  auto constexpr fontHeightPixels = 24.0;
-  g.setColour(juce::Colours::white);
+  auto const fontHeightPixels = std::clamp(getHeight() - 2.0, 2.0, 24.0);
+  g.setColour(findColour(DFVLookAndFeel::equationTextColourId));
   g.setFont(fontHeightPixels);
   auto font = g.getCurrentFont();
 
@@ -157,7 +162,7 @@ paint(juce::Graphics &g)
   }
 
   // NOTE(ry): shift exponent glyphs
-  auto constexpr deltaY = -fontHeightPixels/3.0;
+  auto const deltaY = -fontHeightPixels/3.0;
   for(auto run : expRuns)
   {
     arr.moveRangeOfGlyphs(run.start, run.count, 0, deltaY);

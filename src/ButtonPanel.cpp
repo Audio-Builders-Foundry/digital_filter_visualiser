@@ -6,17 +6,19 @@
 
 ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
   :processorRef(p)
-  ,addRootButton("+")
-  ,delRootButton("-")
   ,player(p)
 {
     saveImage = juce::ImageCache::getFromMemory(BinaryData::Save_png, BinaryData::Save_pngSize);
     undoImage = juce::ImageCache::getFromMemory(BinaryData::Undo_png, BinaryData::Undo_pngSize);
     redoImage = juce::ImageCache::getFromMemory(BinaryData::Redo_png, BinaryData::Redo_pngSize);
+    addImage = juce::ImageCache::getFromMemory(BinaryData::Add_png, BinaryData::Add_pngSize);
+    delImage = juce::ImageCache::getFromMemory(BinaryData::Delete_png, BinaryData::Delete_pngSize);
 
     Utilities::setButtonImage(&exportButton, saveImage);
     Utilities::setButtonImage(&undoButton, undoImage);
     Utilities::setButtonImage(&redoButton, redoImage);
+    Utilities::setButtonImage(&addRootButton, addImage);
+    Utilities::setButtonImage(&delRootButton, delImage);
 
     exportButton.setTooltip("Export");
     undoButton.setTooltip("Undo");
@@ -49,9 +51,7 @@ ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
 
     // NOTE(ry): gain slider setup
     gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-    gainSlider.setColour(juce::Slider::thumbColourId, juce::Colours::orange);
-    gainSlider.setColour(juce::Slider::trackColourId, juce::Colours::white);
-    gainSlider.setRange(-90.f, 6.f);
+    gainSlider.setRange(-90.f, 6.f, 0.01f);
     gainSlider.setTextValueSuffix(" dB");
     gainSlider.onValueChange = [this]{
       auto const dB = gainSlider.getValue();
@@ -80,23 +80,45 @@ ButtonPanel::~ButtonPanel()
 
 void ButtonPanel::resized()
 {
-  auto area = getLocalBounds();
-  auto const height = area.getHeight();
-  auto constexpr padding = 5;
-  //auto constexpr buttonWidth_PercentOfParent = 0.1;
-  //auto const buttonWidth = getWidth() * buttonWidth_PercentOfParent;
-  undoButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  redoButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  exportButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  addRootButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  delRootButton.setBounds(area.removeFromLeft(height).reduced(padding));
-  if (processorRef.wrapperType == juce::AudioProcessor::WrapperType::wrapperType_Standalone)
+    DFVComponent::resized();
+    reducedBounds = reducedBounds.reduced(static_cast<int>(outerFrameCornerSize), 0);
+
+    constexpr int padding = 5;
+    constexpr int maxButtonSize = 30;
+    const bool needPlayer =
+        processorRef.wrapperType == juce::AudioProcessor::WrapperType::wrapperType_Standalone;
+    const int height = reducedBounds.getHeight();
+    const int width = reducedBounds.getWidth();
+    const int buttonGroupWidth =
+        needPlayer ? (width - 4 * padding) / 3 : (width - 3 * padding) / 2;
+    const int buttonSize = 
+        std::min((buttonGroupWidth - 4 * padding) / 5, std::min(height, maxButtonSize));
+    const int buttonY = reducedBounds.getY() + (height - buttonSize) / 2;
+
+  undoButton.setBounds(reducedBounds.getX(), buttonY, buttonSize, buttonSize);
+  redoButton.setBounds(undoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+  exportButton.setBounds(redoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+  addRootButton.setBounds(exportButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+  delRootButton.setBounds(addRootButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+  
+  if (needPlayer)
   {
-    area.removeFromLeft(height);
-    player.setBounds(area.removeFromLeft(player.buttonsCount * (height - padding) + padding).reduced(padding));
-    area.removeFromLeft(height);
+      player.setBounds(2 * padding + buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
+      gainSlider.setBounds(3 * padding + 2 * buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
   }
-  gainSlider.setBounds(area.reduced(padding));
+  else
+    gainSlider.setBounds(2 * padding + buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
+}
+
+void ButtonPanel::updateColours()
+{
+    Utilities::updateButtonColours(&exportButton);
+    Utilities::updateButtonColours(&undoButton);
+    Utilities::updateButtonColours(&redoButton);
+    Utilities::updateButtonColours(&addRootButton);
+    Utilities::updateButtonColours(&delRootButton);
+    
+    player.updateButtonColours();
 }
 
 void ButtonPanel::chooseFileAndSave(std::shared_ptr<juce::XmlElement> xml)

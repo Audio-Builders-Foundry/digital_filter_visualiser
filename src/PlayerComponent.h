@@ -11,10 +11,9 @@ public:
 	PlayerComponent(AudioPluginAudioProcessor& p);
 	~PlayerComponent();
 	void resized() override;
+	void updateButtonColours();
 	void updateButtons(PlayerState playerState);
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
-	
-	const int buttonsCount = 4;
 	
 private:
 

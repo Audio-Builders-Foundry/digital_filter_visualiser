@@ -25,7 +25,7 @@ static ProfileConfig profileConfig{
   }
 };
 
-static inline void
+void
 profileConfigure(ProfileConfig cfg)
 {
   profileConfig = cfg;
@@ -41,9 +41,10 @@ struct ProfilerLog
 
 thread_local ProfilerLog threadProfilerLog = {};
 
-static inline char*
+char*
 profileFlushLog(void)
 {
+  threadProfilerLog.logBuffer[threadProfilerLog.logAt] = 0;
   threadProfilerLog.logAt = 0;
   return threadProfilerLog.logBuffer;
 }
@@ -54,8 +55,9 @@ profileLogFormatString(const char *fmt, ...)
   va_list args;
   va_start(args, fmt);
 
+  jassert(threadProfilerLog.logAt <= sizeof(threadProfilerLog.logBuffer));
   size_t bytesRemaining = sizeof(threadProfilerLog.logBuffer) - threadProfilerLog.logAt;
-  char *buffer = threadProfilerLog.logBuffer + threadProfilerLog.logAt;
+  char *buffer = &threadProfilerLog.logBuffer[0] + threadProfilerLog.logAt;
   int bytesWritten = vsnprintf(buffer, bytesRemaining, fmt, args);
   threadProfilerLog.logAt += size_t(bytesWritten);
 
@@ -336,16 +338,16 @@ ProfiledScope::
           r64 siteTscElapsedExclusive_us = 1000000.0 * (r64)(profSite->tscElapsedRoot - profSite->tscElapsedChildren) * Profiler::tscPeriod;
           if(!juce::approximatelyEqual(siteTscElapsed_us, siteTscElapsedExclusive_us))
           {
-            profileLogFormatString("\"%s\",%f,%f,%lu\r\n",
-                                   profSite->label,
+            profileLogFormatString("\"%.*s\",%f,%f,%lu\r\n",
+                                   profSite->label.size(), profSite->label.data(),
                                    siteTscElapsedExclusive_us,
                                    siteTscElapsed_us,
                                    profSite->hitCount);
           }
           else
           {
-            profileLogFormatString("\"%s\",%f,%s,%lu\r\n",
-                                   profSite->label,
+            profileLogFormatString("\"%.*s\",%f,%s,%lu\r\n",
+                                   profSite->label.size(), profSite->label.data(),
                                    siteTscElapsedExclusive_us,
                                    "-",
                                    profSite->hitCount);

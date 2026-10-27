@@ -1,5 +1,5 @@
 #pragma once
-
+#include "DFVComponent.h"
 
 class ComplexPlaneEditor final
   :public juce::Component

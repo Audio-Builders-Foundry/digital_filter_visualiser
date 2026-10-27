@@ -39,13 +39,25 @@ PlayerComponent::~PlayerComponent()
 
 void PlayerComponent::resized()
 {
-    const int buttonSize = getHeight();
-    const int padding = (getWidth() - buttonSize) / (buttonsCount - 1) - buttonSize;
-    const int distance = buttonSize + padding;
-    openButton.setBounds(0, 0, buttonSize, buttonSize);
-    playButton.setBounds(distance, 0, buttonSize, buttonSize);
-    stopButton.setBounds(2 * distance, 0, buttonSize, buttonSize);
-    loopButton.setBounds(3 * distance, 0, buttonSize, buttonSize);
+    constexpr int padding = 5;
+    const int height = getHeight();
+    const int width = getWidth();
+    const int buttonSize = std::clamp((width - 5 * padding) / 4, 0, height);
+    const int x = (width - 3 * padding - 4 * buttonSize) / 2;
+    const int y = (height - buttonSize) / 2;
+
+    openButton.setBounds(x, y, buttonSize, buttonSize);
+    playButton.setBounds(x + buttonSize + padding, y, buttonSize, buttonSize);
+    stopButton.setBounds(x + 2 * (buttonSize + padding), y, buttonSize, buttonSize);
+    loopButton.setBounds(x + 3 * (buttonSize + padding), y, buttonSize, buttonSize);
+}
+
+void PlayerComponent::updateButtonColours()
+{
+    Utilities::updateButtonColours(&openButton);
+    Utilities::updateButtonColours(&playButton);
+    Utilities::updateButtonColours(&stopButton);
+    Utilities::updateButtonColours(&loopButton);
 }
 
 void PlayerComponent::updateButtons(PlayerState playerState)
