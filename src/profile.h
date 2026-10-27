@@ -37,10 +37,10 @@ struct ProfileConfig
     };
     ```
 */
-static inline void profileConfigure(ProfileConfig cfg);
+extern void profileConfigure(ProfileConfig cfg);
 
 /** returns a pointer to the start of the profile log for the current thread and resets the log */
-static inline char* profileFlushLog(void);
+extern char* profileFlushLog(void);
 
 struct ProfileSite;
 struct ProfiledScope;
