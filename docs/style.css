@@ -89,7 +89,7 @@ h3 {
 
 
 .abstract {
-    display: flex;
+
     justify-content: center;
     flex-flow: column wrap;
 
