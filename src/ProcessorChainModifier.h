@@ -10,12 +10,20 @@ public:
 		FilterState* state,
 		FullState<float>* processorState,
 		juce::dsp::ProcessSpec& spec);
-	static void process(class AudioPluginAudioProcessor& processor);
+	static void process(AudioPluginAudioProcessor& processor);
 
 private:
-	static inline double evaluatePole(const FilterRoot* pole);
+	struct PolePeak
+	{
+		std::size_t index;
+		double gain;
+		double frequency;
+	};
+
+	static inline PolePeak calculatePeak(const FilterRoot* pole, const size_t index);
 	static int findBestZeroIndexPairForPole(
 		const FilterRoot* pole,
+		const double peakFrequency,
 		juce::OwnedArray<FilterRoot>& zeros,
 		std::vector<int>& usedZeros,
 		bool doesEqualPoleExist);
@@ -29,14 +37,8 @@ private:
 		FilterRoot* root,
 		bool shouldBeTakenTwice,
 		float& c0, float& c1, float& c2);
-	static inline double angleDiffAbs(double a, double b);
 
 	static constexpr double pi = juce::MathConstants<double>::pi;
-	static constexpr double angleSimilarityThreshold = 0.1 * pi;
-	static constexpr double magnitudeThreshold = 1e-5;
-	static constexpr double qCoeff = 0.6;
-	static constexpr double magCoeff = 0.3;
-	static constexpr double angleCoeff = 0.1;
 	static constexpr juce::uint32 processBlockMaxPause = 100;
 };
 

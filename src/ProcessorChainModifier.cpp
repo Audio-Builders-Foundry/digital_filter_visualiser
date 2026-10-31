@@ -11,12 +11,6 @@ void ProcessorChainModifier::rootsToJuceCoeffs(
 	// as they will be annihilated immedialely.
 	// That's why zeros at zero (if exist) will always "find" their poles to form biquad.
 
-	struct PolesIndexesWithKeys
-	{
-		std::size_t index;
-		double key;
-	};
-
 	const int channelSize = processorState->size();
 	if (channelSize == 0)
 		return;
@@ -24,23 +18,17 @@ void ProcessorChainModifier::rootsToJuceCoeffs(
 	const auto polesSize = static_cast<std::size_t>(state->poles.size());
 	const auto zerosSize = static_cast<std::size_t>(state->zeros.size());
 
-	int zerosBiquadSize = 0;
-	for (auto* item : state->zeros)
-		zerosBiquadSize += item->order.get();
-	juce::ignoreUnused(zerosBiquadSize);
-
-	// 1. Sort non-null poles by priority for pairing with zeros
-	// (they should be cascaded in reverse order);
+	// 1. Sort non-null poles by priority for pairing with zeros;
 	// calculate delay count.
 	int delayCount = 0;
-	std::vector<PolesIndexesWithKeys> polesIndexesWithKeys;
-	polesIndexesWithKeys.reserve(polesSize);
+	std::vector<PolePeak> polePeaks;
+	polePeaks.reserve(polesSize);
 
 	for (std::size_t i = 0; i < polesSize; i++)
 	{
 		auto* pole = state->poles[static_cast<int>(i)];
 		if (!pole->isAtZero())
-			polesIndexesWithKeys.push_back({ i, evaluatePole(pole) });
+			polePeaks.push_back(calculatePeak(pole, i));
 		delayCount -= pole->order.get() * (pole->isReal() ? 1 : 2);
 	}
 	for (std::size_t i = 0; i < zerosSize; i++)
@@ -48,13 +36,14 @@ void ProcessorChainModifier::rootsToJuceCoeffs(
 		auto* zero = state->zeros[static_cast<int>(i)];
 		delayCount -= zero->order.get() * (zero->isReal() ? 1 : 2);
 	}
+	jassert(delayCount >= 0);
 
-	std::sort(polesIndexesWithKeys.begin(), polesIndexesWithKeys.end(),
-		[](const PolesIndexesWithKeys a, const PolesIndexesWithKeys b)
+	std::sort(polePeaks.begin(), polePeaks.end(),
+		[](const PolePeak a, const PolePeak b)
 		{
-			return a.key > b.key;
+			return a.gain > b.gain;
 		});
-	const auto nonNullPolesSize = polesIndexesWithKeys.size();
+	const auto nonNullPolesSize = polePeaks.size();
 
 	// 2. Find the best zero pair for each pole
 	// and calculate IIR coefficients
@@ -64,13 +53,14 @@ void ProcessorChainModifier::rootsToJuceCoeffs(
 	int bestZeroIndex = -1;
 	for (std::size_t i = 0; i < nonNullPolesSize; i++)
 	{
-		auto* pole = state->poles[static_cast<int>(polesIndexesWithKeys[i].index)];
+		auto* pole = state->poles[static_cast<int>(polePeaks[i].index)];
 		const int poleOrder = std::abs(pole->order.get());
 
 		for (int j = 0; j < poleOrder; j++)
 		{
 			bestZeroIndex = findBestZeroIndexPairForPole(
 				pole,
+				polePeaks[i].frequency,
 				state->zeros,
 				usedZeros,
 				poleOrder - j > 1);
@@ -104,7 +94,6 @@ void ProcessorChainModifier::rootsToJuceCoeffs(
 				j++;
 			if (zero != nullptr)
 			{
-				//const int effectivePoleOrder = pole->isReal() && !shouldEqualPoleBeTaken ? 1 : 2;
 				const int zeroOrder = shouldEqualZeroBeTaken ? 2 : 1;
 				usedZeros[static_cast<std::size_t>(bestZeroIndex)] += zeroOrder;
 			}
@@ -119,7 +108,6 @@ void ProcessorChainModifier::rootsToJuceCoeffs(
 	std::vector<float> firCoeffsArray(firCoeffArraySize);
 	for (std::size_t i = 0; i < firCoeffArraySize; i++)
 		firCoeffsArray[i] = static_cast<float>(firCoeffsDblArray[i]);
-	//delayCount = std::max(0, delayCount - static_cast<int>(firCoeffArraySize - 1));
 
 	// 4. Set processors parameters
 	for (int ch = 0; ch < channelSize; ch++)
@@ -188,29 +176,40 @@ void ProcessorChainModifier::process(AudioPluginAudioProcessor& processor)
 	}
 }
 
-double ProcessorChainModifier::evaluatePole(const FilterRoot* pole)
+ProcessorChainModifier::PolePeak ProcessorChainModifier::calculatePeak(
+	const FilterRoot* pole, const size_t index)
 {
 	const auto value = pole->value.get();
-	const double mag = std::abs(value);
-	const double angleAbs = std::abs(std::arg(value));
-	const double q = juce::exactlyEqual(mag, 0.0) ? 0.5 : -0.5 * angleAbs / std::log(mag);
-	return q * qCoeff + mag * magCoeff + angleAbs * angleCoeff;
+	const double r = std::abs(value);
+	const double edgeFreq = value.real() > 0.0 ? 0.0 : pi;
+
+	if (pole->isReal() && std::abs(pole->order.get()) == 1)
+		return { index, 1.0 / (1.0 - r), edgeFreq };
+
+	const double angle = std::arg(value);
+	const double peakFreqCos = (1.0 + r * r) / (2.0 * r) * std::cos(angle);
+	if (std::abs(peakFreqCos) < 1.0)
+		return { index, 1.0 / ((1.0 - r * r) * std::abs(std::sin(angle))), std::acos(peakFreqCos) };
+
+	return { index, 1.0 / std::min(std::norm(1.0 - value), std::norm(1.0 + value)), edgeFreq };
 }
 
 int ProcessorChainModifier::findBestZeroIndexPairForPole(
 	const FilterRoot* pole,
+	const double peakFrequency,
 	juce::OwnedArray<FilterRoot>& zeros,
 	std::vector<int>& usedZeros,
 	bool doesEqualPoleExist)
 {
 	const auto usedZerosSize = usedZeros.size();
-	//const double poleAngle = std::arg(pole->value.get());
+	const auto peakPoint = std::polar(1.0, peakFrequency);
+	const auto poleValue = pole->value.get();
 	const bool isPoleReal = pole->isReal();
 	const bool shouldDenominatorBeFirstOrder =
 		isPoleReal && !doesEqualPoleExist;
 
 	auto currentBestIndex = -1;
-	double currentMin = 100.0; // greater than maximum possible delta
+	double currentMin = 1.0; // only zeros that attenuate at peakFrequency are accepted
 	for (std::size_t i = 0; i < usedZerosSize; i++)
 	{
 		auto* zero = zeros[static_cast<int>(i)];
@@ -224,11 +223,14 @@ int ProcessorChainModifier::findBestZeroIndexPairForPole(
 		if (shouldDenominatorBeFirstOrder && !isZeroReal)
 			continue;
 
-		const double currentDelta = std::abs(pole->value.get() - zero->value.get());
-		if (currentDelta < currentMin)
+		const auto zeroValue = zero->value.get();
+		double currentGain = std::abs(peakPoint - zeroValue);
+		if (!isZeroReal)
+			currentGain *= std::abs(peakPoint - std::conj(zeroValue));
+		if (currentGain < currentMin)
 		{
 			currentBestIndex = static_cast<int>(i);
-			currentMin = currentDelta;
+			currentMin = currentGain;
 		}
 	}
 
@@ -250,8 +252,6 @@ juce::dsp::IIR::Coefficients<float>* ProcessorChainModifier::calculateIirCoeffic
 
 	if (zeroIndex != -1)
 	{
-		//auto* zero = zeros[zeroIndex];
-		//const int poleOrder = pole->isReal() && !shouldEqualPoleBeTaken ? 1 : 2;
 		calculatePolynomialCoefficients(zeros[zeroIndex], shouldEqualZeroBeTaken, b0, b1, b2);
 	}
 	else if (juce::exactlyEqual(a0, 0.f)) // no zeros, 1-order pole
@@ -311,15 +311,6 @@ void ProcessorChainModifier::calculatePolynomialCoefficients(
 	c2 = static_cast<float>(re * re + im * im);
 	c1 = static_cast<float>(-2.0 * re);
 	c0 = 1.0;
-}
-
-double ProcessorChainModifier::angleDiffAbs(double a, double b)
-{
-	double d = a - b;
-	d = std::fmod(d + pi, 2.0 * pi);
-	if (d < 0)
-		d += 2.0 * pi;
-	return std::abs(d - pi);
 }
 
 // NOTE(ry): I need to put this here so my editor doesn't screw with the style of this file
