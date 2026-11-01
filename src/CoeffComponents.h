@@ -24,6 +24,8 @@ private:
     bool isFeedForwardSynchronized = true;
     std::vector<double> ffcoeffs;
     std::vector<double> fbcoeffs;
+    std::vector<double> ffcoeffsLastSync;
+    std::vector<double> fbcoeffsLastSync;
     juce::TableListBox coeffTable;
     juce::TextButton recalculateButton;
     AudioPluginAudioProcessor* processor;

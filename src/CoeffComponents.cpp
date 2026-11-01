@@ -141,12 +141,16 @@ void CoefficientsComponent::onCellChanged(int row, int col, double value)
     // calculate roots through the coefficient2roots function && notify other listeners about this change
     if (col == 2)
     {
+        if (isFeedForwardSynchronized)
+            ffcoeffsLastSync = ffcoeffs;
         ffcoeffs[static_cast<size_t>(row)] = value;
         isFeedForwardSynchronized = false;
         recalculateButton.setEnabled(true);
     }
     else if (col == 3)
     {
+        if (isFeedBackSynchronized)
+            fbcoeffsLastSync = fbcoeffs;
         fbcoeffs[static_cast<size_t>(row)] = value;
         isFeedBackSynchronized = false;
         recalculateButton.setEnabled(true);
@@ -191,8 +195,16 @@ void CoefficientsComponent::updateFilterState()
 
         if (!filterStable())
         {
-            // @TODO handle that case, reporting back to the user a message about the causality violation
-            // unstable filter, do nothing & return
+            juce::NativeMessageBox::showMessageBoxAsync(
+                juce::MessageBoxIconType::WarningIcon,
+                "Error",
+                "The filter with the given coefficients is unstable.\nUnable to apply change in coefficients.",
+                this);
+            if (!isFeedForwardSynchronized)
+                ffcoeffs = ffcoeffsLastSync;
+            if (!isFeedBackSynchronized)
+                fbcoeffs = fbcoeffsLastSync;
+            coeffTable.updateContent();
             return;
         }
 
