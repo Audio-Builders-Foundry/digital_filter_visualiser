@@ -26,6 +26,8 @@ public:
         sliderThumbOutlineColourId,
         sliderBackgroundMinColourId,
         sliderBackgroundMaxColourId,
+        axisHighlightColourId,
+        circleColourId,
     };
 
     DFVLookAndFeel()
@@ -84,6 +86,8 @@ public:
         setColour(ColourIds::sliderThumbOutlineColourId, juce::Colour(0xff9f5e01));
         setColour(ColourIds::sliderBackgroundMinColourId, juce::Colour(0xfffcc559));
         setColour(ColourIds::sliderBackgroundMaxColourId, juce::Colour(0xffde9300));
+        setColour(ColourIds::axisHighlightColourId, juce::Colour(0xff8f3e15));
+        setColour(ColourIds::circleColourId, juce::Colours::goldenrod);
     }
 
     void drawButtonBackground(

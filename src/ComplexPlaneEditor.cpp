@@ -584,12 +584,16 @@ resized(void)
 
     auto area = getLocalBounds();
     {
-        auto thirdWidth = area.getWidth() / 3;
+        const int w = area.getWidth();
+        const int minButtonsWidth = 120;
+        auto buttonsWidth = std::max(w / 3, minButtonsWidth);
+        buttonsWidth = std::min(buttonsWidth, w);
+        const int deltaX = (w - buttonsWidth) / 2;
         auto seventhHeight = area.getHeight() / 7;
         area.removeFromTop(seventhHeight);
         area.removeFromBottom(5 * seventhHeight);
-        area.removeFromLeft(thirdWidth);
-        area.removeFromRight(thirdWidth);
+        area.removeFromLeft(deltaX);
+        area.removeFromRight(deltaX);
     }
 
     {
@@ -609,9 +613,9 @@ paint(juce::Graphics& g)
 
     auto const backgroundColor = findColour(DFVLookAndFeel::plotBackgroundColourId);
     auto const axisColor = findColour(DFVLookAndFeel::plotAxesColourId);
-    auto const axisHighlightColor = juce::Colours::cadetblue;
+    auto const axisHighlightColor = findColour(DFVLookAndFeel::axisHighlightColourId);
     auto const lineColor = findColour(DFVLookAndFeel::plotGridColourId);
-    auto const circleColor = juce::Colours::goldenrod;
+    auto const circleColor = findColour(DFVLookAndFeel::circleColourId);
     auto const textColor = findColour(DFVLookAndFeel::plotAxesColourId);
 
     auto constexpr axisLabelFontHeightPixels = 32.0;
