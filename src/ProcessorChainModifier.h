@@ -10,7 +10,7 @@ public:
 		FilterState* state,
 		FullState<float>* processorState,
 		juce::dsp::ProcessSpec& spec);
-	static void process(AudioPluginAudioProcessor& processor);
+	static void process(class AudioPluginAudioProcessor& processor);
 
 private:
 	struct PolePeak
