@@ -159,6 +159,31 @@ void CoefficientsComponent::onCellChanged(int row, int col, double value)
 
 void CoefficientsComponent::updateFilterState()
 {
+    auto isNumberOfPolesSufficient = [&]() -> bool {
+        int i = 0;
+        while (i < ffcoeffs.size() && ffcoeffs[i] == 0)
+            i++;
+        int j = 0;
+        while (j < fbcoeffs.size() && fbcoeffs[j] == 0)
+            j++;
+        return j <= i;
+        };
+
+    if (!isNumberOfPolesSufficient())
+    {
+        juce::NativeMessageBox::showMessageBoxAsync(
+            juce::MessageBoxIconType::WarningIcon,
+            "Error",
+            "The filter with the given coefficients is non-causal.\nUnable to apply change in coefficients.",
+            this);
+        if (!isFeedForwardSynchronized)
+            ffcoeffs = ffcoeffsLastSync;
+        if (!isFeedBackSynchronized)
+            fbcoeffs = fbcoeffsLastSync;
+        coeffTable.updateContent();
+        return;
+    }
+
     // this->fbcoeffs can be changed while changing filterState for the new this->ffcoeffs.
     // That's why copying is required.
     std::vector<double> initFbcoeffs = this->fbcoeffs; 
