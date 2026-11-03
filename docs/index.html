@@ -8,6 +8,7 @@
         <title> Digital Filter Visualizer </title>
         <link rel="stylesheet" type="text/css" href="style.css">
         <link rel="stylesheet" type="text/css" href="qr.css">
+
     </head>
     <body>
 
@@ -39,9 +40,7 @@
 
 
             <div class="abstract">
-
                 <div class="mini-header"> Overview </div>  <br><br>
-
                 <!--l. 20-->There are no closed-form solutions for polynomials of degree 5 or greater; iterative
                 methods are required. Algorithms largely fall into one of two broad categories: Newton&#8217;s
                 method-based solvers and eigenvalue solvers. <br><br>
@@ -72,11 +71,7 @@
                 <!--l. 36--><p class="indent" >  The QR solver with double implicit shift finds one or two roots at a time. Our
                 application stores roots along with their orders. When the polynomial has roots with
                 order more than 1, the solver will produce several roots whose weighted average is a close
-                approximation of the true root. Individual roots corresponding to the same high order
-
-
-
-                root may not appear consecutively in the list of solutions, and each root will be farther
+                approximation of the true root. Individual roots corresponding to the same high order root may not appear consecutively in the list of solutions, and each root will be farther
                 from the true root position the higher its order. This necessitates a post-processing pass
                 to group individual roots corresponding to the same true root into a single
                 object.
@@ -95,15 +90,11 @@
                 <div class="mini-header"> Strategy </div>  <br><br>
 
                 <!--l. 47--><p class="noindent" >We will construct a matrix whose eigenvalues are the roots of the polynomial we want to
-                solve. Then we will iteratively apply operations to this matrix in such a way that we
-                don&#8217;t change its eigenvalues, until we have produced a matrix whose eigenvalues we can
-                determine directly from its coefficients.
+                solve. Then we will iteratively apply operations to this matrix in such a way that we don&#8217;t change its eigenvalues, until we have produced a matrix whose eigenvalues we can determine directly from its coefficients.
 
                 <!--l. 50--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">2.1. </span> <a
                  id="x1-30002.1"></a><span
-                class="cmbx-10">Companion Matrix.</span></span> To start, we need to construct a matrix whose eigenvalues
-                are the roots of the polynomial we want to solve. This can be done as follows: given a
-                polynomial <span
+                class="cmbx-10">Companion Matrix.</span></span> To start, we need to construct a matrix whose eigenvalues are the roots of the polynomial we want to solve. This can be done as follows: given a polynomial <span
                 class="cmmi-10">p</span>(<span
                 class="cmmi-10">x</span>) = <span
                 class="cmmi-10">a</span><sub><span
@@ -117,7 +108,7 @@
                 class="equation-star"><tr><td>
                   <div class="math-display" >
                 <img
-                src="math assets/qr1x.png" " class="math-display" ></div>
+                src="math assets/qr1x.png" class="math-display" ></div>
                   </td></tr></table>
                 <!--l. 61--><p class="nopar" >has eigenvalues <span
                 class="cmmi-10">&#x03BB;</span><sub><span
@@ -145,9 +136,7 @@
                 subdiagonal; we call any matrix with this property an <span
                 class="cmti-10">upper Hessenberg </span>matrix, or more
                 specifically, an <span
-                class="cmti-10">unreduced upper Hessenberg </span>matrix. Finding the eigenvalues of upper
-                Hessenberg matrices is a well-studied problem, and exploiting this structure will play a
-                key role in the theory.
+                class="cmti-10">unreduced upper Hessenberg </span>matrix. Finding the eigenvalues of upper Hessenberg matrices is a well-studied problem, and exploiting this structure will play a key role in the theory.
 
 
 
@@ -160,7 +149,7 @@
                 class="equation-star"><tr><td>
                   <div class="math-display" >
                 <img
-                src="math assets/qr3x.png" " class="math-display" ></div>
+                src="math assets/qr3x.png"  class="math-display" ></div>
                   </td></tr></table>
                 <!--l. 77--><p class="nopar" >whose eigenvalues are simply their diagonal entries. The same is true for upper triangular
                 matrices:
@@ -168,13 +157,10 @@
                 class="equation-star"><tr><td>
                   <div class="math-display" >
                 <img
-                src="math assets/qr4x.png" " class="math-display" ></div>
+                src="math assets/qr4x.png" class="math-display" ></div>
                   </td></tr></table>
                 <!--l. 87--><p class="nopar" >These matrices can be targeted when finding the eigenvalues of a matrix with complex
-                entries (diagonal when the matrix is hermitian, upper triangular otherwise). Since we are
-                working with polynomials with real coefficients, and therefore matrices with real entries,
-                we will need to target a slightly less intuitive form, which we call block upper
-                triangular:
+                entries (diagonal when the matrix is hermitian, upper triangular otherwise). Since we are working with polynomials with real coefficients, and therefore matrices with real entries, we will need to target a slightly less intuitive form, which we call block upper triangular:
                   <table
                 class="equation-star"><tr><td>
 
@@ -182,15 +168,11 @@
 
                   <div class="math-display" >
                 <img
-                src="math assets/qr5x.png" " class="math-display" ></div>
+                src="math assets/qr5x.png" class="math-display" ></div>
                   </td></tr></table>
                 <!--l. 97--><p class="nopar" >where each <span
                 class="cmmi-10">T</span><sub><span
-                class="cmmi-7">ij</span></sub> is a square matrix, all matrices in the same row have the same number of
-                rows, all matrices in the same column have the same number of columns, and the zeros
-                denote zero matrices. The set of eigenvalues of a matrix of this form is the union of the
-                sets of eigenvalues of each matrix along the main diagonal. A block upper triangular
-                matrix made up of either 1 <span
+                class="cmmi-7">ij</span></sub> is a square matrix, all matrices in the same row have the same number of rows, all matrices in the same column have the same number of columns, and the zeros denote zero matrices. The set of eigenvalues of a matrix of this form is the union of the sets of eigenvalues of each matrix along the main diagonal. A block upper triangular matrix made up of either 1 <span
                 class="cmsy-10">&#x00D7; </span>1 or 2 <span
                 class="cmsy-10">&#x00D7; </span>2 matrices is known as a <span
                 class="cmti-10">reduced upper Hessenberg</span>

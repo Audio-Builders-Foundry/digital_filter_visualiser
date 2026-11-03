@@ -105,7 +105,7 @@ span.footnote-mark{ vertical-align: super; font-size:80%; }
 div.submaketitle{ text-align:left; margin-top:2em; border-top: 1px solid black; border-bottom: 1px solid black; margin-left:5%; margin-right:5%; font-size:85%; line-height: 95%;}
 div.submaketitle div {margin-top:0.5em; margin-bottom:0.5em; }
 div.submaketitle p { margin-top:0em; margin-bottom:0em; }
-div.abstract{ margin-top: 2em; text-align:left; margin-right:15pt; margin-left:15pt; }
+
 div.addresses p {margin-top:0em; margin-bottom:0em; }
 h2.titleHead{text-align:center;}
 div.maketitle{ margin-bottom: 2em; text-align:center; }
