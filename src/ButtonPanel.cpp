@@ -12,19 +12,16 @@ ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
     undoImage = juce::ImageCache::getFromMemory(BinaryData::Undo_png, BinaryData::Undo_pngSize);
     redoImage = juce::ImageCache::getFromMemory(BinaryData::Redo_png, BinaryData::Redo_pngSize);
     addImage = juce::ImageCache::getFromMemory(BinaryData::Add_png, BinaryData::Add_pngSize);
-    delImage = juce::ImageCache::getFromMemory(BinaryData::Delete_png, BinaryData::Delete_pngSize);
 
     Utilities::setButtonImage(&exportButton, saveImage);
     Utilities::setButtonImage(&undoButton, undoImage);
     Utilities::setButtonImage(&redoButton, redoImage);
     Utilities::setButtonImage(&addRootButton, addImage);
-    Utilities::setButtonImage(&delRootButton, delImage);
 
     exportButton.setTooltip("Export");
     undoButton.setTooltip("Undo");
     redoButton.setTooltip("Redo");
     addRootButton.setTooltip("Add root");
-    delRootButton.setTooltip("Delete root");
 
     exportPopupMenu.addItem("Filter coefficients", [this]
         {
@@ -63,7 +60,6 @@ ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
     addAndMakeVisible(undoButton);
     addAndMakeVisible(redoButton);
     addAndMakeVisible(addRootButton);
-    addAndMakeVisible(delRootButton);
     addAndMakeVisible(gainSlider);
 
     if (processorRef.wrapperType == juce::AudioProcessor::WrapperType::wrapperType_Standalone)
@@ -97,10 +93,9 @@ void ButtonPanel::resized()
 
   undoButton.setBounds(reducedBounds.getX(), buttonY, buttonSize, buttonSize);
   redoButton.setBounds(undoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
-  exportButton.setBounds(redoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
-  addRootButton.setBounds(exportButton.getRight() + padding, buttonY, buttonSize, buttonSize);
-  delRootButton.setBounds(addRootButton.getRight() + padding, buttonY, buttonSize, buttonSize);
-  
+  addRootButton.setBounds(redoButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+  exportButton.setBounds(addRootButton.getRight() + padding, buttonY, buttonSize, buttonSize);
+
   if (needPlayer)
   {
       player.setBounds(2 * padding + buttonGroupWidth, buttonY, buttonGroupWidth, buttonSize);
@@ -116,7 +111,6 @@ void ButtonPanel::updateColours()
     Utilities::updateButtonColours(&undoButton);
     Utilities::updateButtonColours(&redoButton);
     Utilities::updateButtonColours(&addRootButton);
-    Utilities::updateButtonColours(&delRootButton);
     
     player.updateButtonColours();
 }

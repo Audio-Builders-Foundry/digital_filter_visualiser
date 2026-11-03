@@ -26,7 +26,6 @@ private:
     juce::ImageButton undoButton;
     juce::ImageButton redoButton;
     juce::ImageButton addRootButton;
-    juce::ImageButton delRootButton;
     PlayerComponent player;
     juce::Slider gainSlider;
 
