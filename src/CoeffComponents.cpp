@@ -159,6 +159,10 @@ void CoefficientsComponent::onCellChanged(int row, int col, double value)
 
 void CoefficientsComponent::updateFilterState()
 {
+    // this->fbcoeffs can be changed while changing filterState for the new this->ffcoeffs.
+    // That's why copying is required.
+    std::vector<double> initFbcoeffs = this->fbcoeffs; 
+
     if (!isFeedForwardSynchronized)
     {
         auto zeros = Solve(this->ffcoeffs);
@@ -178,7 +182,7 @@ void CoefficientsComponent::updateFilterState()
     }
     if (!isFeedBackSynchronized)
     {
-        auto poles = Solve(this->fbcoeffs);
+        auto poles = Solve(initFbcoeffs);
 
         // check stability
         auto filterStable = [&]() -> bool {
