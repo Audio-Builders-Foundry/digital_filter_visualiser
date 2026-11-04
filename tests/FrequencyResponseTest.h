@@ -4,12 +4,12 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include "TestHelper.h"
 #include "../src/PluginProcessor.h"
-#include "../src/PhaseFrequencyResponseCalculator.h"
+#include "../src/FrequencyResponseCalculator.h"
 
-class PhaseFrequencyResponseTest : public juce::UnitTest
+class FrequencyResponseTest : public juce::UnitTest
 {
 public:
-    PhaseFrequencyResponseTest() : UnitTest("PhaseFrequencyResponseTest", "Math")
+    FrequencyResponseTest() : UnitTest("FrequencyResponseTest", "Math")
     {
     }
 
@@ -83,7 +83,7 @@ private:
         auto* state = processor.filterState.get();
         TestHelper::makeFilterState(state, roots, 1);
         double amplitude, phase;
-        PhaseFrequencyResponseCalculator::calculateForAngle(
+        FrequencyResponseCalculator::calculateForAngle(
             state, phaseUnitCoeff, phaseAmplitude, angle, amplitude, phase);
 
         double amplitudeDb = juce::Decibels::gainToDecibels(expectedGain);
@@ -98,4 +98,4 @@ private:
     const float maxRelError = 1e-6f;
 };
 
-static PhaseFrequencyResponseTest phaseFrequencyResponseTest;
+static FrequencyResponseTest frequencyResponseTest;

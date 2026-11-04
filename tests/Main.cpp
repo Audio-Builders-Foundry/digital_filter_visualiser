@@ -1,7 +1,7 @@
 #include "../src/JUCE/modules/juce_core/juce_core.h"
 #include "RootsToCoefficientsTest.h"
 #include "ProcessorChainModifierTest.h"
-#include "PhaseFrequencyResponseTest.h"
+#include "FrequencyResponseTest.h"
 #include "CoefficientsToRootsTest.h"
 #include "CoefficientsToRootsDistanceTest.h"
 
