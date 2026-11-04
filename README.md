@@ -23,7 +23,7 @@ We present **Digital Filter Visualiser**: a tool that allows you to see the math
     - [Menu Controls](#menu-controls)
     - [Coefficients Table Editor](#coefficients-table-editor)
     - [Complex Plane Editor](#complex-plane-editor)
-    - [Frequency and Phase Viewer](#frequency-and-phase-viewer)
+    - [Frequency Response Viewer](#frequency-response-viewer)
 <!-- - [FAQ](#faq) -->
 - [Future Work](#future-work)
 - [Become Contributor](#become-contributor)
@@ -35,8 +35,8 @@ We present **Digital Filter Visualiser**: a tool that allows you to see the math
 - a graphical editor for zeros and poles position in a complex plane
 - a coefficients table editor
 - a formula representation of the polynomial 
-- phase responce viewer
-- frequency response viewer
+- phase response viewer
+- magnitude response viewer
 
 A method to convert coefficients to roots is provided using the Francis implicit double shift QR algorithm. 
 
@@ -73,16 +73,14 @@ The following sections describe the available controls and their functionality.
 
 Controls | Description
 :-- | --:
-Options | Export, load or reset filter state and Audio/MIDI settings
 Undo | Revert the last change
 Redo | Restore the last undone change
-Export | Export the current **Filter Coeffiicients** or **Processor Chain Parameters**
 Add root | Add a new pole or zero to the filter (see note below)
-Delete root	| Remove the last created pole or zero
-Import | Load an audio file
+Export | Export the current **Filter Coefficients** or **Processor Chain Parameters**
+Load | Load an audio file
 Playback | Start audio playback
 Stop | Stop audio playback
-Loop | Repeat playback when it finishess
+Loop | Repeat playback when it finishes
 Level slider | Adjust the audio playback level
 
 > Note: Adding a new root adds a new zero at (1,0), corresponding to 0 degrees on the polar axis. If the number of poles becomes smaller than the number of zeros, a new pole is also added at the centre of the unit circle, that is at (0,0). In general, the number of zeros can never exceed the number of poles.
@@ -101,13 +99,13 @@ Each root has individual `+`, `-`, and `X` buttons. Plus (`+`) increases the roo
 
 The **Coefficients Table Editor** allows users to have an overview and edit filter coefficients by double-clicking the corresponding cells. Pressing the **Recalculate** button updates the filter state. If the changes result in an unstable filter, the changes are aborted and automatically reverted back to the previous state.
 
-#### Frequency and Phase Viewer
+#### Frequency Response Viewer
 
 Controls | Description
 :-- | --:
-Frequency | Display the filter's frequency response
+Magnitude | Display the filter's magnitude response
 Phase | Display the filter's phase response
-Both | Display both frequency and phase responses
+Both | Display both magnitude and phase responses
 Linear | Use a linear frequency scale
 Log | Use a logarithmic frequency scale
 Zoom In | Magnify the response plot
@@ -117,7 +115,7 @@ Zoom Out | Reduce the magnification of the response plot
 
 **Digital Filter Visualiser** is a tool with room for future development. The followinng are some potential areas for future work:
 
-- [ ] Implement message display (i.e. informing user when changes resulted in unstable filter)
+- [x] Implement message display (i.e. informing user when changes resulted in unstable filter)
 - [ ] [Accessibility support](https://github.com/Audio-Builders-Foundry/digital_filter_visualiser/discussions/2s)
 
 ## Become Contributor
