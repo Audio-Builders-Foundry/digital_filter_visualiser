@@ -1,8 +1,8 @@
-#include "PhaseFrequencyResponseCalculator.h"
+#include "FrequencyResponseCalculator.h"
 #include <complex>
 #include <cmath>
 
-void PhaseFrequencyResponseCalculator::calculate(
+void FrequencyResponseCalculator::calculate(
     FilterState* filterState,
     float minFreq,
     double sampleRate,
@@ -10,12 +10,12 @@ void PhaseFrequencyResponseCalculator::calculate(
     bool isDegrees,
     int intWidth,
     std::vector<double>& angles,
-    std::vector<double>& amplitudes,
+    std::vector<double>& magnitudes,
     std::vector<double>& phases)
 {
     std::size_t width = static_cast<size_t>(intWidth);
     angles.resize(width);
-    amplitudes.resize(width, 1.);
+    magnitudes.resize(width, 1.);
     phases.resize(width, 0.);
 
     const double maxAngle = pi;
@@ -40,20 +40,20 @@ void PhaseFrequencyResponseCalculator::calculate(
             phaseUnitCoeff,
             phaseAmplitude,
             angles[i],
-            amplitudes[i],
+            magnitudes[i],
             phases[i]);
     }
 }
 
-void PhaseFrequencyResponseCalculator::calculateForAngle(
+void FrequencyResponseCalculator::calculateForAngle(
     FilterState* filterState,
     double phaseUnitCoeff,
     double phaseAmplitude,
     double angle,
-    double& amplitude,
+    double& magnitude,
     double& phase)
 {
-    amplitude = 1;
+    magnitude = 1;
     phase = 0;
     double ampCoeff, phaseCoeff;
     int totalOrder = 0;
@@ -62,26 +62,26 @@ void PhaseFrequencyResponseCalculator::calculateForAngle(
         int order = std::abs(pole->order.get());
         totalOrder -= order * (pole->isReal() ? 1 : 2);
         calculateCoefficients(angle, pole, ampCoeff, phaseCoeff);
-        amplitude *= std::pow(ampCoeff, order); // later it turns to 1 / amplitudes[i]
+        magnitude *= std::pow(ampCoeff, order); // later it turns to 1 / magnitudes[i]
         phase -= phaseCoeff * order;
     }
 
-    amplitude = 1.0 / std::max(amplitude, eps);
+    magnitude = 1.0 / std::max(magnitude, eps);
 
     for (auto zero : filterState->zeros)
     {
         int order = zero->order.get();
         totalOrder += order * (zero->isReal() ? 1 : 2);
         calculateCoefficients(angle, zero, ampCoeff, phaseCoeff);
-        amplitude *= std::pow(ampCoeff, order);
+        magnitude *= std::pow(ampCoeff, order);
         phase += phaseCoeff * order;
     }
 
-    amplitude = juce::Decibels::gainToDecibels(amplitude);
+    magnitude = juce::Decibels::gainToDecibels(magnitude);
     phase = (phase - angle * static_cast<double>(totalOrder)) * phaseUnitCoeff;
 }
 
-double PhaseFrequencyResponseCalculator::calculateUnwrappedPhase(
+double FrequencyResponseCalculator::calculateUnwrappedPhase(
     double angle,
     std::complex<double>& point,
     std::complex<double>& root)
@@ -92,20 +92,20 @@ double PhaseFrequencyResponseCalculator::calculateUnwrappedPhase(
         std::arg(-root) + std::arg(1.0 - point / root);
 }
 
-void PhaseFrequencyResponseCalculator::calculateCoefficients(
+void FrequencyResponseCalculator::calculateCoefficients(
     double angle,
     FilterRoot* root,
-    double& ampCoeff,
+    double& magnCoeff,
     double& phaseCoeff)
 {
     std::complex<double> rootVal = root->value.get();
     std::complex<double> point(std::cos(angle), std::sin(angle));
-    ampCoeff = std::abs(point - rootVal);
+    magnCoeff = std::abs(point - rootVal);
     phaseCoeff = calculateUnwrappedPhase(angle, point, rootVal);
     if (!root->isReal())
     {
         std::complex<double> conj = std::conj(rootVal);
-        ampCoeff *= std::abs(point - conj);
+        magnCoeff *= std::abs(point - conj);
         phaseCoeff += calculateUnwrappedPhase(angle, point, conj);
     }
 }

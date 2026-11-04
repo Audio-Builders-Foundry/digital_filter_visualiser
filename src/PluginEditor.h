@@ -7,7 +7,7 @@
 #include "FilterState.h"
 
 #include "ComplexPlaneComponent.h"
-#include "PhaseFrequencyResponseViewer.h"
+#include "FrequencyResponseViewer.h"
 #include "CoeffComponents.h"
 #include "ButtonPanel.h"
 #include "EquationViewer.h"
@@ -26,7 +26,7 @@ public:
 
 private:
   ComplexPlaneComponent complexPlaneComponent;
-  PhaseFrequencyResponseViewer phaseFrequencyResponseViewer;
+  FrequencyResponseViewer frequencyResponseViewer;
   CoefficientsComponent coefficients;
   ButtonPanel buttonPanel;
   EquationViewer equationViewer;

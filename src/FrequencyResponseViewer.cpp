@@ -1,7 +1,7 @@
-#include "PhaseFrequencyResponseViewer.h"
-#include "PhaseFrequencyResponseCalculator.h"
+#include "FrequencyResponseViewer.h"
+#include "FrequencyResponseCalculator.h"
 
-PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProcessor* p) :
+FrequencyResponseViewer::FrequencyResponseViewer(AudioPluginAudioProcessor* p) :
     processor(p),
     ampDb(minAmpDb * 4),
     sampleRate(processor->getSampleRate()),
@@ -9,7 +9,7 @@ PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProce
     zoomOutButton("-"),
     linearScaleButton("LINEAR"),
     logScaleButton("LOG"),
-    freqButton("FREQ."),
+    magnButton("MAGN."),
     phaseButton("PHASE"),
     bothButton("BOTH")
 {
@@ -17,10 +17,10 @@ PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProce
     this->processor->addChangeListener(this);
     this->processor->filterState->um->addChangeListener(this);
 
-    freqButton.onClick = [this] { changePlotsSet(); };
-    freqButton.setClickingTogglesState(true);
-    freqButton.setRadioGroupId(1);
-    freqButton.setTooltip("Show only frequency response plot");
+    magnButton.onClick = [this] { changePlotsSet(); };
+    magnButton.setClickingTogglesState(true);
+    magnButton.setRadioGroupId(1);
+    magnButton.setTooltip("Show only magnitude response plot");
 
     phaseButton.onClick = [this] { changePlotsSet(); };
     phaseButton.setClickingTogglesState(true);
@@ -31,7 +31,7 @@ PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProce
     bothButton.setClickingTogglesState(true);
     bothButton.setRadioGroupId(1);
     bothButton.setToggleState(true, juce::dontSendNotification);
-    bothButton.setTooltip("Show frequency and phase response plots");
+    bothButton.setTooltip("Show magnitude and phase response plots");
 
     zoomInButton.onClick = [this]
         {
@@ -66,7 +66,7 @@ PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProce
     linearScaleButton.setTooltip("Linear X scale");
     linearScaleButton.setToggleState(true, juce::sendNotificationSync);
 
-    addAndMakeVisible(freqButton);
+    addAndMakeVisible(magnButton);
     addAndMakeVisible(phaseButton);
     addAndMakeVisible(bothButton);
     addAndMakeVisible(zoomInButton);
@@ -75,13 +75,13 @@ PhaseFrequencyResponseViewer::PhaseFrequencyResponseViewer(AudioPluginAudioProce
     addAndMakeVisible(logScaleButton);
 }
 
-PhaseFrequencyResponseViewer::~PhaseFrequencyResponseViewer()
+FrequencyResponseViewer::~FrequencyResponseViewer()
 {
     processor->filterState->um->removeChangeListener(this);
     processor->removeChangeListener(this);
 }
 
-void PhaseFrequencyResponseViewer::changeListenerCallback(juce::ChangeBroadcaster* source)
+void FrequencyResponseViewer::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
     if (source == processor->filterState->um)
         repaint();
@@ -93,13 +93,13 @@ void PhaseFrequencyResponseViewer::changeListenerCallback(juce::ChangeBroadcaste
     }
 }
 
-void PhaseFrequencyResponseViewer::resized()
+void FrequencyResponseViewer::resized()
 {
     //PROFILE_FUNCTION();
     DFVComponent::resized();
     int y = reducedBounds.getY();
-    freqButton.setBounds(reducedBounds.getX(), y, plotButtonsWidth, buttonsHeight);
-    phaseButton.setBounds(freqButton.getRight() + padding, y, plotButtonsWidth, buttonsHeight);
+    magnButton.setBounds(reducedBounds.getX(), y, plotButtonsWidth, buttonsHeight);
+    phaseButton.setBounds(magnButton.getRight() + padding, y, plotButtonsWidth, buttonsHeight);
     bothButton.setBounds(phaseButton.getRight() + padding, y, plotButtonsWidth, buttonsHeight);
 
     logScaleButton.setBounds(reducedBounds.getRight() - padding - scaleButtonsWidth, y, scaleButtonsWidth, buttonsHeight);
@@ -109,7 +109,7 @@ void PhaseFrequencyResponseViewer::resized()
     repaint();
 }
 
-void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
+void FrequencyResponseViewer::paint(juce::Graphics& g)
 {
     //PROFILE_FUNCTION();
     DFVComponent::paint(g);
@@ -117,26 +117,26 @@ void PhaseFrequencyResponseViewer::paint(juce::Graphics& g)
     const int plotsWidth = singleRect.getWidth() - plotPaddingLeft - plotPaddingRight;
 
     if (plotsWidth <= 0 ||
-        frequencyRect.getHeight() <= plotTitleHeight ||
+        magnitudeRect.getHeight() <= plotTitleHeight ||
         phaseRect.getHeight() <= plotTitleHeight)
         return;
 
-    // angles, amplitudes & phases
+    // angles, magnitudes & phases
     const bool isLogScale = logScaleButton.getToggleState();
-    std::vector<double> angles, amplitudes, phases;
-    PhaseFrequencyResponseCalculator::calculate(
+    std::vector<double> angles, magnitudes, phases;
+    FrequencyResponseCalculator::calculate(
         processor->filterState.get(),
         minFreq,
         sampleRate,
-        isLogScale, true, plotsWidth, angles, amplitudes, phases);
+        isLogScale, true, plotsWidth, angles, magnitudes, phases);
 
     if (!phaseButton.getToggleState())
-        paintPlot(g, amplitudes, isLogScale, ampDb, frequencyRect, false);
-    if (!freqButton.getToggleState())
+        paintPlot(g, magnitudes, isLogScale, ampDb, magnitudeRect, false);
+    if (!magnButton.getToggleState())
         paintPlot(g, phases, isLogScale, 180., phaseRect, true);
 }
 
-void PhaseFrequencyResponseViewer::changePlotsSet()
+void FrequencyResponseViewer::changePlotsSet()
 {
     setZoomButtonsBounds();
     zoomInButton.setVisible(!phaseButton.getToggleState());
@@ -144,7 +144,7 @@ void PhaseFrequencyResponseViewer::changePlotsSet()
     repaint();
 }
 
-void PhaseFrequencyResponseViewer::paintPlot(
+void FrequencyResponseViewer::paintPlot(
     juce::Graphics& g,
     std::vector<double>& yValues,
     bool isLogScale,
@@ -152,7 +152,7 @@ void PhaseFrequencyResponseViewer::paintPlot(
     juce::Rectangle<int> rect,
     bool isPhase)
 {
-    const juce::String title = isPhase ? "PHASE RESPONSE" : "FREQUENCY RESPONSE";
+    const juce::String title = isPhase ? "PHASE RESPONSE" : "MAGNITUDE RESPONSE";
     const juce::String unitText = isPhase ? " deg." : " dB";
 
     const auto axesColour = findColour(DFVLookAndFeel::plotAxesColourId);
@@ -396,7 +396,7 @@ void PhaseFrequencyResponseViewer::paintPlot(
     }
 }
 
-void PhaseFrequencyResponseViewer::setZoomButtonsBounds()
+void FrequencyResponseViewer::setZoomButtonsBounds()
 {
     singleRect = reducedBounds;
     singleRect.removeFromTop(buttonsHeight + padding);
@@ -405,15 +405,15 @@ void PhaseFrequencyResponseViewer::setZoomButtonsBounds()
     topRect.removeFromBottom(distanceBetweenRects);
 
     const bool areBoth = bothButton.getToggleState();
-    frequencyRect = areBoth ? topRect : singleRect;
+    magnitudeRect = areBoth ? topRect : singleRect;
     phaseRect = areBoth ? bottomRect : singleRect;
 
-    const int freqPlotRectTop = frequencyRect.getY() + plotTitleHeight + plotPaddingTop;
-    const int freqPlotRectBottom = frequencyRect.getBottom() - padding - plotPaddingBottom;
-    const int freqPlotCentreY = (freqPlotRectTop + freqPlotRectBottom) / 2;
+    const int magnPlotRectTop = magnitudeRect.getY() + plotTitleHeight + plotPaddingTop;
+    const int magnPlotRectBottom = magnitudeRect.getBottom() - padding - plotPaddingBottom;
+    const int magnPlotCentreY = (magnPlotRectTop + magnPlotRectBottom) / 2;
 
-    zoomOutButton.setBounds(30, freqPlotCentreY + distanceBetweenRects / 2, buttonsHeight, buttonsHeight);
-    zoomInButton.setBounds(30, freqPlotCentreY - distanceBetweenRects / 2 - buttonsHeight, buttonsHeight, buttonsHeight);
+    zoomOutButton.setBounds(30, magnPlotCentreY + distanceBetweenRects / 2, buttonsHeight, buttonsHeight);
+    zoomInButton.setBounds(30, magnPlotCentreY - distanceBetweenRects / 2 - buttonsHeight, buttonsHeight, buttonsHeight);
 }
 
 // NOTE(ry): I need to put this here so my editor doesn't screw with the style of this file

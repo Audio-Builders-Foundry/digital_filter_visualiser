@@ -1,12 +1,12 @@
 #pragma once
 
-class PhaseFrequencyResponseViewer final :
+class FrequencyResponseViewer final :
     public DFVComponent,
     juce::ChangeListener
 {
 public:
-    PhaseFrequencyResponseViewer(AudioPluginAudioProcessor* p);
-    ~PhaseFrequencyResponseViewer();
+    FrequencyResponseViewer(AudioPluginAudioProcessor* p);
+    ~FrequencyResponseViewer();
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
     void resized() override;
@@ -46,11 +46,11 @@ private:
     float ampDb;
     double sampleRate;
 
-    juce::Rectangle<int> singleRect, topRect, bottomRect, frequencyRect, phaseRect;
+    juce::Rectangle<int> singleRect, topRect, bottomRect, magnitudeRect, phaseRect;
     juce::TextButton
         zoomInButton, zoomOutButton,
         linearScaleButton, logScaleButton,
-        freqButton, phaseButton, bothButton;
+        magnButton, phaseButton, bothButton;
 };
 
 // NOTE(ry): I need to put this here so my editor doesn't screw with the style of this file

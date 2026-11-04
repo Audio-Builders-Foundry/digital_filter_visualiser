@@ -1,7 +1,7 @@
 #pragma once
 #include "FilterState.h"
 
-class PhaseFrequencyResponseCalculator
+class FrequencyResponseCalculator
 {
 public:
     static void calculate(
@@ -12,14 +12,14 @@ public:
         bool isDegrees,
         int intWidth,
         std::vector<double>& angles,
-        std::vector<double>& amplitudes,
+        std::vector<double>& magnitudes,
         std::vector<double>& phases);
     static void calculateForAngle(
         FilterState* filterState,
         double phaseUnitCoeff,
         double phaseAmplitude,
         double angle,
-        double& amplitude,
+        double& magnitude,
         double& phase);
 private:
     inline static double calculateUnwrappedPhase(
@@ -29,7 +29,7 @@ private:
     inline static void calculateCoefficients(
         double angle,
         FilterRoot* root,
-        double& ampCoeff,
+        double& magnCoeff,
         double& phaseCoeff);
 
     static constexpr double eps = std::numeric_limits<double>::epsilon();
