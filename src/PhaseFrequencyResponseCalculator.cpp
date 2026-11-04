@@ -3,7 +3,7 @@
 #include <cmath>
 
 void PhaseFrequencyResponseCalculator::calculate(
-    FilterState* filterState, 
+    FilterState* filterState,
     float minFreq,
     double sampleRate,
     bool isLogScale,
@@ -56,9 +56,11 @@ void PhaseFrequencyResponseCalculator::calculateForAngle(
     amplitude = 1;
     phase = 0;
     double ampCoeff, phaseCoeff;
+    int totalOrder = 0;
     for (auto pole : filterState->poles)
     {
         int order = std::abs(pole->order.get());
+        totalOrder -= order * (pole->isReal() ? 1 : 2);
         calculateCoefficients(angle, pole, ampCoeff, phaseCoeff);
         amplitude *= std::pow(ampCoeff, order); // later it turns to 1 / amplitudes[i]
         phase -= phaseCoeff * order;
@@ -69,21 +71,22 @@ void PhaseFrequencyResponseCalculator::calculateForAngle(
     for (auto zero : filterState->zeros)
     {
         int order = zero->order.get();
+        totalOrder += order * (zero->isReal() ? 1 : 2);
         calculateCoefficients(angle, zero, ampCoeff, phaseCoeff);
         amplitude *= std::pow(ampCoeff, order);
         phase += phaseCoeff * order;
     }
 
     amplitude = juce::Decibels::gainToDecibels(amplitude);
-    phase *= phaseUnitCoeff;
+    phase = (phase - angle * static_cast<double>(totalOrder)) * phaseUnitCoeff;
 }
 
 double PhaseFrequencyResponseCalculator::calculateUnwrappedPhase(
-    double angle, 
-    std::complex<double>& point, 
+    double angle,
+    std::complex<double>& point,
     std::complex<double>& root)
 { // unwrapped version of std::arg(point - root)
-    return 
+    return
         std::abs(root) < 1.0 ?
         angle + std::arg(1.0 - root * std::conj(point)) :
         std::arg(-root) + std::arg(1.0 - point / root);
