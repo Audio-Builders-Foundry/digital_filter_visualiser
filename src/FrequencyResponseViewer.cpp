@@ -13,7 +13,7 @@ FrequencyResponseViewer::FrequencyResponseViewer(AudioPluginAudioProcessor* p) :
     phaseButton("PHASE"),
     bothButton("BOTH")
 {
-    setName("RESPONSE");
+    setName("FREQUENCY RESPONSE");
     this->processor->addChangeListener(this);
     this->processor->filterState->um->addChangeListener(this);
 
