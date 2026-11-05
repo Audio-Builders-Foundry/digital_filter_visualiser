@@ -42,9 +42,9 @@ SolutionSet QR::Solve(Coefficients coefs)
     else if (degree == 2)
     {
 	// NOTE(ry): solve for roots explicitly via quadratic formula
-	auto a = coefs[0];
-	auto b = coefs[1];
-	auto c = coefs[2];
+        auto a = coefs[coefs.size() - 3];
+	auto b = coefs[coefs.size() - 2];
+	auto c = coefs[coefs.size() - 1];
 	auto disc = b*b - 4.0*a*c;
 	if (disc < 0)
 	{
