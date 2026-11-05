@@ -24,6 +24,8 @@ CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
     recalculateButton.onClick = [this] { this->updateFilterState(); };
     addAndMakeVisible(recalculateButton);
 
+    addAndMakeVisible(gainScaleLabel);
+
     processor->filterState->addListener(this);
     processor->filterState->syncListener(this);
 }
@@ -46,9 +48,11 @@ void CoefficientsComponent::resized()
     DFVComponent::resized();
     // TODO adjust dims and position based on area or neighbor components --> should call something like getChildren() + getName() but seems fragile quering approach
     constexpr int recalculateButtonHeight = 25;
+    constexpr int labelHeight = 35;
     //headerRect.setBounds(area.getX(), area.getY(), static_cast<float>(area.getWidth()), headerHeight);
-    coeffTable.setBounds(reducedBounds.getX(), reducedBounds.getY(), reducedBounds.getWidth(), reducedBounds.getHeight() - recalculateButtonHeight - 3 * padding);
-    recalculateButton.setBounds(reducedBounds.getX() + 4 * padding, coeffTable.getBottom() + 2 * padding, reducedBounds.getWidth() - 8 * padding, recalculateButtonHeight);
+    coeffTable.setBounds(reducedBounds.getX(), reducedBounds.getY(), reducedBounds.getWidth(), reducedBounds.getHeight() - labelHeight - recalculateButtonHeight - 3 * padding);
+    gainScaleLabel.setBounds(reducedBounds.getX(), coeffTable.getBottom() + padding, reducedBounds.getWidth(), labelHeight);
+    recalculateButton.setBounds(reducedBounds.getX() + 4 * padding, gainScaleLabel.getBottom() + padding, reducedBounds.getWidth() - 8 * padding, recalculateButtonHeight);
 }
 
 int CoefficientsComponent::getNumRows()
@@ -159,17 +163,22 @@ void CoefficientsComponent::onCellChanged(int row, int col, double value)
 
 void CoefficientsComponent::updateFilterState()
 {
-    auto isNumberOfPolesSufficient = [&]() -> bool {
-        int i = 0;
-        while (i < ffcoeffs.size() && ffcoeffs[i] == 0)
-            i++;
-        int j = 0;
-        while (j < fbcoeffs.size() && fbcoeffs[j] == 0)
-            j++;
-        return j <= i;
-        };
+    // Calculate gain scale;
+    // check if number of poles >= number of zeros.
+    double gainScale = 1.0;
+    int i = 0;
+    while (i < ffcoeffs.size() && ffcoeffs[i] == 0)
+        i++;
+    if (i < ffcoeffs.size())
+        gainScale *= ffcoeffs[i];
+    int j = 0;
+    while (j < fbcoeffs.size() && fbcoeffs[j] == 0)
+        j++;
+    if (j < fbcoeffs.size())
+        gainScale /= fbcoeffs[j];
+    const bool isNumberOfPolesSufficient = j <= i;
 
-    if (!isNumberOfPolesSufficient())
+    if (!isNumberOfPolesSufficient)
     {
         juce::NativeMessageBox::showMessageBoxAsync(
             juce::MessageBoxIconType::WarningIcon,
@@ -275,6 +284,9 @@ void CoefficientsComponent::updateFilterState()
             }
         }
     }
+
+    if (gainScale != 1.0)
+        gainScaleLabel.setText("Gain scale: " + juce::String(gainScale) + "\n(doesn't affect sound & freq. response)", juce::NotificationType::dontSendNotification);
     isFeedBackSynchronized = isFeedForwardSynchronized = true;
     recalculateButton.setEnabled(false);
 }
@@ -325,6 +337,7 @@ void CoefficientsComponent::updateCoeffTable()
         processor->filterState->poles);
     ffcoeffs = RootsToCoefficients::CalculatePolynomialCoefficientsFrom(
         processor->filterState->zeros, static_cast<int>(fbcoeffs.size()));
+    gainScaleLabel.setText("", juce::NotificationType::dontSendNotification);
     coeffTable.updateContent();
 }
 

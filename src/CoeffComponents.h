@@ -28,6 +28,7 @@ private:
     std::vector<double> fbcoeffsLastSync;
     juce::TableListBox coeffTable;
     juce::TextButton recalculateButton;
+    juce::Label gainScaleLabel;
     AudioPluginAudioProcessor* processor;
 
     void toggleCollapseExpand();
