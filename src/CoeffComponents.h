@@ -22,6 +22,7 @@ private:
 
     bool isFeedBackSynchronized = true;
     bool isFeedForwardSynchronized = true;
+    bool updatingCoefficients = false;
     std::vector<double> ffcoeffs;
     std::vector<double> fbcoeffs;
     std::vector<double> ffcoeffsLastSync;

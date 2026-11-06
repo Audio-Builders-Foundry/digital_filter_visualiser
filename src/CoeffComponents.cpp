@@ -159,6 +159,8 @@ void CoefficientsComponent::onCellChanged(int row, int col, double value)
 
 void CoefficientsComponent::updateFilterState()
 {
+    updatingCoefficients = true;
+
     auto isNumberOfPolesSufficient = [&]() -> bool {
         int i = 0;
         while (i < ffcoeffs.size() && ffcoeffs[i] == 0)
@@ -184,10 +186,6 @@ void CoefficientsComponent::updateFilterState()
         return;
     }
 
-    // this->fbcoeffs can be changed while changing filterState for the new this->ffcoeffs.
-    // That's why copying is required.
-    std::vector<double> initFbcoeffs = this->fbcoeffs; 
-
     if (!isFeedForwardSynchronized)
     {
         auto zeros = Solve(this->ffcoeffs);
@@ -207,7 +205,7 @@ void CoefficientsComponent::updateFilterState()
     }
     if (!isFeedBackSynchronized)
     {
-        auto poles = Solve(initFbcoeffs);
+        auto poles = Solve(this->fbcoeffs);
 
         // check stability
         auto filterStable = [&]() -> bool {
@@ -277,6 +275,7 @@ void CoefficientsComponent::updateFilterState()
     }
     isFeedBackSynchronized = isFeedForwardSynchronized = true;
     recalculateButton.setEnabled(false);
+    updatingCoefficients = false;
 }
 
 void CoefficientsComponent::valueTreePropertyChanged (juce::ValueTree& node, const juce::Identifier& property)
@@ -300,7 +299,10 @@ void CoefficientsComponent::valueTreeChildAdded (juce::ValueTree& node, juce::Va
     juce::ignoreUnused(node);
     juce::ignoreUnused(child);
 
-    updateCoeffTable();
+    if (!updatingCoefficients)
+        updateCoeffTable();
+    else coeffTable.updateContent();
+
 }
 
 void CoefficientsComponent::valueTreeChildRemoved (juce::ValueTree& node, juce::ValueTree& child, int idx)
@@ -316,7 +318,10 @@ void CoefficientsComponent::valueTreeChildRemoved (juce::ValueTree& node, juce::
         coeffTable.updateContent();
         return;
     }
-    updateCoeffTable();
+    if (!updatingCoefficients)
+        updateCoeffTable();
+    else coeffTable.updateContent();
+
 }
 
 void CoefficientsComponent::updateCoeffTable()
