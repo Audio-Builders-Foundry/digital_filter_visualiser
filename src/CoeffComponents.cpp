@@ -286,7 +286,7 @@ void CoefficientsComponent::updateFilterState()
     }
 
     if (gainScale != 1.0)
-        gainScaleLabel.setText("Gain scale: " + juce::String(gainScale) + "\n(doesn't affect sound & freq. response)", juce::NotificationType::dontSendNotification);
+        gainScaleLabel.setText("Gain coefficient: " + juce::String(gainScale) + "\n(unlinked from sound & freq. response)", juce::NotificationType::dontSendNotification);
     isFeedBackSynchronized = isFeedForwardSynchronized = true;
     recalculateButton.setEnabled(false);
 }
