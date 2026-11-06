@@ -184,9 +184,41 @@ void CoefficientsComponent::updateFilterState()
         return;
     }
 
-    // this->fbcoeffs can be changed while changing filterState for the new this->ffcoeffs.
-    // That's why copying is required.
-    std::vector<double> initFbcoeffs = this->fbcoeffs; 
+    CoefficientsToRoots::SolutionSet poles;
+    if (!isFeedBackSynchronized)
+    {
+        poles = Solve(this->fbcoeffs);
+
+        // check stability
+        auto filterStable = [&]() -> bool {
+            for (auto& [r, order] : poles)
+            {
+                const double re = r.real();
+                const double im = r.imag();
+                const double magnitude{ std::sqrt(re * re + im * im) };
+                if (magnitude >= processor->filterState->maxPoleMagnitude)
+                    return false;
+            }
+            return true;
+            };
+
+        if (!filterStable())
+        {
+            juce::NativeMessageBox::showMessageBoxAsync(
+                juce::MessageBoxIconType::WarningIcon,
+                "Error",
+                "The filter with the given coefficients is unstable.\nUnable to apply change in coefficients.",
+                this);
+            if (!isFeedForwardSynchronized)
+                ffcoeffs = ffcoeffsLastSync;
+            if (!isFeedBackSynchronized)
+                fbcoeffs = fbcoeffsLastSync;
+            coeffTable.updateContent();
+            isFeedForwardSynchronized = isFeedBackSynchronized = true;
+            recalculateButton.setEnabled(false);
+            return;
+        }
+    }
 
     if (!isFeedForwardSynchronized)
     {
@@ -205,39 +237,9 @@ void CoefficientsComponent::updateFilterState()
             processor->filterState->add(order, r);
         }
     }
+
     if (!isFeedBackSynchronized)
     {
-        auto poles = Solve(initFbcoeffs);
-
-        // check stability
-        auto filterStable = [&]() -> bool {
-            for (auto& [r, order] : poles)
-            {
-                const double re = r.real();
-                const double im = r.imag();
-                const double magnitude { std::sqrt ( re * re + im * im) };
-                if ( magnitude >= processor->filterState->maxPoleMagnitude)
-                    return false;
-            }
-            return true;
-            };
-
-        if (!filterStable())
-        {
-            juce::NativeMessageBox::showMessageBoxAsync(
-                juce::MessageBoxIconType::WarningIcon,
-                "Error",
-                "The filter with the given coefficients is unstable.\nUnable to apply change in coefficients.",
-                this);
-            if (!isFeedForwardSynchronized)
-                ffcoeffs = ffcoeffsLastSync;
-            if (!isFeedBackSynchronized)
-                fbcoeffs = fbcoeffsLastSync;
-            coeffTable.updateContent();
-            return;
-        }
-
-
         size_t prev_sz = static_cast<size_t>(processor->filterState->poles.size());
 
         for (size_t i=0 ; i< poles.size(); i++)
@@ -325,6 +327,8 @@ void CoefficientsComponent::updateCoeffTable()
         processor->filterState->poles);
     ffcoeffs = RootsToCoefficients::CalculatePolynomialCoefficientsFrom(
         processor->filterState->zeros, static_cast<int>(fbcoeffs.size()));
+    isFeedBackSynchronized = isFeedForwardSynchronized = true;
+    recalculateButton.setEnabled(false);
     coeffTable.updateContent();
 }
 
