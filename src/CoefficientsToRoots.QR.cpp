@@ -36,15 +36,15 @@ SolutionSet QR::Solve(Coefficients coefs)
     if (degree==1)
     {
         // Returing 1 non-zero root + root at (0,0) if any
-        roots.emplace_back(Root{static_cast<c128>(-coefs[coefs.size() - 1]), 1});
+        roots.emplace_back(Root{static_cast<c128>(-coefs[coefs.size() - orderAtZero - 1]), 1});
         return roots;
     }
     else if (degree == 2)
     {
 	// NOTE(ry): solve for roots explicitly via quadratic formula
-        auto a = coefs[coefs.size() - 3];
-	auto b = coefs[coefs.size() - 2];
-	auto c = coefs[coefs.size() - 1];
+        auto a = coefs[coefs.size() - orderAtZero - 3];
+	auto b = coefs[coefs.size() - orderAtZero - 2];
+	auto c = coefs[coefs.size() - orderAtZero - 1];
 	auto disc = b*b - 4.0*a*c;
 	if (disc < 0)
 	{
