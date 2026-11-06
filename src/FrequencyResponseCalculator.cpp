@@ -78,7 +78,7 @@ void FrequencyResponseCalculator::calculateForAngle(
     }
 
     magnitude = juce::Decibels::gainToDecibels(magnitude);
-    phase = (phase - angle * static_cast<double>(totalOrder)) * phaseUnitCoeff;
+    phase *= phaseUnitCoeff;
 }
 
 double FrequencyResponseCalculator::calculateUnwrappedPhase(

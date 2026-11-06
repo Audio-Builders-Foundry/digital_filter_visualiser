@@ -94,11 +94,14 @@ Use **Right-click** for adding a pole, and **Ctrl+Right-click** for adding a zer
 - Moving roots:
 
 The **Complex Plane Editor** allows users to move poles and zeros by dragging them.  Poles and zeros can also be merged by dropping them onto one another. Zeros can be dragged outside the unit circle, but poles cannot. 
+
 When you hover over a plot, three mode buttons - **def**, **mag**, and **arg** - appear.
 The **def** mode is enabled by default and allows you to move a root freely in any direction.
 Use **mag** mode to preserve the root's magnitude.
 Use **arg** mode to preserve the root's argument.
+
 Roots that have a non-zero imaginary part are always created and moved together with their complex-conjugate pairs.
+
 If a root approaches the real axis, the axis changes color. If the mouse button is released at this point, the root will "fall" onto the axis together with its complex-conjugate pair, and its imaginary part will be set to zero. However, the order of the root will not be added to the order of its complex-conjugate pair. Conversely, when a root is moved so that its imaginary part becomes non-zero, its complex-conjugate pair is created with the same order. Therefore, in both cases, the total order of the poles changes. 
 
 - Modifying root order:
