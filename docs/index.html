@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <meta name="viewport" content="initial-scale=1, maximum-scale=1, width=device-width, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-
+<html xmlns="http://www.w3.org/1999/xhtml">
 
 <html>
     <head>
+        <meta charset="utf-8" />
+        <meta name="generator" content="pandoc 3.13" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
         <title> Digital Filter Visualizer </title>
         <link rel="stylesheet" type="text/css" href="style.css">
         <link rel="stylesheet" type="text/css" href="qr.css">
@@ -18,7 +21,7 @@
             <h2> an intuitive way to create, visualize and evaluate your digital filter </h2>
 
             <div class="abstract">
-                <div class="mini-header"> ABSTRACT </div>  <br><br>
+                <div class="mini-header"> ABSTRACT </div>  <br>
                 Digital filters are a foundational concept in <span class="tooltip" tabindex="0">digital audio<span class="tooltip-text">Is this working?</span> </span>, but designing them presents certain challenges: from finding the right coefficients to checking for stability. <br><br>
                 We present DigitalFilterVisualizer: a tool that allows you to see the mathematical structure of linear time-invariant filters, calculate filter coefficients from your poles and zeros and vice versa, automatically ensure the stability, and instantly hear the result. <br><br>
                 DigitalFilterVisualizer features 5 autosynchronized representations of a filter, including interactive visual interfaces, to provide utility in both learning and creating. <br><br>
@@ -35,1057 +38,651 @@
 
             </div>
 
+           <div class="abstract">
+
+              <div class="mini-header"> OVERVIEW </div> <br>
+
+              <p>There are no closed-form solutions for polynomials of degree 5 or
+              greater; iterative methods are required. Algorithms largely fall into
+              one of two broad categories: Newton’s method-based solvers and
+              eigenvalue solvers.</p>
+              <p>Newton’s method is a technique for finding roots of any function, not
+              just polynomials. While it is relatively simple and can be applied to
+              polynomials as well, Newton’s method has problems with convergence,
+              especially when dealing with complex roots and roots with multiplicity.
+              There are specializations of Newton’s method for polynomials that try to
+              address these problems, such as the Aberth-Ehrlich method, but we found
+              these insufficient.</p>
+              <p>Eigenvalue solvers use a method for computing the eigenvalues of a
+              matrix whose eigenvalues are the roots of the polynomial we want to
+              solve. Compared to Newton solvers, they require more sophisticated
+              mathematical theory to understand, and are seemingly more computationaly
+              expensive; indeed the operations on polynomials in Newton’s method can
+              be implemented in linear time, whereas most operations on matrices
+              require quadratic or cubic time. Yet the eigenvalue formalism offers
+              advantages in analyzing convergence and designing algorithms with
+              improved performance on roots with multiplicity.</p>
+              <p>We use an Eigenvalue solver using a variant of the QR algorithm
+              called the <em>Francis double implicit shift</em>. Simple QR algorithm
+              implementations have issues with convergence for complex roots and roots
+              with multiplicity, much like Newton solvers, which can be addressed
+              using a technique called <em>shifting</em>. Single shifting is
+              insufficient due to the possibility of complex roots, which necessitates
+              double shifting; explicit double shifting is inefficient, hence the need
+              for implicit double shifts. Orthogonal matrices are constructed as a
+              product of Householder reflections.</p>
+              <p>The QR solver with double implicit shift finds one or two roots at a
+              time. Our application stores roots along with their orders. When the
+              polynomial has roots with order more than 1, the solver will produce
+              several roots whose weighted average is a close approximation of the
+              true root. Individual roots corresponding to the same high order root
+              may not appear consecutively in the list of solutions, and each root
+              will be farther from the true root position the higher its order. This
+              necessitates a post-processing pass to group individual roots
+              corresponding to the same true root into a single object.</p>
+              <p><a href="#sec:strategy" data-reference-type="ref+label"
+              data-reference="sec:strategy">2</a> describes how the QR eigenvalue
+              solver works in general. <a href="#sec:convergence"
+              data-reference-type="ref+label" data-reference="sec:convergence">3</a>
+              details methods for improving the convergence rate of the general QR
+              solver. <a href="#sec:impl" data-reference-type="ref+label"
+              data-reference="sec:impl">4</a> contains details about our specific
+              implementation and the post processing technique for clustering
+              higher-order roots.</p>
+
+            </div>
+
+           <div class="abstract">
+
+              <div class="mini-header"> STRATEGY </div> <br>
+
+              <p>We will construct a matrix whose eigenvalues are the roots of the
+              polynomial we want to solve. Then we will iteratively apply operations
+              to this matrix in such a way that we don’t change its eigenvalues, until
+              we have produced a matrix whose eigenvalues we can determine directly
+              from its coefficients.</p>
+
+
+              <h2 id="companion-matrix">2.1. Companion Matrix</h2>
+              <p>To start, we need to construct a matrix whose eigenvalues are the
+              roots of the polynomial we want to solve. This can be done as follows:
+              given a polynomial
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mi>a</mi><mi>n</mi></msub><msup><mi>x</mi><mi>n</mi></msup><mo>+</mo><mi>…</mi><mo>+</mo><msub><mi>a</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">{p(x) = a_nx^n + \dots + a_0}</annotation></semantics></math>,
+              the matrix
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>0</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>2</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                A = \begin{bmatrix}
+                  0      &amp; 0      &amp; \cdots &amp; 0      &amp; -a_0   \\
+                  1      &amp; 0      &amp; \cdots &amp; 0      &amp; -a_1   \\
+                  0      &amp; 1      &amp; \cdots &amp; 0      &amp; -a_2   \\
+                  \vdots &amp; \vdots &amp; \ddots &amp; \vdots &amp; \vdots \\
+                  0      &amp; 0      &amp; \cdots &amp; 1      &amp; -a_{n-1}   \\
+                \end{bmatrix}
+              \end{equation*}</annotation></semantics></math> has eigenvalues
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>λ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_1, \dots, \lambda_n</annotation></semantics></math>
+              such that
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>−</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo><mi>⋯</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>−</mo><msub><mi>λ</mi><mi>n</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">{p(x) = (x - \lambda_1)\cdots(x - \lambda_n)}</annotation></semantics></math>.
+              The matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              is called the <em>companion matrix</em> of the polynomial
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>.
+              Note that the companion matrix has ones along the diagonal below the
+              main diagonal and zeros in all places below this subdiagonal; we call
+              any matrix with this property an <em>upper Hessenberg</em> matrix, or
+              more specifically, an <em>unreduced upper Hessenberg</em> matrix.
+              Finding the eigenvalues of upper Hessenberg matrices is a well-studied
+              problem, and exploiting this structure will play a key role in the
+              theory.</p>
+
+
+              <h2 id="canonical-forms">2.2. Canonical Forms</h2>
+              <p>We list some matrices whose eigenvalues can be determined directly
+              from its coefficients. The simplest of these are diagonal matrices:
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mn>1</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mn>2</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mi>n</mi></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                D = \begin{bmatrix}
+                  d_1    &amp; 0      &amp; \cdots &amp; 0      \\
+                  0      &amp; d_2    &amp; \cdots &amp; 0      \\
+                  \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+                  0      &amp; 0      &amp; \cdots &amp; d_n
+                \end{bmatrix}
+              \end{equation*}</annotation></semantics></math> whose eigenvalues are
+              simply their diagonal entries. The same is true for upper triangular
+              matrices:
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>11</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>12</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mn>1</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>22</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mn>2</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mi>n</mi><mi>n</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                T = \begin{bmatrix}
+                  t_{11} &amp; t_{12} &amp; \cdots &amp; t_{1n} \\
+                  0      &amp; t_{22} &amp; \cdots &amp; t_{2n} \\
+                  \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+                  0      &amp; 0      &amp; \cdots &amp; t_{nn}
+                \end{bmatrix}.
+              \end{equation*}</annotation></semantics></math> These matrices can be
+              targeted when finding the eigenvalues of a matrix with complex entries
+              (diagonal when the matrix is hermitian, upper triangular otherwise).
+              Since we are working with polynomials with real coefficients, and
+              therefore matrices with real entries, we will need to target a slightly
+              less intuitive form, which we call block upper triangular:
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>11</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>12</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mn>1</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>22</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mn>2</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mi>n</mi><mi>n</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                T = \begin{bmatrix}
+                  T_{11} &amp; T_{12} &amp; \cdots &amp; T_{1n} \\
+                  0      &amp; T_{22} &amp; \cdots &amp; T_{2n} \\
+                  \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+                  0      &amp; 0      &amp; \cdots &amp; T_{nn}
+                \end{bmatrix}
+              \end{equation*}</annotation></semantics></math> where each
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>T</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">T_{ij}</annotation></semantics></math>
+              is a square matrix, all matrices in the same row have the same number of
+              rows, all matrices in the same column have the same number of columns,
+              and the zeros denote zero matrices. The set of eigenvalues of a matrix
+              of this form is the union of the sets of eigenvalues of each matrix
+              along the main diagonal. A block upper triangular matrix made up of
+              either
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">1 \times 1</annotation></semantics></math>
+              or
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 2</annotation></semantics></math>
+              matrices is known as a <em>reduced upper Hessenberg</em> matrix. Our
+              goal is to bring the unreduced upper Hessenberg companion matrix to
+              reduced upper Hessenberg form by bringing some subdiagonal entries to
+              zero.</p>
+
+
+              <h2 id="similar-matrices">2.3. Similar Matrices</h2>
+              <p>Two square matrices
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>
+              with the same dimension have the same eigenvalues whenever there is a
+              matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
+              such that
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><msup><mi>X</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>A</mi><mi>X</mi></mrow><annotation encoding="application/x-tex">B = X^{-1} A X</annotation></semantics></math>;
+              we say
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>
+              are <em>similar matrices</em> in this case. Given a matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>,
+              forming
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><msup><mi>X</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>A</mi><mi>X</mi></mrow><annotation encoding="application/x-tex">B = X^{-1} A X</annotation></semantics></math>
+              for some matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
+              is called <em>conjugation of A by X</em>. We will refer to this
+              operation as applying a <em>similarity transformation</em> to
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>.
+              A matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
+              is called <em>orthogonal</em> if
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>Q</mi><mi>T</mi></msup><mo>=</mo><msup><mi>Q</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">Q^T = Q^{-1}</annotation></semantics></math>;
+              these are a good choice for use in similarity transformations since it
+              avoids having to form the inverse of a matrix (an expensive operation in
+              general). We will call a similarity transformation using an orthogonal
+              matrix an <em>orthogonal similarity transformation</em>.</p>
+
+
+              <h2 id="qr-decomposition">2.4. QR Decomposition</h2>
+              <p>So we want to find the roots of a polynomial
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+              by repeatedly applying orthogonal similarity transformations to its
+              companion matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              until we obtain a matrix in reduced upper Hessenberg form. The first
+              step is to find a matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
+              to use in the orthogonal similarity transformation. We can always
+              express any real matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              as the product of an orthogonal matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
+              and an upper triangular matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math>;
+              this is called the <em>QR decomposition</em> of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>.
+              Once we have
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mi>k</mi></msub><mo>=</mo><msub><mi>Q</mi><mi>k</mi></msub><msub><mi>R</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">A_k = Q_k R_k</annotation></semantics></math>,
+              we form
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msubsup><mi>Q</mi><mi>k</mi><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>Q</mi><mi>k</mi></msub><mo>=</mo><msub><mi>R</mi><mi>k</mi></msub><msub><mi>Q</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">A_{k+1} = Q_k^T A_k Q_k = R_k Q_k</annotation></semantics></math>.
+              There are some choices for how to perform the decomposition.</p>
+
+              <h3 id="triangular-orthogonalization">2.4.1. Triangular Orthogonalization</h3>
+              <p>The most famous technique, known as the <em>Gram-Schmidt
+              algorithm</em>, is to iteratively form the columns of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
+              from the columns of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>:
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><mi>A</mi><msup><mi>R</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">Q = A R^{-1}</annotation></semantics></math>
+              in such a way that
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math>
+              is upper triangular. Since
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
+              is the result of many operations, this method has poor numerical
+              stability when using finite-precision arithmetic on a computer;
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
+              will not be exactly orthogonal, so
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>Q</mi><mi>T</mi></msup><annotation encoding="application/x-tex">Q^T</annotation></semantics></math>
+              will not be
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>Q</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><annotation encoding="application/x-tex">Q^{-1}</annotation></semantics></math>.</p>
+
+
+              <h3 id="orthogonal-triangularization">2.4.2. Orthogonal Triangularization</h3>
+              <p>A better method for use in computers is to form the upper triangular
+              matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math>
+              as
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mo>=</mo><msubsup><mi>Q</mi><mi>n</mi><mi>T</mi></msubsup><mi>⋯</mi><msubsup><mi>Q</mi><mn>1</mn><mi>T</mi></msubsup><mi>A</mi></mrow><annotation encoding="application/x-tex">R = Q_n^T \cdots Q_1^T A</annotation></semantics></math>,
+              where each
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mi>j</mi></msub><annotation encoding="application/x-tex">Q_j</annotation></semantics></math>
+              is an orthogonal matrix that sets all entries below the main diagonal in
+              the
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>j</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">h</mi></mrow></msup><annotation encoding="application/x-tex">j^{\mathrm{th}}</annotation></semantics></math>
+              column of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              to zero. Now
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mi>Q</mi><mi>R</mi></mrow><annotation encoding="application/x-tex">A = Q R</annotation></semantics></math>
+              with
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><msub><mi>Q</mi><mn>1</mn></msub><mi>⋯</mi><msub><mi>Q</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">Q = Q_1 \cdots Q_n</annotation></semantics></math>.</p>
+              <p>There are two possible forms for the
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mi>j</mi></msub><annotation encoding="application/x-tex">Q_j</annotation></semantics></math>:
+              Householder reflections and Givens rotations. A Householder reflection
+              is a reflection of a vector about a hyperplane through the origin. One
+              can be represented by the symmetric orthogonal matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>=</mo><mi>I</mi><mo>−</mo><mn>2</mn><mi>v</mi><msup><mi>v</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">H = I - 2vv^T</annotation></semantics></math>,
+              where
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>v</mi><annotation encoding="application/x-tex">v</annotation></semantics></math>
+              is the normal vector of the hyperplane. To bring
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              to upper triangular form using Householder reflections, we zero out the
+              subdiagonal elements of each column. For the first column, we want to
+              produce a vector in the span of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi mathvariant="normal">e</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\mathrm{e}_1</annotation></semantics></math>,
+              the canonical unit basis vector with a 1 in the first entry and zeros
+              elsewhere. Let
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mn>1</mn></msub><annotation encoding="application/x-tex">a_1</annotation></semantics></math>
+              be the first column of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>,
+              and form
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo>=</mo><msub><mi>a</mi><mn>1</mn></msub><mo>−</mo><mrow><mo stretchy="true" form="prefix">∥</mo><msub><mi>a</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">∥</mo></mrow><msub><mi>e</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">u = a_1 - \left\lVert a_1 \right\rVert e_1</annotation></semantics></math>.
+              Normalizing to form
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi><mo>=</mo><mfrac><mi>u</mi><mrow><mo stretchy="true" form="prefix">∥</mo><mi>u</mi><mo stretchy="true" form="postfix">∥</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">v = \frac{u}{\left\lVert u \right\rVert}</annotation></semantics></math>
+              produces the normal to an appropriate hyperplane. Note that we only need
+              to set to zero the entries we know are non-zero, and we know all entries
+              of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              below the first subdiagonal are already zero. Thus we may treat
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mi>j</mi></msub><annotation encoding="application/x-tex">a_j</annotation></semantics></math>,
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>e</mi><mn>1</mn></msub><annotation encoding="application/x-tex">e_1</annotation></semantics></math>,
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>u</mi><annotation encoding="application/x-tex">u</annotation></semantics></math>,
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>v</mi><annotation encoding="application/x-tex">v</annotation></semantics></math>
+              as 2-component vectors for each of the first
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">n-1</annotation></semantics></math>
+              columns. This means that multiplication with
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mi>j</mi></msub><annotation encoding="application/x-tex">Q_j</annotation></semantics></math>
+              only requires a constant number of operations per column, and so the
+              update requires
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( n^2 \right)</annotation></semantics></math>
+              operations.</p>
+              <p>A Givens rotation is a rotation in the plane spanned by two basis
+              vectors. We can bring a single non-zero subdiagonal element of a column
+              of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              to zero by
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mi>c</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><mi>s</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>s</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>c</mi></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mi>r</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                \begin{bmatrix}
+                  c &amp; -s \\
+                  s &amp; c
+                \end{bmatrix} \begin{bmatrix}
+                  a_{j,j} \\
+                  a_{j+1,j}
+                \end{bmatrix} = \begin{bmatrix}
+                  r \\
+                  0
+                \end{bmatrix}
+              \end{equation*}</annotation></semantics></math> where
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">a_{j,j}</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">a_{j+1,j}</annotation></semantics></math>
+              are the diagonal and subdiagonal elements of the
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>j</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">h</mi></mrow></msup><annotation encoding="application/x-tex">j^{\mathrm{th}}</annotation></semantics></math>
+              column of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>,
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><msqrt><mrow><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub></mrow></msqrt></mrow><annotation encoding="application/x-tex">r = \sqrt{a_{j,j} + a_{j+1,j}}</annotation></semantics></math>,
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>=</mo><mfrac><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><mi>r</mi></mfrac></mrow><annotation encoding="application/x-tex">c = \frac{a_{j,j}}{r}</annotation></semantics></math>,
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mi>−</mi><mfrac><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub><mi>r</mi></mfrac></mrow><annotation encoding="application/x-tex">s = -\frac{a_{j+1,j}}{r}</annotation></semantics></math>.
+              In <a href="#subsec:implicitshift" data-reference-type="ref+label"
+              data-reference="subsec:implicitshift">3.3</a>, we will require
+              operations that bring 2 subdiagonal entries to zero instead of 1. For
+              this reason, it is more convenient to work with Householder reflections.
+              We never implemented a version of the QR algorithm using Givens
+              rotations, and so cannot comment on whether any of their potential
+              advantages can be realized in practice.</p>
+            </div>
+
+
+           <div class="abstract">
+
+              <div class="mini-header"> CONVERGENCE </div> <br>
+
+              <p>The basic QR iteration computes
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msubsup><mi>Q</mi><mi>k</mi><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>Q</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">A_{k+1} = Q_k^T A_k Q_k</annotation></semantics></math>;
+              here
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mn>0</mn></msub><annotation encoding="application/x-tex">A_0</annotation></semantics></math>
+              is the companion matrix of the polynomial we want to solve, and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mi>k</mi></msub><annotation encoding="application/x-tex">Q_k</annotation></semantics></math>
+              is obtained from the QR decomposition of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>.
+              This step can be computed with
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( n^2 \right)</annotation></semantics></math>
+              operations, where
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
+              is the degree of the polynomial. The question is if
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              will converge to a canonical form, and if so, how many iterations we
+              expect it to take. For reduced upper Hessenberg form, we need
+              subdiagonal elements of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              to become zero; no two consecutive diagonal elements can be non-zero.
+              Once a sudiagonal element has been brought close enough to zero (a
+              metric that will be made precise in <a href="#sec:impl"
+              data-reference-type="ref+label" data-reference="sec:impl">4</a>), we say
+              the
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">1 \times 1</annotation></semantics></math>
+              or
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 2</annotation></semantics></math>
+              matrix to the right of this element has become <em>detached</em> from
+              the rest of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              and we can compute its eigenvalues. We no longer need to update this
+              part of the matrix with QR iterations, so we effectively reduce the
+              dimension of the matrix; this is called <em>deflation</em>. We can
+              measure the extent to which
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              fails to be in reduced upper Hessenberg form by the largest magnitude of
+              its subdiagonal elements. Analysis shows this magnitude of this element
+              is
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><msup><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mi>k</mi></msup><msup><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mi>k</mi></msup></mfrac><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( \frac{\left\vert \lambda_2 \right\vert^k}{\left\vert \lambda_1 \right\vert^k} \right)</annotation></semantics></math>,
+              where
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>λ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_1, \dots, \lambda_n</annotation></semantics></math>
+              are the eigenvalues of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              ordered such that
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>≥</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>≥</mo><mi>…</mi><mo>≥</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mi>n</mi></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">\left\vert \lambda_1 \right\vert \geq \left\vert \lambda_2 \right\vert \geq \dots \geq \left\vert \lambda_n \right\vert</annotation></semantics></math>.
+              Thus if
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">\left\vert \lambda_1 \right\vert = \left\vert \lambda_2 \right\vert</annotation></semantics></math>,
+              which will occur in the presence of a multiple root or a conjugate pair
+              of roots, the iterations will not converge; if
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>−</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">\left\vert \lambda_1 \right\vert - \left\vert \lambda_2 \right\vert</annotation></semantics></math>
+              is very small, convergence will be very slow. We are therefore motivated
+              to modify the strategy to speed up convergence.</p>
+
+
+              <h2 id="shifted-qr">3.1. Shifted QR</h2>
+              <p>A popular modification is to perform <em>shifting</em>: form
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mo>=</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><mi>μ</mi><mi>I</mi></mrow><annotation encoding="application/x-tex">{\widetilde{A_k} = A_k - \mu I}</annotation></semantics></math>
+              for some number
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>,
+              compute
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo accent="true">̃</mo></mover><mo>=</mo><msubsup><mi>Q</mi><mi>k</mi><mi>T</mi></msubsup><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><msub><mi>Q</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\widetilde{A_{k+1}} = Q_k^T \widetilde{A_k} Q_k</annotation></semantics></math>
+              obtaining
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mi>k</mi></msub><annotation encoding="application/x-tex">Q_k</annotation></semantics></math>
+              from the QR factorization of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><annotation encoding="application/x-tex">\widetilde{A_k}</annotation></semantics></math>,
+              then obtain
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mover><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo accent="true">̃</mo></mover><mo>+</mo><mi>μ</mi><mi>I</mi></mrow><annotation encoding="application/x-tex">A_{k+1} = \widetilde{A_{k+1}} + \mu I</annotation></semantics></math>.
+              If
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>λ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_1, \dots, \lambda_n</annotation></semantics></math>
+              are the eigenvalues of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>,
+              then
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>−</mo><mi>μ</mi><mo>,</mo><mi>…</mi><msub><mi>λ</mi><mi>n</mi></msub><mo>−</mo><mi>μ</mi></mrow><annotation encoding="application/x-tex">\lambda_1 - \mu, \dots \lambda_n - \mu</annotation></semantics></math>
+              are the eigenvalues of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><annotation encoding="application/x-tex">\widetilde{A_k}</annotation></semantics></math>;
+              when the eigenvalues are ordered
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>≥</mo><mi>…</mi><mo>≥</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mi>n</mi></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">\left\vert \lambda_1 \right\vert \geq \dots \geq \left\vert \lambda_n \right\vert</annotation></semantics></math>,
+              we see the largest magnitude of a subdiagonal element of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              is now
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><msup><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo>−</mo><mi>μ</mi><mo stretchy="true" form="postfix">|</mo></mrow><mi>k</mi></msup><msup><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo>−</mo><mi>μ</mi><mo stretchy="true" form="postfix">|</mo></mrow><mi>k</mi></msup></mfrac><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( \frac{\left\vert \lambda_2 - \mu \right\vert^k}{\left\vert \lambda_1 - \mu \right\vert^k} \right)</annotation></semantics></math>.
+              When
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+              is approximately
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\lambda_2</annotation></semantics></math>,
+              convergence will be very fast. Often the bottom-right entry of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              is chosen as an approximation.</p>
 
 
 
+              <h2 id="double-shifted-qr">3.2. Double Shifted QR</h2>
+              <p>When
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\lambda_2</annotation></semantics></math>
+              is complex, no entry of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              will serve as a good approximation since the entries are all real. We
+              also don’t want to shift by a complex number, for then the entries of
+              the matrix will be complex. Instead we perform two shifts:
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mn>1</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>;</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mn>2</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><msub><mi>A</mi><mi>k</mi></msub><mn>2</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
+                \widetilde{A_k}_1 &amp;= A_k - a_1I \\
+                                  &amp;= {Q_k}_1 {R_k}_1, \\
+                {A_k}_1 &amp;= {R_k}_1 {Q_k}_1 + a_1I; \\
+                \widetilde{A_k}_2 &amp;= {A_k}_1 - a_2I \\
+                                  &amp;= {Q_k}_2 {R_k}_2, \\
+                {A_k}_2 &amp;= {R_k}_2 {Q_k}_2 + a_2I.
+              \end{align*}</annotation></semantics></math> We see
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><mo>−</mo><mi>s</mi><msub><mi>A</mi><mi>k</mi></msub><mo>+</mo><mi>t</mi><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mo>:</mo><msub><mi>M</mi><mi>k</mi></msub><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
+                \left( {Q_k}_1 {Q_k}_2 \right)\left( {R_k}_2 {R_k}_1 \right)
+                &amp;= {Q_k}_1\left( {A_k}_1 - a_2I \right){R_k}_1 \\
+                &amp;= {Q_k}_1\left( {R_k}_1{Q_k}_1 + a_1I - a_2I \right){R_k}_1 \\
+                &amp;= \left( A_k - a_1I \right)\left( A_k - a_1I \right) + a_1\left( A_k - a_1I \right) - a_2\left( A_k - a_1I \right) \\
+                &amp;= \left( A_k - a_1I \right)\left( A_k - a_1I + a_1I - a_2I \right) \\
+                &amp;= \left( A_k - a_1I \right)\left( A_k - a_2I \right) \\
+                &amp;= A_k^2 - sA_k + tI \\
+                &amp;=: M_k,
+              \end{align*}</annotation></semantics></math> where
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><msub><mi>a</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">s = a_1 + a_2</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><msub><mi>a</mi><mn>1</mn></msub><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">t = a_1a_2</annotation></semantics></math>
+              for shifts
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>a</mi><mn>1</mn></msub><mo>,</mo><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">a_1, a_2</annotation></semantics></math>.
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mn>1</mn></msub><annotation encoding="application/x-tex">a_1</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mn>2</mn></msub><annotation encoding="application/x-tex">a_2</annotation></semantics></math>
+              are usually taken to be the eigenvalues of the bottom-right
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 2</annotation></semantics></math>
+              diagonal block
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math>
+              of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>;
+              we can then compute
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+              directly from the coefficients of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math>
+              as
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>H</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">s = \mathrm{tr}\left( H \right)</annotation></semantics></math>,
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">t</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>H</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">t = \mathrm{det}\left( H \right)</annotation></semantics></math>.
+              Since
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+              are real, it is possible to choose
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><annotation encoding="application/x-tex">{Q_k}_1</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><annotation encoding="application/x-tex">{Q_k}_2</annotation></semantics></math>
+              such that
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Z</mi><mi>k</mi></msub><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">Z_k = {Q_k}_1 {Q_k}_2</annotation></semantics></math>
+              is a real orthogonal matrix. Thus we may execute the double shifted
+              procedure
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>M</mi><mi>k</mi></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><mo>−</mo><mi>s</mi><msub><mi>A</mi><mi>k</mi></msub><mo>+</mo><mi>t</mi><mi>I</mi><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><mi>Z</mi><mi>k</mi></msub><msub><mi>R</mi><mi>k</mi></msub><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><msub><mi>Z</mi><mi>k</mi></msub><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> real</mtext></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>Z</mi><mi>k</mi><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>Z</mi><mi>k</mi></msub><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
+                M_k &amp;= A_k^2 - sA_k + tI, \\
+                    &amp;= Z_k R_k \text{ with } Z_k \text{ real}, \\
+                A_{k+1} &amp;= Z_k^T A_k Z_k.
+              \end{align*}</annotation></semantics></math> Unfortunately, calculating
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><annotation encoding="application/x-tex">A_k^2</annotation></semantics></math>
+              requires
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( n^3 \right)</annotation></semantics></math>
+              operations. We can however exploit a result of upper Hessenberg matrices
+              to avoid the explicit matrix multiplication.</p>
 
-            <div class="abstract">
-                <div class="mini-header"> Overview </div>  <br><br>
-                <!--l. 20-->There are no closed-form solutions for polynomials of degree 5 or greater; iterative
-                methods are required. Algorithms largely fall into one of two broad categories: Newton&#8217;s
-                method-based solvers and eigenvalue solvers. <br><br>
-                <!--l. 23--> Newton&#8217;s method is a technique for finding roots of any function, not just
-                polynomials. While it is relatively simple and can be applied to polynomials as well,
-                Newton&#8217;s method has problems with convergence, especially when dealing with complex
-                roots and roots with multiplicity. There are specializations of Newton&#8217;s method for
-                polynomials that try to address these problems, such as the Aberth-Ehrlich method, but
-                we found these insufficient. <br><br>
-                <!--l. 27-->Eigenvalue solvers use a method for computing the eigenvalues of a matrix whose
-                eigenvalues are the roots of the polynomial we want to solve. Compared to Newton
-                solvers, they require more sophisticated mathematical theory to understand, and are
-                seemingly more computationaly expensive; indeed the operations on polynomials in
-                Newton&#8217;s method can be implemented in linear time, whereas most operations on
-                matrices require quadratic or cubic time. Yet the eigenvalue formalism offers advantages
-                in analyzing convergence and designing algorithms with improved performance on roots
-                with multiplicity. <br><br>
-                <!--l. 31--><p class="indent" >  We use an Eigenvalue solver using a variant of the QR algorithm called the <span
-                class="cmti-10">Francis</span>
-                <span
-                class="cmti-10">double implicit shift</span>. Simple QR algorithm implementations have issues with convergence
-                for complex roots and roots with multiplicity, much like Newton solvers, which can be
-                addressed using a technique called <span
-                class="cmti-10">shifting</span>. Single shifting is insufficient due to the
-                possibility of complex roots, which necessitates double shifting; explicit double shifting is
-                inefficient, hence the need for implicit double shifts. Orthogonal matrices are constructed
-                as a product of Householder reflections.
-                <!--l. 36--><p class="indent" >  The QR solver with double implicit shift finds one or two roots at a time. Our
-                application stores roots along with their orders. When the polynomial has roots with
-                order more than 1, the solver will produce several roots whose weighted average is a close
-                approximation of the true root. Individual roots corresponding to the same high order root may not appear consecutively in the list of solutions, and each root will be farther
-                from the true root position the higher its order. This necessitates a post-processing pass
-                to group individual roots corresponding to the same true root into a single
-                object.
-                <!--l. 42--><p class="indent" >  <a
-                href="#x1-20002">section&#x00A0;2</a> describes how the QR eigenvalue solver works in general. <a
-                href="#x1-90003">section&#x00A0;3</a> details
-                methods for improving the convergence rate of the general QR solver. <a
-                href="#x1-130004">section&#x00A0;4</a> contains
-                details about our specific implementation and the post processing technique for
-                clustering higher-order roots.
+
+              <h2 id="subsec:implicitshift">3.3. Double Implicit Shift</h2>
+              <p>The <em>implicit Q theorem</em> states that if
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>Q</mi><mi>T</mi></msup><mi>A</mi><mi>Q</mi><mo>=</mo><mi>H</mi></mrow><annotation encoding="application/x-tex">Q^T A Q = H</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>V</mi><mi>T</mi></msup><mi>A</mi><mi>V</mi><mo>=</mo><mi>G</mi></mrow><annotation encoding="application/x-tex">V^T A V = G</annotation></semantics></math>
+              are both upper Hessenberg matrices for a general matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+              and orthogonal matrices
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>V</mi><annotation encoding="application/x-tex">V</annotation></semantics></math>
+              with the same first column, then
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>G</mi><annotation encoding="application/x-tex">G</annotation></semantics></math>
+              are equal up to a change of sign. Thus we don’t need to compute
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>M</mi><mi>k</mi></msub><annotation encoding="application/x-tex">M_k</annotation></semantics></math>
+              and its QR factorization; we can compute a matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>Z</mi><mi>k</mi><mo>′</mo></msubsup><annotation encoding="application/x-tex">Z_k&#39;</annotation></semantics></math>
+              with the same first column as
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>k</mi></msub><annotation encoding="application/x-tex">Z_k</annotation></semantics></math>
+              above such that
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msubsup><mi>Z</mi><mi>k</mi><mo>′</mo></msubsup><msup><mi></mi><mi>T</mi></msup><msub><mi>A</mi><mi>k</mi></msub><msubsup><mi>Z</mi><mi>k</mi><mo>′</mo></msubsup></mrow><annotation encoding="application/x-tex">A_{k+1} = Z_k&#39;^T A_k Z_k&#39;</annotation></semantics></math>
+              is upper Hessenberg.</p>
+              <p>The prescription to compute
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>Z</mi><mi>k</mi><mo>′</mo></msubsup><annotation encoding="application/x-tex">Z_k&#39;</annotation></semantics></math>
+              is as follows:</p>
+              <ul>
+              <li><p>compute the first column of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>M</mi><mi>k</mi></msub><annotation encoding="application/x-tex">M_k</annotation></semantics></math>;</p></li>
+              <li><p>compute a Householder matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_0</annotation></semantics></math>
+              which zeros out all but the first entry of this column;</p></li>
+              <li><p>compute Householder matrices
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>P</mi><mrow><mi>n</mi><mo>−</mo><mn>2</mn></mrow></msub></mrow><annotation encoding="application/x-tex">P_1, \dots, P_{n-2}</annotation></semantics></math>
+              such that
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>Z</mi><mi>k</mi><mo>′</mo></msubsup><mo>=</mo><msub><mi>P</mi><mn>0</mn></msub><msub><mi>P</mi><mn>1</mn></msub><mi>⋯</mi><msub><mi>P</mi><mrow><mi>n</mi><mo>−</mo><mn>2</mn></mrow></msub></mrow><annotation encoding="application/x-tex">Z_k&#39; = P_0 P_1 \cdots P_{n-2}</annotation></semantics></math>
+              satisfies the required properties.</p></li>
+              </ul>
+              <p>The first and second steps requires a constant number of operations.
+              To perform the last step, note that since
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_0</annotation></semantics></math>
+              is a
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>×</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">3 \times 3</annotation></semantics></math>
+              Householder transformation, the first three columns
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>P</mi><mn>0</mn><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>P</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">P_0^T A_k P_0</annotation></semantics></math>
+              will have as many non-zero entries as the third column of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>.
+              This requires
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>1</mn></msub><annotation encoding="application/x-tex">P_1</annotation></semantics></math>
+              to be a
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>×</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">3 \times 3</annotation></semantics></math>
+              Householder transformation as well to zero out the 2 subdiagonal
+              elements below the first subdiagonal of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>P</mi><mn>0</mn><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>P</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">P_0^T A_k P_0</annotation></semantics></math>,
+              giving the second, third, and fourth columns of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>P</mi><mn>1</mn><mi>T</mi></msubsup><msubsup><mi>P</mi><mn>0</mn><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>P</mi><mn>0</mn></msub><msub><mi>P</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">P_1^T P_0^T A_k P_0 P_1</annotation></semantics></math>
+              the same number of non-zero entries as the fourth column of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>P</mi><mn>0</mn><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>P</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">P_0^T A_k P_0</annotation></semantics></math>,
+              and so on. Thus each of
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>P</mi><mrow><mi>n</mi><mo>−</mo><mn>3</mn></mrow></msub></mrow><annotation encoding="application/x-tex">P_1, \dots, P_{n-3}</annotation></semantics></math>
+              will be a
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>×</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">3 \times 3</annotation></semantics></math>
+              Householder transformation, while
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mrow><mi>n</mi><mo>−</mo><mn>2</mn></mrow></msub><annotation encoding="application/x-tex">P_{n-2}</annotation></semantics></math>
+              only needs to be
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 2</annotation></semantics></math>.
+              Zeroing out the one or two entries below the subdiagonal in each column
+              is sometimes refered to as <em>bulge chasing</em> in the literature.
+              Applicability of the theorem then follows from the fact that
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_0</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>k</mi></msub><annotation encoding="application/x-tex">Z_k</annotation></semantics></math>
+              have the same first column and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>P</mi><mrow><mi>n</mi><mo>−</mo><mn>2</mn></mrow></msub></mrow><annotation encoding="application/x-tex">P_1, \dots, P_{n-2}</annotation></semantics></math>
+              don’t modify the first column. Multiplications with each of the matrices
+              forming
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>Z</mi><mi>k</mi><mo>′</mo></msubsup><annotation encoding="application/x-tex">Z_k&#39;</annotation></semantics></math>
+              can be computed in constant time, so the total iteration can be
+              completed with
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( n^2 \right)</annotation></semantics></math>
+              operations.</p>
 
             </div>
 
 
-            <div class="abstract">
-                <div class="mini-header"> Strategy </div>  <br><br>
 
-                <!--l. 47--><p class="noindent" >We will construct a matrix whose eigenvalues are the roots of the polynomial we want to
-                solve. Then we will iteratively apply operations to this matrix in such a way that we don&#8217;t change its eigenvalues, until we have produced a matrix whose eigenvalues we can determine directly from its coefficients.
+           <div class="abstract">
 
-                <!--l. 50--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">2.1. </span> <a
-                 id="x1-30002.1"></a><span
-                class="cmbx-10">Companion Matrix.</span></span> To start, we need to construct a matrix whose eigenvalues are the roots of the polynomial we want to solve. This can be done as follows: given a polynomial <span
-                class="cmmi-10">p</span>(<span
-                class="cmmi-10">x</span>) = <span
-                class="cmmi-10">a</span><sub><span
-                class="cmmi-7">n</span></sub><span
-                class="cmmi-10">x</span><sup><span
-                class="cmmi-7">n</span></sup> + <img
-                src="math assets/qr0x.png" alt="&#x22C5;&#x22C5;&#x22C5;"  class="@cdots" > + <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">0</span></sub>, the matrix
-                  <table
-                class="equation-star"><tr><td>
-                  <div class="math-display" >
-                <img
-                src="math assets/qr1x.png" class="math-display" ></div>
-                  </td></tr></table>
-                <!--l. 61--><p class="nopar" >has eigenvalues <span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">,</span><span
-                class="cmmi-10">&#x2026;</span><span
-                class="cmmi-10">,&#x03BB;</span><sub><span
-                class="cmmi-7">n</span></sub> such that <span
-                class="cmmi-10">p</span>(<span
-                class="cmmi-10">x</span>) = (<span
-                class="cmmi-10">x </span><span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmr-7">1</span></sub>)<img
-                src="math assets/qr2x.png" alt="&#x22C5;&#x22C5;&#x22C5;"  class="@cdots" >(<span
-                class="cmmi-10">x </span><span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmmi-7">n</span></sub>). The matrix <span
-                class="cmmi-10">A </span>is called
-                the <span
-                class="cmti-10">companion matrix </span>of the polynomial <span
-                class="cmmi-10">p</span>. Note that the companion matrix has ones
-                along the diagonal below the main diagonal and zeros in all places below this
-                subdiagonal; we call any matrix with this property an <span
-                class="cmti-10">upper Hessenberg </span>matrix, or more
-                specifically, an <span
-                class="cmti-10">unreduced upper Hessenberg </span>matrix. Finding the eigenvalues of upper Hessenberg matrices is a well-studied problem, and exploiting this structure will play a key role in the theory.
+              <div class="mini-header"> IMPLEMENTATION </div> <br>
+
+              <p>We use the double implicit shift QR algorithm. All matrices are
+              stored in contiguous arrays of doubles. The threshold for decoupling is
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>a</mi><mrow><mi>i</mi><mo>,</mo><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>≤</mo><mi>ϵ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>a</mi><mrow><mi>i</mi><mo>,</mo><mi>i</mi></mrow></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>a</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn><mo>,</mo><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                \left\vert a_{i,i-1} \right\vert \leq \epsilon \left( \left\vert a_{i,i} \right\vert + \left\vert a_{i-1,i-1} \right\vert \right),
+              \end{equation*}</annotation></semantics></math> where the
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mrow><mi>i</mi><mo>,</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">a_{i,j}</annotation></semantics></math>
+              are entries in the matrix
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+              and
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϵ</mi><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math>
+              = <code>std::numeric_limits&lt;double&gt;::epsilon()</code>. We have a
+              maximum of 100 iterations before we force a deflate.
+              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϵ</mi><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math>
+              is chosen so this practically never happens.</p>
 
 
-
-
-                <!--l. 67--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">2.2. </span> <a
-                 id="x1-40002.2"></a><span
-                class="cmbx-10">Canonical Forms.</span></span> We list some matrices whose eigenvalues can be determined
-                directly from its coefficients. The simplest of these are diagonal matrices:
-                  <table
-                class="equation-star"><tr><td>
-                  <div class="math-display" >
-                <img
-                src="math assets/qr3x.png"  class="math-display" ></div>
-                  </td></tr></table>
-                <!--l. 77--><p class="nopar" >whose eigenvalues are simply their diagonal entries. The same is true for upper triangular
-                matrices:
-                  <table
-                class="equation-star"><tr><td>
-                  <div class="math-display" >
-                <img
-                src="math assets/qr4x.png" class="math-display" ></div>
-                  </td></tr></table>
-                <!--l. 87--><p class="nopar" >These matrices can be targeted when finding the eigenvalues of a matrix with complex
-                entries (diagonal when the matrix is hermitian, upper triangular otherwise). Since we are working with polynomials with real coefficients, and therefore matrices with real entries, we will need to target a slightly less intuitive form, which we call block upper triangular:
-                  <table
-                class="equation-star"><tr><td>
+              <h2 id="coalescing-higher-order-roots">4.1. Coalescing Higher-Order
+              Roots</h2>
+              <p>Our data model stores roots along with their orders. As the QR
+              algorithm deflates, roots are added to the solution set with order at
+              most 2. It is therefore necessary to coalesce individual roots
+              corresponding to the same higher-order root. In practice, as the order
+              of a root increases, the approximated individual roots lie on a circle
+              of increasing radius centered at the true root. We therefore require a
+              post-processing algorithm that will coalesce approximate root
+              corresponding to the same high-order true root while leaving truly
+              distinct roots alone.</p>
+              <p>Our algorithm keeps a running state of the current root cluster. As
+              roots are deflated, we prospectively combine them with the cluster using
+              a weighted averge. When adding a real root, the result is taken to be
+              real (weighting an existing complex root with twice the order and zero
+              imaginary part, as if we had combined it with its conjugate). We check
+              if the new cluster is a better solution than the previous cluster by
+              repeatedly dividing the polynomial by each root; this generates two
+              sequences of remainders which are the values of the polynomial and its
+              derivatives up to the cluster order evaluated at either cluster center.
+              The new cluster is declared a stronger approximation of the true root if
+              each of the corresponding remainders is not much larger than those
+              corresponding to the old cluster; we have found 3 orders of magnitude to
+              be a sufficient tolerance. Since the new cluster has a higher order than
+              the old cluster, there will be at least one remainder that we do not
+              compare. In the case that the new cluster is near a true root but its
+              order is higher than that of the true root, the extra remainders will be
+              large. For this reason we have a second check that each remainder is not
+              much larger than the one preceding it; we use a tolerance of 8000.</p>
+              <p>These two checks mostly ensure robust behavior. The serial nature of
+              computing successive remainders of polynomials makes it difficult to
+              take advantage of parallel, superscalar hardware, but this has not been
+              observed to have a significant impact on the total runtime of the
+              solver. It should be noted that this method is not fully immune to
+              erroneous behavior. It is possible the algorithm successively deflates
+              two approximate roots which each correspond to a true isolated root and
+              whose weighted average is another true root with the same or greater
+              order as the prospective cluster. In this case the post-processing
+              algorithm would classify the new cluster as a better approximation than
+              the previous one, mistakenly omitting the isolated roots and adding too
+              much contribution to the higher-order root at their midpoint. While
+              possible, we have not observed this to happen in practice.</p>
+          </div>
 
 
 
-                  <div class="math-display" >
-                <img
-                src="math assets/qr5x.png" class="math-display" ></div>
-                  </td></tr></table>
-                <!--l. 97--><p class="nopar" >where each <span
-                class="cmmi-10">T</span><sub><span
-                class="cmmi-7">ij</span></sub> is a square matrix, all matrices in the same row have the same number of rows, all matrices in the same column have the same number of columns, and the zeros denote zero matrices. The set of eigenvalues of a matrix of this form is the union of the sets of eigenvalues of each matrix along the main diagonal. A block upper triangular matrix made up of either 1 <span
-                class="cmsy-10">&#x00D7; </span>1 or 2 <span
-                class="cmsy-10">&#x00D7; </span>2 matrices is known as a <span
-                class="cmti-10">reduced upper Hessenberg</span>
-                matrix. Our goal is to bring the unreduced upper Hessenberg companion matrix
-                to reduced upper Hessenberg form by bringing some subdiagonal entries to
-                zero.
-
-                <!--l. 103--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">2.3. </span> <a
-                 id="x1-50002.3"></a><span
-                class="cmbx-10">Similar Matrices.</span></span> Two square matrices <span
-                class="cmmi-10">A </span>and <span
-                class="cmmi-10">B </span>with the same dimension have
-                the same eigenvalues whenever there is a matrix <span
-                class="cmmi-10">X </span>such that <span
-                class="cmmi-10">B </span>= <span
-                class="cmmi-10">X</span><sup><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">1</span></sup><span
-                class="cmmi-10">AX</span>; we say <span
-                class="cmmi-10">A</span>
-                and <span
-                class="cmmi-10">B </span>are <span
-                class="cmti-10">similar matrices </span>in this case. Given a matrix <span
-                class="cmmi-10">A</span>, forming <span
-                class="cmmi-10">B </span>= <span
-                class="cmmi-10">X</span><sup><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">1</span></sup><span
-                class="cmmi-10">AX </span>for
-                some matrix <span
-                class="cmmi-10">X </span>is called <span
-                class="cmti-10">conjugation of A by X</span>. We will refer to this operation as
-                applying a <span
-                class="cmti-10">similarity transformation </span>to <span
-                class="cmmi-10">A</span>. A matrix <span
-                class="cmmi-10">Q </span>is called <span
-                class="cmti-10">orthogonal </span>if <span
-                class="cmmi-10">Q</span><sup><span
-                class="cmmi-7">T</span></sup> = <span
-                class="cmmi-10">Q</span><sup><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">1</span></sup>;
-                these are a good choice for use in similarity transformations since it avoids having to
-                form the inverse of a matrix (an expensive operation in general). We will call a
-                similarity transformation using an orthogonal matrix an <span
-                class="cmti-10">orthogonal similarity</span>
-                <span
-                class="cmti-10">transformation</span>.
-
-                <!--l. 110--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">2.4. </span> <a
-                 id="x1-60002.4"></a><span
-                class="cmbx-10">QR Decomposition.</span></span> So we want to find the roots of a polynomial <span
-                class="cmmi-10">p </span>by repeatedly
-                applying orthogonal similarity transformations to its companion matrix <span
-                class="cmmi-10">A </span>until we
-                obtain a matrix in reduced upper Hessenberg form. The first step is to find a matrix <span
-                class="cmmi-10">Q </span>to
-                use in the orthogonal similarity transformation. We can always express any real matrix <span
-                class="cmmi-10">A</span>
-                as the product of an orthogonal matrix <span
-                class="cmmi-10">Q </span>and an upper triangular matrix <span
-                class="cmmi-10">R</span>;
-                this is called the <span
-                class="cmti-10">QR decomposition </span>of <span
-                class="cmmi-10">A</span>. Once we have <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub>, we form
-                <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span><span
-                class="cmr-7">+1</span></sub> = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub> = <span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub>. There are some choices for how to perform the
-                decomposition.
-                <!--l. 116--><p class="noindent" ><span class="subsubsectionHead"><span class="titlemark">2.4.1. </span> <a
-                 id="x1-70002.4.1"></a><span
-                class="cmti-10">Triangular Orthogonalization.</span></span> The most famous technique, known as the
-                <span
-                class="cmti-10">Gram-Schmidt algorithm</span>, is to iteratively form the columns of <span
-                class="cmmi-10">Q </span>from the columns of <span
-                class="cmmi-10">A</span>:
-                <span
-                class="cmmi-10">Q </span>= <span
-                class="cmmi-10">AR</span><sup><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">1</span></sup> in such a way that <span
-                class="cmmi-10">R </span>is upper triangular. Since <span
-                class="cmmi-10">Q </span>is the result of many
-                operations, this method has poor numerical stability when using finite-precision
-                arithmetic on a computer; <span
-                class="cmmi-10">Q </span>will not be exactly orthogonal, so <span
-                class="cmmi-10">Q</span><sup><span
-                class="cmmi-7">T</span></sup> will not be
-                <span
-                class="cmmi-10">Q</span><sup><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">1</span></sup>.
 
 
 
-                <!--l. 119--><p class="noindent" ><span class="subsubsectionHead"><span class="titlemark">2.4.2. </span> <a
-                 id="x1-80002.4.2"></a><span
-                class="cmti-10">Orthogonal Triangularization.</span></span> A better method for use in computers is to form the
-                upper triangular matrix <span
-                class="cmmi-10">R </span>as <span
-                class="cmmi-10">R </span>= <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">n</span></sub><sup><span
-                class="cmmi-7">T</span></sup><img
-                src="math assets/qr6x.png" alt="&#x22C5;&#x22C5;&#x22C5;"  class="@cdots" ><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmr-7">1</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span>, where each <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">j</span></sub> is an orthogonal matrix
-                that sets all entries below the main diagonal in the <span
-                class="cmmi-10">j</span><sup><span
-                class="cmr-7">th</span></sup> column of <span
-                class="cmmi-10">A </span>to zero. Now
-                <span
-                class="cmmi-10">A </span>= <span
-                class="cmmi-10">QR </span>with <span
-                class="cmmi-10">Q </span>= <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmr-7">1</span></sub><img
-                src="math assets/qr7x.png" alt="&#x22C5;&#x22C5;&#x22C5;"  class="@cdots" ><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">n</span></sub>.
-                  There are two possible forms for the <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">j</span></sub>: Householder reflections and Givens rotations.
-                A Householder reflection is a reflection of a vector about a hyperplane through the
-                origin. One can be represented by the symmetric orthogonal matrix <span
-                class="cmmi-10">H </span>= <span
-                class="cmmi-10">I </span><span
-                class="cmsy-10">- </span>2<span
-                class="cmmi-10">vv</span><sup><span
-                class="cmmi-7">T</span></sup>, where
-                <span
-                class="cmmi-10">v </span>is the normal vector of the hyperplane. To bring <span
-                class="cmmi-10">A </span>to upper triangular form using
-                Householder reflections, we zero out the subdiagonal elements of each column. For the
-                first column, we want to produce a vector in the span of e<sub><span
-                class="cmr-7">1</span></sub>, the canonical unit basis
-                vector with a 1 in the first entry and zeros elsewhere. Let <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub> be the first column of <span
-                class="cmmi-10">A</span>,
-                and form <span
-                class="cmmi-10">u </span>= <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub> <span
-                class="cmsy-10">-</span><img
-                src="math assets/qr8x.png" alt="&#x2225;a1&#x2225;"  class="left" align="middle"><span
-                class="cmmi-10">e</span><sub><span
-                class="cmr-7">1</span></sub>. Normalizing to form <span
-                class="cmmi-10">v </span>= <img
-                src="math assets/qr9x.png" alt="-u-
-                &#x2225;u&#x2225;"  class="frac" align="middle"> produces the normal to an
-                appropriate hyperplane. Note that we only need to set to zero the entries we know are
-                non-zero, and we know all entries of <span
-                class="cmmi-10">A </span>below the first subdiagonal are already zero.
-                Thus we may treat <span
-                class="cmmi-10">a</span><sub><span
-                class="cmmi-7">j</span></sub>, <span
-                class="cmmi-10">e</span><sub><span
-                class="cmr-7">1</span></sub>, <span
-                class="cmmi-10">u</span>, and <span
-                class="cmmi-10">v </span>as 2-component vectors for each of the
-                first <span
-                class="cmmi-10">n </span><span
-                class="cmsy-10">- </span>1 columns. This means that multiplication with <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">j</span></sub> only requires a
-                constant number of operations per column, and so the update requires <span
-                class="cmmi-10">O</span><img
-                src="math assets/qr10x.png" alt="(n2)"  class="left" align="middle">
-                operations.
-                <!--l. 134--><p class="indent" >  A Givens rotation is a rotation in the plane spanned by two basis vectors.
-                We can bring a single non-zero subdiagonal element of a column of <span
-                class="cmmi-10">A </span>to zero
-                by
-                  <table
-                class="equation-star"><tr><td>
-                  <div class="math-display" >
-                <img
-                src="math assets/qr11x.png" alt="[     ] [     ]  [ ]
-                 c  - s   aj,j  =  r
-                 s   c   aj+1,j    0" class="math-display" ></div>
-                  </td></tr></table>
-                <!--l. 147--><p class="nopar" >where <span
-                class="cmmi-10">a</span><sub><span
-                class="cmmi-7">j,j</span></sub> and <span
-                class="cmmi-10">a</span><sub><span
-                class="cmmi-7">j</span><span
-                class="cmr-7">+1</span><span
-                class="cmmi-7">,j</span></sub> are the diagonal and subdiagonal elements of the <span
-                class="cmmi-10">j</span><sup><span
-                class="cmr-7">th</span></sup> column of
-                <span
-                class="cmmi-10">A</span>, <span
-                class="cmmi-10">r </span>= <img
-                src="math assets/qr12x.png" alt="&#x221A;aj,j +-aj+1,j"  class="sqrt" >, <span
-                class="cmmi-10">c </span>= <img
-                src="math assets/qr13x.png" alt="aj,j
-                 r"  class="frac" align="middle">, and <span
-                class="cmmi-10">s </span>= <span
-                class="cmsy-10">-</span><img
-                src="math assets/qr14x.png" alt="aj+1,j
-                  r"  class="frac" align="middle">. In <a
-                href="#x1-120003.3">subsection&#x00A0;3.3</a>, we will
-                require operations that bring 2 subdiagonal entries to zero instead of 1. For this
-                reason, it is more convenient to work with Householder reflections. We never
-                implemented a version of the QR algorithm using Givens rotations, and so
-                cannot comment on whether any of their potential advantages can be realized in
-                practice.
-
-            </div>
 
 
-            <div class="abstract">
-                <div class="mini-header"> Convergence </div>  <br><br>
-
-                <!--l. 154--><p class="noindent" >The basic QR iteration computes <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span><span
-                class="cmr-7">+1</span></sub> = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub>; here <span
-                class="cmmi-10">A</span><sub><span
-                class="cmr-7">0</span></sub> is the companion matrix of
-                the polynomial we want to solve, and <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub> is obtained from the QR decomposition of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub>.
-
-
-
-                This step can be computed with <span
-                class="cmmi-10">O</span><img
-                src="math assets/qr15x.png" alt="(n2)"  class="left" align="middle"> operations, where <span
-                class="cmmi-10">n </span>is the degree of the
-                polynomial. The question is if <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> will converge to a canonical form, and if so, how many
-                iterations we expect it to take. For reduced upper Hessenberg form, we need subdiagonal
-                elements of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> to become zero; no two consecutive diagonal elements can be non-zero.
-                Once a sudiagonal element has been brought close enough to zero (a metric
-                that will be made precise in <a
-                href="#x1-130004">section&#x00A0;4</a>), we say the 1 <span
-                class="cmsy-10">&#x00D7; </span>1 or 2 <span
-                class="cmsy-10">&#x00D7; </span>2 matrix to
-                the right of this element has become <span
-                class="cmti-10">detached </span>from the rest of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> and we can
-                compute its eigenvalues. We no longer need to update this part of the matrix with
-                QR iterations, so we effectively reduce the dimension of the matrix; this is
-                called <span
-                class="cmti-10">deflation</span>. We can measure the extent to which <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> fails to be in reduced
-                upper Hessenberg form by the largest magnitude of its subdiagonal elements.
-                Analysis shows this magnitude of this element is <span
-                class="cmmi-10">O</span><img
-                src="math assets/qr16x.png" class="left" align="middle">, where <span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">,</span><span
-                class="cmmi-10">&#x2026;</span><span
-                class="cmmi-10">,&#x03BB;</span><sub><span
-                class="cmmi-7">n</span></sub> are the
-                eigenvalues of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> ordered such that <img
-                src="math assets/qr17x.png" alt="|&#x03BB;1|"  class="left" align="middle"><span
-                class="cmsy-10">&#x2265;</span><img
-                src="math assets/qr18x.png" alt="|&#x03BB;2|"  class="left" align="middle"><span
-                class="cmsy-10">&#x2265;</span><img
-                src="math assets/qr19x.png" alt="&#x22C5;&#x22C5;&#x22C5;"  class="@cdots" ><span
-                class="cmsy-10">&#x2265;</span><img
-                src="math assets/qr20x.png" alt="|&#x03BB;n|"  class="left" align="middle">. Thus if <img
-                src="math assets/qr21x.png" alt="|&#x03BB;1|"  class="left" align="middle"> = <img
-                src="math assets/qr22x.png" alt="|&#x03BB;2|"  class="left" align="middle">,
-                which will occur in the presence of a multiple root or a conjugate pair of roots,
-                the iterations will not converge; if <img
-                src="math assets/qr23x.png" alt="|&#x03BB;1|"  class="left" align="middle"><span
-                class="cmsy-10">-</span><img
-                src="math assets/qr24x.png" alt="|&#x03BB;2|"  class="left" align="middle"> is very small, convergence will
-                be very slow. We are therefore motivated to modify the strategy to speed up
-                convergence.
-                <!--l. 164--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">3.1. </span> <a
-                 id="x1-100003.1"></a><span
-                class="cmbx-10">Shifted QR.</span></span> A popular modification is to perform <span
-                class="cmti-10">shifting</span>: form <img
-                src="math assets/qr25x.png" alt="&#xFF5E;A
-                 k"  class="widetilde" > = <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> <span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">&#x03BC;I</span> for
-                some number <span
-                class="cmmi-10">&#x03BC;</span>, compute <img
-                src="math assets/qr26x.png" alt="&#x0303;
-                Ak+1"  class="widetilde" > = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sup><span
-                class="cmmi-7">T</span></sup><img
-                src="math assets/qr27x.png" alt=" &#xFF5E;
-                Ak"  class="widetilde" ><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub> obtaining <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub> from the QR factorization of
-                <img
-                src="math assets/qr28x.png" alt="&#xFF5E;Ak"  class="widetilde" >, then obtain <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span><span
-                class="cmr-7">+1</span></sub> = <img
-                src="math assets/qr29x.png" alt="&#x0303;Ak+1"  class="widetilde" > + <span
-                class="cmmi-10">&#x03BC;I</span>. If <span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">,</span><span
-                class="cmmi-10">&#x2026;</span><span
-                class="cmmi-10">,&#x03BB;</span><sub><span
-                class="cmmi-7">n</span></sub> are the eigenvalues of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub>, then
-                <span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmr-7">1</span></sub> <span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">&#x03BC;,</span><span
-                class="cmmi-10">&#x2026;</span><span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmmi-7">n</span></sub> <span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">&#x03BC; </span>are the eigenvalues of <img
-                src="math assets/qr30x.png" alt="&#xFF5E;Ak"  class="widetilde" >; when the eigenvalues are ordered
-                <img
-                src="math assets/qr31x.png" alt="|&#x03BB;1|"  class="left" align="middle"> <span
-                class="cmsy-10">&#x2265;</span><img
-                src="math assets/qr32x.png" alt="&#x22C5;&#x22C5;&#x22C5;"  class="@cdots" ><span
-                class="cmsy-10">&#x2265;</span><img
-                src="math assets/qr33x.png" alt="|&#x03BB;n|"  class="left" align="middle">, we see the largest magnitude of a subdiagonal element of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> is now
-                <span
-                class="cmmi-10">O</span><img
-                src="math assets/qr34x.png" alt="(     k)
-                 ||&#x03BB;&#x03BB;2--&#x03BC;&#x03BC;||k
-                   1"  class="left" align="middle">. When <span
-                class="cmmi-10">&#x03BC; </span>is approximately <span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmr-7">2</span></sub>, convergence will be very fast. Often the
-                bottom-right entry of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> is chosen as an approximation.
-                <!--l. 169--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">3.2. </span> <a
-                 id="x1-110003.2"></a><span
-                class="cmbx-10">Double Shifted QR.</span></span> When <span
-                class="cmmi-10">&#x03BB;</span><sub><span
-                class="cmr-7">2</span></sub> is complex, no entry of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> will serve as a good
-                approximation since the entries are all real. We also don&#8217;t want to shift by a complex
-                number, for then the entries of the matrix will be complex. Instead we perform two
-                shifts:
-
-
-
-                <table
-                class="align-star">
-                                         <tr><td
-                class="align-odd"><img
-                src="math assets/qr35x.png" alt="&#xFF5E;
-                Ak"  class="widetilde" ><sub><span
-                class="cmr-7">1</span></sub></td>                         <td
-                class="align-even"> = <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> <span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">I</span></td>                              <td
-                class="align-label"></td>                         <td
-                class="align-label">
-                                         </td></tr><tr><td
-                class="align-odd"></td>                             <td
-                class="align-even"> = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">,</span></td>                              <td
-                class="align-label"></td>                         <td
-                class="align-label">
-                                         </td></tr><tr><td
-                class="align-odd"><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub></td>                         <td
-                class="align-even"> = <span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub> + <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">I</span>;</td>                         <td
-                class="align-label"></td>                         <td
-                class="align-label">
-                                         </td></tr><tr><td
-                class="align-odd"><img
-                src="math assets/qr36x.png" alt="&#xFF5E;
-                Ak"  class="widetilde" ><sub><span
-                class="cmr-7">2</span></sub></td>                         <td
-                class="align-even"> = <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub> <span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">2</span></sub><span
-                class="cmmi-10">I</span></td>                             <td
-                class="align-label"></td>                         <td
-                class="align-label">
-                                         </td></tr><tr><td
-                class="align-odd"></td>                             <td
-                class="align-even"> = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">2</span></sub><span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">2</span></sub><span
-                class="cmmi-10">,</span></td>                              <td
-                class="align-label"></td>                         <td
-                class="align-label">
-                                         </td></tr><tr><td
-                class="align-odd"><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">2</span></sub></td>                         <td
-                class="align-even"> = <span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">2</span></sub><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">2</span></sub> + <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">2</span></sub><span
-                class="cmmi-10">I.</span></td>                         <td
-                class="align-label"></td>                         <td
-                class="align-label"></td></tr></table>
-                  We see
-                <table
-                class="align-star">
-                  <tr><td
-                class="align-odd"><img
-                src="math assets/qr37x.png" alt="(Qk1Qk2 )"  class="left" align="middle"><img
-                src="math assets/qr38x.png" alt=" (Rk2Rk1 )"  class="left" align="middle"></td>  <td
-                class="align-even"> = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub><img
-                src="math assets/qr39x.png" alt="(Ak1 - a2I)"  class="left" align="middle"><span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub></td>                               <td
-                class="align-label"></td>  <td
-                class="align-label">
-                  </td></tr><tr><td
-                class="align-odd"></td>                   <td
-                class="align-even"> = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub><img
-                src="math assets/qr40x.png" alt="(Rk1Qk1 + a1I - a2I)"  class="left" align="middle"><span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub></td>                       <td
-                class="align-label"></td>  <td
-                class="align-label">
-                  </td></tr><tr><td
-                class="align-odd"></td>                   <td
-                class="align-even"> = <img
-                src="math assets/qr41x.png" alt="(Ak - a1I)"  class="left" align="middle"><img
-                src="math assets/qr42x.png" alt=" (Ak - a1I)"  class="left" align="middle"> + <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub><img
-                src="math assets/qr43x.png" alt="(Ak - a1I)"  class="left" align="middle"> <span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">2</span></sub><img
-                src="math assets/qr44x.png" alt="(Ak - a1I)"  class="left" align="middle"></td>  <td
-                class="align-label"></td>  <td
-                class="align-label">
-                  </td></tr><tr><td
-                class="align-odd"></td>                   <td
-                class="align-even"> = <img
-                src="math assets/qr45x.png" alt="(Ak - a1I)"  class="left" align="middle"><img
-                src="math assets/qr46x.png" alt=" (Ak - a1I + a1I - a2I)"  class="left" align="middle"></td>                   <td
-                class="align-label"></td>  <td
-                class="align-label">
-                  </td></tr><tr><td
-                class="align-odd"></td>                   <td
-                class="align-even"> = <img
-                src="math assets/qr47x.png" alt="(Ak - a1I)"  class="left" align="middle"><img
-                src="math assets/qr48x.png" alt=" (Ak - a2I)"  class="left" align="middle"></td>                             <td
-                class="align-label"></td>  <td
-                class="align-label">
-                  </td></tr><tr><td
-                class="align-odd"></td>                   <td
-                class="align-even"> = <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><sup><span
-                class="cmr-7">2</span></sup> <span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">sA</span><sub>
-                <span
-                class="cmmi-7">k</span></sub> + <span
-                class="cmmi-10">tI</span></td>                                   <td
-                class="align-label"></td>  <td
-                class="align-label">
-                  </td></tr><tr><td
-                class="align-odd"></td>                   <td
-                class="align-even"> =: <span
-                class="cmmi-10">M</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">,</span></td>                                            <td
-                class="align-label"></td>  <td
-                class="align-label"></td></tr></table>
-                <!--l. 192--><p class="indent" >  where <span
-                class="cmmi-10">s </span>= <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub> + <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">2</span></sub> and <span
-                class="cmmi-10">t </span>= <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">2</span></sub> for shifts <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">,a</span><sub><span
-                class="cmr-7">2</span></sub>. <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">1</span></sub> and <span
-                class="cmmi-10">a</span><sub><span
-                class="cmr-7">2</span></sub> are usually taken to
-                be the eigenvalues of the bottom-right 2 <span
-                class="cmsy-10">&#x00D7; </span>2 diagonal block <span
-                class="cmmi-10">H </span>of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub>; we can
-                then compute <span
-                class="cmmi-10">s </span>and <span
-                class="cmmi-10">t </span>directly from the coefficients of <span
-                class="cmmi-10">H </span>as <span
-                class="cmmi-10">s </span>= tr<img
-                src="math assets/qr49x.png" alt="(H )"  class="left" align="middle">, and
-
-
-
-                <span
-                class="cmmi-10">t </span>= det<img
-                src="math assets/qr50x.png" alt="(H )"  class="left" align="middle">. Since <span
-                class="cmmi-10">s </span>and <span
-                class="cmmi-10">t </span>are real, it is possible to choose <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub> and <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">2</span></sub> such that
-                <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub> = <span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">Q</span><sub><span
-                class="cmmi-7">k</span></sub><sub><span
-                class="cmr-7">2</span></sub> is a real orthogonal matrix. Thus we may execute the double shifted
-                procedure
-                <table
-                class="align-star">
-                                       <tr><td
-                class="align-odd"><span
-                class="cmmi-10">M</span><sub><span
-                class="cmmi-7">k</span></sub></td>                        <td
-                class="align-even"> = <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><sup><span
-                class="cmr-7">2</span></sup> <span
-                class="cmsy-10">- </span><span
-                class="cmmi-10">sA</span><sub>
-                <span
-                class="cmmi-7">k</span></sub> + <span
-                class="cmmi-10">tI,</span></td>                          <td
-                class="align-label"></td>                       <td
-                class="align-label">
-                                       </td></tr><tr><td
-                class="align-odd"></td>                           <td
-                class="align-even"> = <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">R</span><sub><span
-                class="cmmi-7">k</span></sub> with <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub> real<span
-                class="cmmi-10">,</span></td>                       <td
-                class="align-label"></td>                       <td
-                class="align-label">
-                                       </td></tr><tr><td
-                class="align-odd"><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span><span
-                class="cmr-7">+1</span></sub></td>                       <td
-                class="align-even"> = <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span><sub>
-                <span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">.</span></td>                              <td
-                class="align-label"></td>                       <td
-                class="align-label"></td></tr></table>
-                <!--l. 201--><p class="indent" >  Unfortunately, calculating <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><sup><span
-                class="cmr-7">2</span></sup> requires <span
-                class="cmmi-10">O</span><img
-                src="math assets/qr51x.png" alt="(n3)"  class="left" align="middle"> operations. We can however exploit a
-                result of upper Hessenberg matrices to avoid the explicit matrix multiplication.
-                <!--l. 203--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">3.3. </span> <a
-                 id="x1-120003.3"></a><span
-                class="cmbx-10">Double Implicit Shift.</span></span>  The <span
-                class="cmti-10">implicit Q theorem </span>states that if <span
-                class="cmmi-10">Q</span><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">AQ </span>= <span
-                class="cmmi-10">H </span>and
-                <span
-                class="cmmi-10">V</span> <sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">AV </span>= <span
-                class="cmmi-10">G </span>are both upper Hessenberg matrices for a general matrix <span
-                class="cmmi-10">A </span>and orthogonal
-                matrices <span
-                class="cmmi-10">Q </span>and <span
-                class="cmmi-10">V </span>with the same first column, then <span
-                class="cmmi-10">H </span>and <span
-                class="cmmi-10">G </span>are equal up to a change of
-                sign. Thus we don&#8217;t need to compute <span
-                class="cmmi-10">M</span><sub><span
-                class="cmmi-7">k</span></sub> and its QR factorization; we can compute a
-                matrix <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmsy-10">&#x2032; </span>with the same first column as <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub> above such that <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span><span
-                class="cmr-7">+1</span></sub> = <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmsy-10">&#x2032;</span><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmsy-10">&#x2032; </span>is
-                upper Hessenberg.
-                  The prescription to compute <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmsy-10">&#x2032; </span>is as follows:
-                         <ul class="itemize1">
-                       <li class="itemize">
-                       <!--l. 208--><p class="indent" >    compute the first column of <span
-                class="cmmi-10">M</span><sub><span
-                class="cmmi-7">k</span></sub>;
-                         </li>
-                       <li class="itemize">
-                       <!--l. 209--><p class="indent" >    compute a Householder matrix <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub> which zeros out all but the first entry
-                       of this column;
-                         </li>
-                       <li class="itemize">
-                       <!--l. 210--><p class="indent" >    compute   Householder   matrices   <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">,</span><span
-                class="cmmi-10">&#x2026;</span><span
-                class="cmmi-10">,P</span><sub><span
-                class="cmmi-7">n</span><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">2</span></sub>    such   that   <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmsy-10">&#x2032;  </span>=
-                       <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub><span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">1</span></sub><img
-                src="math assets/qr52x.png" alt="&#x22C5;&#x22C5;&#x22C5;"  class="@cdots" ><span
-                class="cmmi-10">P</span><sub><span
-                class="cmmi-7">n</span><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">2</span></sub> satisfies the required properties.</li></ul>
-
-
-
-                <!--l. 212--><p class="noindent" >The first and second steps requires a constant number of operations. To perform the last
-                step, note that since <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub> is a 3 <span
-                class="cmsy-10">&#x00D7; </span>3 Householder transformation, the first three columns
-                <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub> will have as many non-zero entries as the third column of <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub>. This requires <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">1</span></sub>
-                to be a 3 <span
-                class="cmsy-10">&#x00D7; </span>3 Householder transformation as well to zero out the 2 subdiagonal elements
-                below the first subdiagonal of <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub>, giving the second, third, and fourth columns of
-                <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">1</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub><span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">1</span></sub> the same number of non-zero entries as the fourth column of
-                <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub><sup><span
-                class="cmmi-7">T</span></sup><span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub>, and so on. Thus each of <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">,</span><span
-                class="cmmi-10">&#x2026;</span><span
-                class="cmmi-10">,P</span><sub><span
-                class="cmmi-7">n</span><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">3</span></sub> will be a 3 <span
-                class="cmsy-10">&#x00D7; </span>3 Householder
-                transformation, while <span
-                class="cmmi-10">P</span><sub><span
-                class="cmmi-7">n</span><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">2</span></sub> only needs to be 2 <span
-                class="cmsy-10">&#x00D7; </span>2. Zeroing out the one or two
-                entries below the subdiagonal in each column is sometimes refered to as <span
-                class="cmti-10">bulge</span>
-                <span
-                class="cmti-10">chasing </span>in the literature. Applicability of the theorem then follows from the
-                fact that <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">0</span></sub> and <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub> have the same first column and <span
-                class="cmmi-10">P</span><sub><span
-                class="cmr-7">1</span></sub><span
-                class="cmmi-10">,</span><span
-                class="cmmi-10">&#x2026;</span><span
-                class="cmmi-10">,P</span><sub><span
-                class="cmmi-7">n</span><span
-                class="cmsy-7">-</span><span
-                class="cmr-7">2</span></sub> don&#8217;t modify
-                the first column. Multiplications with each of the matrices forming <span
-                class="cmmi-10">Z</span><sub><span
-                class="cmmi-7">k</span></sub><span
-                class="cmsy-10">&#x2032; </span>can be
-                computed in constant time, so the total iteration can be completed with <span
-                class="cmmi-10">O</span><img
-                src="math assets/qr53x.png" alt="(n2)"  class="left" align="middle">
-                operations.
-
-            </div>
-
-
-            <div class="abstract">
-                <div class="mini-header"> Implementation </div>  <br><br>
-
-
-                <!--l. 222--><p class="noindent" >We use the double implicit shift QR algorithm. All matrices are stored in contiguous
-                arrays of doubles. The threshold for decoupling is
-                  <table
-                class="equation-star"><tr><td>
-                  <div class="math-display" >
-                <img
-                src="math assets/qr54x.png" alt="|ai,i-1| &#x2264; &#x03F5;(|ai,i|+|ai-1,i-1|)," class="math-display" ></div>
-                  </td></tr></table>
-                <!--l. 227--><p class="nopar" >where the <span
-                class="cmmi-10">a</span><sub><span
-                class="cmmi-7">i,j</span></sub> are entries in the matrix <span
-                class="cmmi-10">A</span><sub><span
-                class="cmmi-7">k</span></sub> and <span
-                class="cmmi-10">&#x03F5; </span>= <span
-                class="cmtt-10">std::numeric</span><span
-                class="cmtt-10">_limits&#x003C;double&#x003E;::epsilon()</span>.
-                We have a maximum of 100 iterations before we force a deflate. <span
-                class="cmmi-10">&#x03F5; </span>is chosen so this
-                practically never happens.
-
-                <!--l. 232--><p class="noindent" ><span class="subsectionHead"><span class="titlemark">4.1. </span> <a
-                 id="x1-140004.1"></a><span
-                class="cmbx-10">Coalescing Higher-Order Roots.</span></span>
-                  Our data model stores roots along with their orders. As the QR algorithm deflates,
-                roots are added to the solution set with order at most 2. It is therefore necessary to
-                coalesce individual roots corresponding to the same higher-order root. In practice, as the
-                order of a root increases, the approximated individual roots lie on a circle of increasing
-                radius centered at the true root. We therefore require a post-processing algorithm that
-                will coalesce approximate root corresponding to the same high-order true root while
-                leaving truly distinct roots alone.
-                <!--l. 240--><p class="indent" >  Our algorithm keeps a running state of the current root cluster. As roots are
-                deflated, we prospectively combine them with the cluster using a weighted averge.
-                When adding a real root, the result is taken to be real (weighting an existing
-
-
-
-                complex root with twice the order and zero imaginary part, as if we had combined
-                it with its conjugate). We check if the new cluster is a better solution than
-                the previous cluster by repeatedly dividing the polynomial by each root; this
-                generates two sequences of remainders which are the values of the polynomial and
-                its derivatives up to the cluster order evaluated at either cluster center. The
-                new cluster is declared a stronger approximation of the true root if each of the
-                corresponding remainders is not much larger than those corresponding to the old
-                cluster; we have found 3 orders of magnitude to be a sufficient tolerance. Since
-                the new cluster has a higher order than the old cluster, there will be at least
-                one remainder that we do not compare. In the case that the new cluster is
-                near a true root but its order is higher than that of the true root, the extra
-                remainders will be large. For this reason we have a second check that each
-                remainder is not much larger than the one preceding it; we use a tolerance of
-                8000.
-                <!--l. 249--><p class="indent" >  These two checks mostly ensure robust behavior. The serial nature of computing
-                successive remainders of polynomials makes it difficult to take advantage of parallel,
-                superscalar hardware, but this has not been observed to have a significant impact on the
-                total runtime of the solver. It should be noted that this method is not fully immune
-                to erroneous behavior. It is possible the algorithm successively deflates two
-                approximate roots which each correspond to a true isolated root and whose
-                weighted average is another true root with the same or greater order as the
-                prospective cluster. In this case the post-processing algorithm would classify
-                the new cluster as a better approximation than the previous one, mistakenly
-                omitting the isolated roots and adding too much contribution to the higher-order
-                root at their midpoint. While possible, we have not observed this to happen in
-                practice.
-
-                </body></html>
-
-            </div>
 
 
 
