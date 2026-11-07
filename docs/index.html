@@ -22,7 +22,7 @@
 
             <div class="abstract">
                 <div class="mini-header"> ABSTRACT </div>  <br>
-                Digital filters are a foundational concept in <span class="tooltip" tabindex="0">digital audio<span class="tooltip-text">Is this working?</span> </span>, but designing them presents certain challenges: from finding the right coefficients to checking for stability. To facilitate the study of this topic, it would be highly beneficial to have a tool with an interactive visual interface. Such a tool should allow users to determine which roots of the polynomials defining a filter correspond to given coefficients - and vice versa - as well as to adjust these roots on the complex plane in real time, instantly hearing how the audio processing result changes and observing the corresponding shifts in the filter's frequency and phase response. This would help foster an intuitive grasp of the processes underlying the mathematical formulas. <br><br>
+                Digital filters are a foundational concept in digital audio, but designing them presents certain challenges: from finding the right coefficients to checking for stability. To facilitate the study of this topic, it would be highly beneficial to have a tool with an interactive visual interface. Such a tool should allow users to determine which roots of the polynomials defining a filter correspond to given coefficients - and vice versa - as well as to adjust these roots on the complex plane in real time, instantly hearing how the audio processing result changes and observing the corresponding shifts in the filter's frequency and phase response. This would help foster an intuitive grasp of the processes underlying the mathematical formulas. <br><br>
                 We present Digital Filter Visualizer: a tool that allows you to see the mathematical structure of linear time-invariant filters, calculate filter coefficients from your poles and zeros and vice versa, automatically ensure the stability, and instantly hear the result. <br><br>
                 Digital Filter Visualizer features 5 autosynchronized representations of a filter, including interactive visual interfaces, to provide utility in both learning and creating. <br><br>
                 In this poster, we concentrate on the math behind the most challenging part of its implementation - namely, converting the filter's coefficients to roots, that is provided using the Francis implicit double shift QR algorithm. Other problems, like building the filter's processing chain and plotting frequency response, will be briefly described as well. <br><br>
@@ -827,6 +827,7 @@
 
               <p class="p1">If a stage in the chain of biquads adds an error, the following stages can no longer tell the error from the signal, so they cannot improve the signal-to-error ratio. The potential error can be reduced if a level increase is compensated by a level decrease inside the same biquad. To do this, each pole is paired with a zero. Poles with a higher gain at their peak frequency are paired first. From the zeros that do not have a pair yet, we choose the one that gives the strongest attenuation at the peak frequency of the pole. Zeros that amplify the signal at this frequency are not considered as candidates.</p>
               <p class="p1">If some zeros are left without a pair after this matching, they form an FIR filter placed after the IIR section.</p>
+              <p class="p1">It should be noted that a pole located on the unit circle should not be paired with zeros: instead, it is moved into the delay block. This block is placed before the IIR section, and the delay value in samples is equal to the order of the pole located on the unit circle.</p>
               <p class="p2"><br></p>
 
 
@@ -860,6 +861,9 @@
 
 
               <p class="p1">Geometrically, these formulas mean the following. The magnitude response is the product of the lengths of the vectors from the zeros to the point <i>z</i>, divided by the product of the lengths of the vectors from the poles to the point <i>z</i>, and multiplied by |<i>g</i>|. The phase <i>φ</i>(<i>ω</i>) is the sum of the angles between the real axis and the vectors from the zeros, minus the sum of the angles between the real axis and the vectors from the poles, plus the terms (<i>N</i> − <i>M</i>)<i>ω</i> and arg(<i>g</i>).</p>
+              
+              <br><br>
+
               <p class="p1">The problem with the formula for <i>φ</i>(<i>ω</i>) is that each term in the sums is a wrapped phase, that is, a phase limited to the range from −<i>π</i> to <i>π</i>. This distorts the phase response plot: where the curve should break at the edge of the plot area and continue from the opposite edge, it crosses the horizontal axis instead. Therefore, it is better to plot the unwrapped phase <i>φ</i><sub>u</sub>(<i>ω</i>). This is a continuous function that satisfies the following condition for all <i>ω</i>:</p>
 
 

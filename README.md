@@ -1,4 +1,4 @@
-# Digital Filter Visualiser
+# Digital Filter Visualiser 
 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/Audio-Builders-Foundry/digital_filter_visualiser)
 [![License?](https://img.shields.io/badge/license-AGPLv3-green)](LICENSE)
@@ -106,7 +106,7 @@ If a root approaches the real axis, the axis changes color. If the mouse button 
 
 - Modifying root order:
 
-Each root has individual `+`, `-`, and `X` buttons. Plus (`+`) increases the root order by one, and minus (`-`) decreases the root order by one. If the order of the root is one, further reducing the order of the root completely erases the root. So does the `X` button for roots of any arbitrary order. However, as the total order of zeros can never exceed the total order of poles, additional poles at zero are automatically added when necessary to compensate for the difference in their total orders.
+Each root has individual `+`, `-`, and `X` buttons. Plus (`+`) increases the root order by one, and minus (`-`) decreases the root order by one. If the order of the root is one, further reducing the order of the root completely erases the root. So does the `X` button for roots of any arbitrary order. However, the total order of zeros can never exceed the total order of poles. In order to preserve this, it is impossible to reduce the total order of poles to a value less than the total order of zeros. Besides that, additional poles at zero are automatically added if the total order of zeros increases to a value exceeding the total order of poles.
 
 - Moving a plot:
 

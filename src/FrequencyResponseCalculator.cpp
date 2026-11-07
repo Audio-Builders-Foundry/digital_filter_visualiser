@@ -56,11 +56,9 @@ void FrequencyResponseCalculator::calculateForAngle(
     magnitude = 1;
     phase = 0;
     double ampCoeff, phaseCoeff;
-    int totalOrder = 0;
     for (auto pole : filterState->poles)
     {
         int order = std::abs(pole->order.get());
-        totalOrder -= order * (pole->isReal() ? 1 : 2);
         calculateCoefficients(angle, pole, ampCoeff, phaseCoeff);
         magnitude *= std::pow(ampCoeff, order); // later it turns to 1 / magnitudes[i]
         phase -= phaseCoeff * order;
@@ -71,7 +69,6 @@ void FrequencyResponseCalculator::calculateForAngle(
     for (auto zero : filterState->zeros)
     {
         int order = zero->order.get();
-        totalOrder += order * (zero->isReal() ? 1 : 2);
         calculateCoefficients(angle, zero, ampCoeff, phaseCoeff);
         magnitude *= std::pow(ampCoeff, order);
         phase += phaseCoeff * order;
