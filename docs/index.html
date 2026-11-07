@@ -17,8 +17,8 @@
 
         <div class="container">
 
-            <h1> Digital Filter Visualizer </h1>
-            <h2> an intuitive way to create, visualize and evaluate your digital filter </h2>
+            <h1 id="filter-name"> Digital Filter Visualizer </h1>
+            <h2 id="poster-title"> an intuitive way to create, visualize and evaluate your digital filter </h2>
 
             <div class="abstract">
                 <div class="mini-header"> ABSTRACT </div>  <br>
@@ -471,115 +471,121 @@
               <div class="fig"> Fig.3 Methods for reducing amount of iterations </div>
 
 
-              <h2 id="shifted-qr">3.1. Shifted QR</h2>
-              <p>A popular modification is to perform <em>shifting</em>: form
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mo>=</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><mi>μ</mi><mi>I</mi></mrow><annotation encoding="application/x-tex">{\widetilde{A_k} = A_k - \mu I}</annotation></semantics></math>
-              for some number
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>,
-              compute
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo accent="true">̃</mo></mover><mo>=</mo><msubsup><mi>Q</mi><mi>k</mi><mi>T</mi></msubsup><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><msub><mi>Q</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\widetilde{A_{k+1}} = Q_k^T \widetilde{A_k} Q_k</annotation></semantics></math>
-              obtaining
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mi>k</mi></msub><annotation encoding="application/x-tex">Q_k</annotation></semantics></math>
-              from the QR factorization of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><annotation encoding="application/x-tex">\widetilde{A_k}</annotation></semantics></math>,
-              then obtain
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mover><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo accent="true">̃</mo></mover><mo>+</mo><mi>μ</mi><mi>I</mi></mrow><annotation encoding="application/x-tex">A_{k+1} = \widetilde{A_{k+1}} + \mu I</annotation></semantics></math>.
-              If
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>λ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_1, \dots, \lambda_n</annotation></semantics></math>
-              are the eigenvalues of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>,
-              then
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>−</mo><mi>μ</mi><mo>,</mo><mi>…</mi><msub><mi>λ</mi><mi>n</mi></msub><mo>−</mo><mi>μ</mi></mrow><annotation encoding="application/x-tex">\lambda_1 - \mu, \dots \lambda_n - \mu</annotation></semantics></math>
-              are the eigenvalues of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><annotation encoding="application/x-tex">\widetilde{A_k}</annotation></semantics></math>;
-              when the eigenvalues are ordered
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>≥</mo><mi>…</mi><mo>≥</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mi>n</mi></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">\left\vert \lambda_1 \right\vert \geq \dots \geq \left\vert \lambda_n \right\vert</annotation></semantics></math>,
-              we see the largest magnitude of a subdiagonal element of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
-              is now
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><msup><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo>−</mo><mi>μ</mi><mo stretchy="true" form="postfix">|</mo></mrow><mi>k</mi></msup><msup><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo>−</mo><mi>μ</mi><mo stretchy="true" form="postfix">|</mo></mrow><mi>k</mi></msup></mfrac><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( \frac{\left\vert \lambda_2 - \mu \right\vert^k}{\left\vert \lambda_1 - \mu \right\vert^k} \right)</annotation></semantics></math>.
-              When
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
-              is approximately
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\lambda_2</annotation></semantics></math>,
-              convergence will be very fast. Often the bottom-right entry of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
-              is chosen as an approximation.</p>
+              <details>
+                  <summary> <h2 id="shifted-qr">3.1. Shifted QR</h2> </summary>
+
+                  <p>A popular modification is to perform <em>shifting</em>: form
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mo>=</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><mi>μ</mi><mi>I</mi></mrow><annotation encoding="application/x-tex">{\widetilde{A_k} = A_k - \mu I}</annotation></semantics></math>
+                  for some number
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>,
+                  compute
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo accent="true">̃</mo></mover><mo>=</mo><msubsup><mi>Q</mi><mi>k</mi><mi>T</mi></msubsup><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><msub><mi>Q</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\widetilde{A_{k+1}} = Q_k^T \widetilde{A_k} Q_k</annotation></semantics></math>
+                  obtaining
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mi>k</mi></msub><annotation encoding="application/x-tex">Q_k</annotation></semantics></math>
+                  from the QR factorization of
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><annotation encoding="application/x-tex">\widetilde{A_k}</annotation></semantics></math>,
+                  then obtain
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mover><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo accent="true">̃</mo></mover><mo>+</mo><mi>μ</mi><mi>I</mi></mrow><annotation encoding="application/x-tex">A_{k+1} = \widetilde{A_{k+1}} + \mu I</annotation></semantics></math>.
+                  If
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>λ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_1, \dots, \lambda_n</annotation></semantics></math>
+                  are the eigenvalues of
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>,
+                  then
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>−</mo><mi>μ</mi><mo>,</mo><mi>…</mi><msub><mi>λ</mi><mi>n</mi></msub><mo>−</mo><mi>μ</mi></mrow><annotation encoding="application/x-tex">\lambda_1 - \mu, \dots \lambda_n - \mu</annotation></semantics></math>
+                  are the eigenvalues of
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><annotation encoding="application/x-tex">\widetilde{A_k}</annotation></semantics></math>;
+                  when the eigenvalues are ordered
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>≥</mo><mi>…</mi><mo>≥</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mi>n</mi></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">\left\vert \lambda_1 \right\vert \geq \dots \geq \left\vert \lambda_n \right\vert</annotation></semantics></math>,
+                  we see the largest magnitude of a subdiagonal element of
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+                  is now
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><msup><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo>−</mo><mi>μ</mi><mo stretchy="true" form="postfix">|</mo></mrow><mi>k</mi></msup><msup><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo>−</mo><mi>μ</mi><mo stretchy="true" form="postfix">|</mo></mrow><mi>k</mi></msup></mfrac><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( \frac{\left\vert \lambda_2 - \mu \right\vert^k}{\left\vert \lambda_1 - \mu \right\vert^k} \right)</annotation></semantics></math>.
+                  When
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+                  is approximately
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\lambda_2</annotation></semantics></math>,
+                  convergence will be very fast. Often the bottom-right entry of
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+                  is chosen as an approximation.</p>
+              </details>
 
 
+              <details>
+                    <summary> <h2 id="double-shifted-qr">3.2. Double Shifted QR</h2> </summary>
 
-              <h2 id="double-shifted-qr">3.2. Double Shifted QR</h2>
-              <p>When
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\lambda_2</annotation></semantics></math>
-              is complex, no entry of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
-              will serve as a good approximation since the entries are all real. We
-              also don’t want to shift by a complex number, for then the entries of
-              the matrix will be complex. Instead we perform two shifts: <br><br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mn>1</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>;</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mn>2</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><msub><mi>A</mi><mi>k</mi></msub><mn>2</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
-                \widetilde{A_k}_1 &amp;= A_k - a_1I \\
-                                  &amp;= {Q_k}_1 {R_k}_1, \\
-                {A_k}_1 &amp;= {R_k}_1 {Q_k}_1 + a_1I; \\
-                \widetilde{A_k}_2 &amp;= {A_k}_1 - a_2I \\
-                                  &amp;= {Q_k}_2 {R_k}_2, \\
-                {A_k}_2 &amp;= {R_k}_2 {Q_k}_2 + a_2I.
-              \end{align*}</annotation></semantics></math> <br> We see<br><br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><mo>−</mo><mi>s</mi><msub><mi>A</mi><mi>k</mi></msub><mo>+</mo><mi>t</mi><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mo>:</mo><msub><mi>M</mi><mi>k</mi></msub><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
-                \left( {Q_k}_1 {Q_k}_2 \right)\left( {R_k}_2 {R_k}_1 \right)
-                &amp;= {Q_k}_1\left( {A_k}_1 - a_2I \right){R_k}_1 \\
-                &amp;= {Q_k}_1\left( {R_k}_1{Q_k}_1 + a_1I - a_2I \right){R_k}_1 \\
-                &amp;= \left( A_k - a_1I \right)\left( A_k - a_1I \right) + a_1\left( A_k - a_1I \right) - a_2\left( A_k - a_1I \right) \\
-                &amp;= \left( A_k - a_1I \right)\left( A_k - a_1I + a_1I - a_2I \right) \\
-                &amp;= \left( A_k - a_1I \right)\left( A_k - a_2I \right) \\
-                &amp;= A_k^2 - sA_k + tI \\
-                &amp;=: M_k,
-              \end{align*}</annotation></semantics></math><br> where
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><msub><mi>a</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">s = a_1 + a_2</annotation></semantics></math>
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><msub><mi>a</mi><mn>1</mn></msub><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">t = a_1a_2</annotation></semantics></math>
-              for shifts
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>a</mi><mn>1</mn></msub><mo>,</mo><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">a_1, a_2</annotation></semantics></math>.
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mn>1</mn></msub><annotation encoding="application/x-tex">a_1</annotation></semantics></math>
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mn>2</mn></msub><annotation encoding="application/x-tex">a_2</annotation></semantics></math>
-              are usually taken to be the eigenvalues of the bottom-right
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 2</annotation></semantics></math>
-              diagonal block
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math>
-              of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>;
-              we can then compute
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
-              directly from the coefficients of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math>
-              as
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>H</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">s = \mathrm{tr}\left( H \right)</annotation></semantics></math>,
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">t</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>H</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">t = \mathrm{det}\left( H \right)</annotation></semantics></math>.
-              Since
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
-              are real, it is possible to choose
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><annotation encoding="application/x-tex">{Q_k}_1</annotation></semantics></math>
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><annotation encoding="application/x-tex">{Q_k}_2</annotation></semantics></math>
-              such that
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Z</mi><mi>k</mi></msub><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">Z_k = {Q_k}_1 {Q_k}_2</annotation></semantics></math>
-              is a real orthogonal matrix. Thus we may execute the double shifted
-              procedure <br><br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>M</mi><mi>k</mi></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><mo>−</mo><mi>s</mi><msub><mi>A</mi><mi>k</mi></msub><mo>+</mo><mi>t</mi><mi>I</mi><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><mi>Z</mi><mi>k</mi></msub><msub><mi>R</mi><mi>k</mi></msub><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><msub><mi>Z</mi><mi>k</mi></msub><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> real</mtext></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>Z</mi><mi>k</mi><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>Z</mi><mi>k</mi></msub><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
-                M_k &amp;= A_k^2 - sA_k + tI, \\
-                    &amp;= Z_k R_k \text{ with } Z_k \text{ real}, \\
-                A_{k+1} &amp;= Z_k^T A_k Z_k.
-              \end{align*}</annotation></semantics></math> <br> Unfortunately, calculating
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><annotation encoding="application/x-tex">A_k^2</annotation></semantics></math>
-              requires
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( n^3 \right)</annotation></semantics></math>
-              operations. We can however exploit a result of upper Hessenberg matrices
-              to avoid the explicit matrix multiplication.</p>
+                  <p>When
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\lambda_2</annotation></semantics></math>
+                  is complex, no entry of
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>
+                  will serve as a good approximation since the entries are all real. We
+                  also don’t want to shift by a complex number, for then the entries of
+                  the matrix will be complex. Instead we perform two shifts: <br><br>
+                  <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mn>1</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>;</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mover><msub><mi>A</mi><mi>k</mi></msub><mo accent="true">̃</mo></mover><mn>2</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><msub><mi>A</mi><mi>k</mi></msub><mn>2</mn></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
+                    \widetilde{A_k}_1 &amp;= A_k - a_1I \\
+                                      &amp;= {Q_k}_1 {R_k}_1, \\
+                    {A_k}_1 &amp;= {R_k}_1 {Q_k}_1 + a_1I; \\
+                    \widetilde{A_k}_2 &amp;= {A_k}_1 - a_2I \\
+                                      &amp;= {Q_k}_2 {R_k}_2, \\
+                    {A_k}_2 &amp;= {R_k}_2 {Q_k}_2 + a_2I.
+                  \end{align*}</annotation></semantics></math> <br> We see<br><br>
+                  <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>2</mn></msub><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>A</mi><mi>k</mi></msub><mn>1</mn></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><msub><msub><mi>R</mi><mi>k</mi></msub><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>1</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>A</mi><mi>k</mi></msub><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><mo>−</mo><mi>s</mi><msub><mi>A</mi><mi>k</mi></msub><mo>+</mo><mi>t</mi><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mo>:</mo><msub><mi>M</mi><mi>k</mi></msub><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
+                    \left( {Q_k}_1 {Q_k}_2 \right)\left( {R_k}_2 {R_k}_1 \right)
+                    &amp;= {Q_k}_1\left( {A_k}_1 - a_2I \right){R_k}_1 \\
+                    &amp;= {Q_k}_1\left( {R_k}_1{Q_k}_1 + a_1I - a_2I \right){R_k}_1 \\
+                    &amp;= \left( A_k - a_1I \right)\left( A_k - a_1I \right) + a_1\left( A_k - a_1I \right) - a_2\left( A_k - a_1I \right) \\
+                    &amp;= \left( A_k - a_1I \right)\left( A_k - a_1I + a_1I - a_2I \right) \\
+                    &amp;= \left( A_k - a_1I \right)\left( A_k - a_2I \right) \\
+                    &amp;= A_k^2 - sA_k + tI \\
+                    &amp;=: M_k,
+                  \end{align*}</annotation></semantics></math><br> where
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><msub><mi>a</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">s = a_1 + a_2</annotation></semantics></math>
+                  and
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><msub><mi>a</mi><mn>1</mn></msub><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">t = a_1a_2</annotation></semantics></math>
+                  for shifts
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>a</mi><mn>1</mn></msub><mo>,</mo><msub><mi>a</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">a_1, a_2</annotation></semantics></math>.
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mn>1</mn></msub><annotation encoding="application/x-tex">a_1</annotation></semantics></math>
+                  and
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mn>2</mn></msub><annotation encoding="application/x-tex">a_2</annotation></semantics></math>
+                  are usually taken to be the eigenvalues of the bottom-right
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 2</annotation></semantics></math>
+                  diagonal block
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math>
+                  of
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>k</mi></msub><annotation encoding="application/x-tex">A_k</annotation></semantics></math>;
+                  we can then compute
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
+                  and
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+                  directly from the coefficients of
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math>
+                  as
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>H</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">s = \mathrm{tr}\left( H \right)</annotation></semantics></math>,
+                  and
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">t</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>H</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">t = \mathrm{det}\left( H \right)</annotation></semantics></math>.
+                  Since
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
+                  and
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+                  are real, it is possible to choose
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><annotation encoding="application/x-tex">{Q_k}_1</annotation></semantics></math>
+                  and
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub><annotation encoding="application/x-tex">{Q_k}_2</annotation></semantics></math>
+                  such that
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Z</mi><mi>k</mi></msub><mo>=</mo><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>1</mn></msub><msub><msub><mi>Q</mi><mi>k</mi></msub><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">Z_k = {Q_k}_1 {Q_k}_2</annotation></semantics></math>
+                  is a real orthogonal matrix. Thus we may execute the double shifted
+                  procedure <br><br>
+                  <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>M</mi><mi>k</mi></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><mo>−</mo><mi>s</mi><msub><mi>A</mi><mi>k</mi></msub><mo>+</mo><mi>t</mi><mi>I</mi><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><mi>Z</mi><mi>k</mi></msub><msub><mi>R</mi><mi>k</mi></msub><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><msub><mi>Z</mi><mi>k</mi></msub><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> real</mtext></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msubsup><mi>Z</mi><mi>k</mi><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>Z</mi><mi>k</mi></msub><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align*}
+                    M_k &amp;= A_k^2 - sA_k + tI, \\
+                        &amp;= Z_k R_k \text{ with } Z_k \text{ real}, \\
+                    A_{k+1} &amp;= Z_k^T A_k Z_k.
+                  \end{align*}</annotation></semantics></math> <br> Unfortunately, calculating
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>A</mi><mi>k</mi><mn>2</mn></msubsup><annotation encoding="application/x-tex">A_k^2</annotation></semantics></math>
+                  requires
+                  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( n^3 \right)</annotation></semantics></math>
+                  operations. We can however exploit a result of upper Hessenberg matrices
+                  to avoid the explicit matrix multiplication.</p>
+
+              </details>
 
 
               <h2 id="subsec:implicitshift">3.3. Double Implicit Shift</h2>
@@ -736,7 +742,7 @@
 
               <p class="p1">High-order polynomials are acceptable for displaying the solution. However, if the filter is implemented as a single block, that is, as the ratio of these polynomials, the solution becomes numerically unstable. The coefficients are computed with finite precision, and the effect of rounding errors grows with the polynomial order. Besides a simple mismatch between the theoretical and the actual filter parameters, this increases the risk of instability: in theory the filter is stable (its poles are inside the unit circle), but rounding errors in the coefficients can make the actual filter unstable.</p>
               <p class="p1">To improve accuracy and reduce the risk of instability, the filter is implemented as a cascade of biquads, that is, second-order IIR filters connected in series. Second order is the lowest order that can represent complex-conjugate roots. In this form, the pole sensitivity (the ratio of the pole shift caused by an error in a coefficient to the error itself) stays minimal.</p>
-              <p class="p1">The effect of coefficient errors on the filter parameters can be reduced further by choosing which zeros and poles go into each biquad.</p> <br><br>
+              <p class="p1">The effect of coefficient errors on the filter parameters can be reduced further by choosing which zeros and poles go into each biquad.</p>
               <p class="p1">First, we need to find which poles can add the largest error to the processed signal. The average absolute error of a floating-point number is proportional to the value of this number. Therefore, the potential error of a filter can be estimated by its maximum gain, that is, its gain at the peak frequency. If the input signal is unknown, this gain measures the risk in the worst case. Here and below, the gain of a filter at a given frequency means the magnitude of the transfer function |<i>H</i>(<i>z</i>)| at the point <i>z</i> of the unit circle that corresponds to this frequency.</p>
 
 
@@ -794,15 +800,10 @@
                     \end{array}</annotation></semantics></math>
 
 
-
-
-
                     <p class="p1">Let <i>c</i> = cos(<i>ω</i>). Then  <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mrow><mo form="prefix" stretchy="true">|</mo><mi>A</mi><mo form="postfix" stretchy="true">|</mo></mrow><mn>2</mn></msup><annotation encoding="application/x-tex">|A|^{2}</annotation></semantics></math>  is a parabola that opens upward:</p>
 
 
                     <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mo form="prefix" stretchy="true">|</mo><mi>A</mi><mo form="postfix" stretchy="true">|</mo></mrow><mn>2</mn></msup><mo>=</mo><msup><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>a</mi><mn>2</mn></msub><mo form="postfix" stretchy="true">)</mo></mrow><mn>2</mn></msup><mo>+</mo><msubsup><mi>a</mi><mn>1</mn><mn>2</mn></msubsup><mo>+</mo><mn>2</mn><msub><mi>a</mi><mn>1</mn></msub><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub><mo form="postfix" stretchy="true">)</mo></mrow><mi>c</mi><mo>+</mo><mn>4</mn><msub><mi>a</mi><mn>2</mn></msub><msup><mi>c</mi><mn>2</mn></msup><mi>.</mi></mrow><annotation encoding="application/x-tex">|A|^{2} = \left( 1 - a_{2} \right)^{2} + a_{1}^{2} + 2a_{1}\left( 1 + a_{2} \right)c + 4a_{2}c^{2}.</annotation></semantics></math>
-
-
 
 
                     <p class="p1">Its minimum is reached at</p>
@@ -823,7 +824,6 @@
 
                 </details>
 
-	      <br><br>
 
               <p class="p1">If a stage in the chain of biquads adds an error, the following stages can no longer tell the error from the signal, so they cannot improve the signal-to-error ratio. The potential error can be reduced if a level increase is compensated by a level decrease inside the same biquad. To do this, each pole is paired with a zero. Poles with a higher gain at their peak frequency are paired first. From the zeros that do not have a pair yet, we choose the one that gives the strongest attenuation at the peak frequency of the pole. Zeros that amplify the signal at this frequency are not considered as candidates.</p>
               <p class="p1">If some zeros are left without a pair after this matching, they form an FIR filter placed after the IIR section.</p>
@@ -837,7 +837,7 @@
 
               <div class="mini-header"> Computing the frequency response </div>  <br>
 
-              <p class="p1">To plot the phase-frequency and magnitude-frequency response, it is necessary to determine the corresponding frequency functions. It is straightforward if the roots are known. Moreover, there is a simple geometric rule for calculating them. The only challenge lies in correctly constructing a continuous phase function, which requires the use of an "unwrapped" phase. A technique for computing it is described below. </p><br><br>
+              <p class="p1">To plot the phase-frequency and magnitude-frequency response, it is necessary to determine the corresponding frequency functions. It is straightforward if the roots are known. Moreover, there is a simple geometric rule for calculating them. The only challenge lies in correctly constructing a continuous phase function, which requires the use of an "unwrapped" phase. A technique for computing it is described below. </p>
 
               <p class="p1">The magnitude response and the phase response of the filter at the angular frequency <i>ω</i> are the magnitude and the argument of the transfer function <i>H</i>(<i>z</i>) at the point <i>z</i> of the unit circle at the angle <i>ω</i> to the real axis. The magnitude response in dimensionless units is <i>a</i>(<i>ω</i>) = |<i>H</i>(<i>z</i>)|, and the phase response is arg(<i>H</i>(<i>z</i>)), defined up to a multiple of 2<i>π</i>. With known roots, both are easy to compute as follows.</p>
               <p class="p1">Since 1 − <i>p</i><i><sub>i</sub></i><i>z</i><sup>−1</sup> = <i>z</i><sup>−1</sup>(<i>z</i> − <i>p</i><i><sub>i</sub></i>) and 1 − <i>q</i><i><sub>j</sub></i><i>z</i><sup>−1</sup> = <i>z</i><sup>−1</sup>(<i>z</i> − <i>q</i><i><sub>j</sub></i>), the transfer function can be written as</p>
