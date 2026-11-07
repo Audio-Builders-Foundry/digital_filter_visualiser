@@ -22,6 +22,7 @@ private:
 
     bool isFeedBackSynchronized = true;
     bool isFeedForwardSynchronized = true;
+    bool internalRootProcessing = false; // variable that is used to separate occasions when updating of the filterstate happens due to 1) manual edits of roots in complex plane, and 2) internal reconfiguration of filterstate (addition and removal of roots) as a result of manual coefficient edits.
     std::vector<double> ffcoeffs;
     std::vector<double> fbcoeffs;
     std::vector<double> ffcoeffsLastSync;

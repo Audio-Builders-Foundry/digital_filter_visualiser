@@ -159,6 +159,8 @@ void CoefficientsComponent::onCellChanged(int row, int col, double value)
 
 void CoefficientsComponent::updateFilterState()
 {
+    internalRootProcessing = true;
+
     auto isNumberOfPolesSufficient = [&]() -> bool {
         int i = 0;
         while (i < ffcoeffs.size() && ffcoeffs[i] == 0)
@@ -278,6 +280,7 @@ void CoefficientsComponent::updateFilterState()
         }
     }
     isFeedBackSynchronized = isFeedForwardSynchronized = true;
+    internalRootProcessing = false;
     recalculateButton.setEnabled(false);
 }
 
@@ -302,7 +305,8 @@ void CoefficientsComponent::valueTreeChildAdded (juce::ValueTree& node, juce::Va
     juce::ignoreUnused(node);
     juce::ignoreUnused(child);
 
-    updateCoeffTable();
+    if (!internalRootProcessing)
+        updateCoeffTable();
 }
 
 void CoefficientsComponent::valueTreeChildRemoved (juce::ValueTree& node, juce::ValueTree& child, int idx)
@@ -318,7 +322,8 @@ void CoefficientsComponent::valueTreeChildRemoved (juce::ValueTree& node, juce::
         coeffTable.updateContent();
         return;
     }
-    updateCoeffTable();
+    if (!internalRootProcessing)
+        updateCoeffTable();
 }
 
 void CoefficientsComponent::updateCoeffTable()
