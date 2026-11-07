@@ -113,118 +113,128 @@
               from its coefficients.</p>
 
 
-              <h2 id="companion-matrix">2.1. Companion Matrix</h2>
-              <p>To start, we need to construct a matrix whose eigenvalues are the
-              roots of the polynomial we want to solve. This can be done as follows:
-              given a polynomial
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mi>a</mi><mi>n</mi></msub><msup><mi>x</mi><mi>n</mi></msup><mo>+</mo><mi>…</mi><mo>+</mo><msub><mi>a</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">{p(x) = a_nx^n + \dots + a_0}</annotation></semantics></math>,
-              the matrix <br><br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>0</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>2</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
-                A = \begin{bmatrix}
-                  0      &amp; 0      &amp; \cdots &amp; 0      &amp; -a_0   \\
-                  1      &amp; 0      &amp; \cdots &amp; 0      &amp; -a_1   \\
-                  0      &amp; 1      &amp; \cdots &amp; 0      &amp; -a_2   \\
-                  \vdots &amp; \vdots &amp; \ddots &amp; \vdots &amp; \vdots \\
-                  0      &amp; 0      &amp; \cdots &amp; 1      &amp; -a_{n-1}   \\
-                \end{bmatrix}
-              \end{equation*}</annotation></semantics></math> <br> has eigenvalues
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>λ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_1, \dots, \lambda_n</annotation></semantics></math>
-              such that
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>−</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo><mi>⋯</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>−</mo><msub><mi>λ</mi><mi>n</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">{p(x) = (x - \lambda_1)\cdots(x - \lambda_n)}</annotation></semantics></math>.
-              The matrix
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
-              is called the <em>companion matrix</em> of the polynomial
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>.
-              Note that the companion matrix has ones along the diagonal below the
-              main diagonal and zeros in all places below this subdiagonal; we call
-              any matrix with this property an <em>upper Hessenberg</em> matrix, or
-              more specifically, an <em>unreduced upper Hessenberg</em> matrix.
-              Finding the eigenvalues of upper Hessenberg matrices is a well-studied
-              problem, and exploiting this structure will play a key role in the
-              theory.</p>
+              <details>
+                    <summary> <h2 id="companion-matrix">2.1. Companion Matrix</h2> </summary>
 
+                    <p>To start, we need to construct a matrix whose eigenvalues are the
+                    roots of the polynomial we want to solve. This can be done as follows:
+                    given a polynomial
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mi>a</mi><mi>n</mi></msub><msup><mi>x</mi><mi>n</mi></msup><mo>+</mo><mi>…</mi><mo>+</mo><msub><mi>a</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">{p(x) = a_nx^n + \dots + a_0}</annotation></semantics></math>,
+                    the matrix <br><br>
+                    <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>0</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>1</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mn>2</mn></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><msub><mi>a</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                      A = \begin{bmatrix}
+                        0      &amp; 0      &amp; \cdots &amp; 0      &amp; -a_0   \\
+                        1      &amp; 0      &amp; \cdots &amp; 0      &amp; -a_1   \\
+                        0      &amp; 1      &amp; \cdots &amp; 0      &amp; -a_2   \\
+                        \vdots &amp; \vdots &amp; \ddots &amp; \vdots &amp; \vdots \\
+                        0      &amp; 0      &amp; \cdots &amp; 1      &amp; -a_{n-1}   \\
+                      \end{bmatrix}
+                    \end{equation*}</annotation></semantics></math> <br> has eigenvalues
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>λ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_1, \dots, \lambda_n</annotation></semantics></math>
+                    such that
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>−</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo><mi>⋯</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>−</mo><msub><mi>λ</mi><mi>n</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">{p(x) = (x - \lambda_1)\cdots(x - \lambda_n)}</annotation></semantics></math>.
+                    The matrix
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+                    is called the <em>companion matrix</em> of the polynomial
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>.
+                    Note that the companion matrix has ones along the diagonal below the
+                    main diagonal and zeros in all places below this subdiagonal; we call
+                    any matrix with this property an <em>upper Hessenberg</em> matrix, or
+                    more specifically, an <em>unreduced upper Hessenberg</em> matrix.
+                    Finding the eigenvalues of upper Hessenberg matrices is a well-studied
+                    problem, and exploiting this structure will play a key role in the
+                    theory.</p>
 
-              <h2 id="canonical-forms">2.2. Canonical Forms</h2>
-              <p>We list some matrices whose eigenvalues can be determined directly
-              from its coefficients. The simplest of these are diagonal matrices: <br><br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mn>1</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mn>2</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mi>n</mi></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
-                D = \begin{bmatrix}
-                  d_1    &amp; 0      &amp; \cdots &amp; 0      \\
-                  0      &amp; d_2    &amp; \cdots &amp; 0      \\
-                  \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
-                  0      &amp; 0      &amp; \cdots &amp; d_n
-                \end{bmatrix}
-              \end{equation*}</annotation></semantics></math> <br> whose eigenvalues are
-              simply their diagonal entries. The same is true for upper triangular
-              matrices: <br><br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>11</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>12</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mn>1</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>22</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mn>2</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mi>n</mi><mi>n</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">\begin{equation*}
-                T = \begin{bmatrix}
-                  t_{11} &amp; t_{12} &amp; \cdots &amp; t_{1n} \\
-                  0      &amp; t_{22} &amp; \cdots &amp; t_{2n} \\
-                  \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
-                  0      &amp; 0      &amp; \cdots &amp; t_{nn}
-                \end{bmatrix}.
-              \end{equation*}</annotation></semantics></math> <br>These matrices can be
-              targeted when finding the eigenvalues of a matrix with complex entries
-              (diagonal when the matrix is hermitian, upper triangular otherwise).
-              Since we are working with polynomials with real coefficients, and
-              therefore matrices with real entries, we will need to target a slightly
-              less intuitive form, which we call block upper triangular:<br><br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>11</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>12</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mn>1</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>22</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mn>2</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mi>n</mi><mi>n</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
-                T = \begin{bmatrix}
-                  T_{11} &amp; T_{12} &amp; \cdots &amp; T_{1n} \\
-                  0      &amp; T_{22} &amp; \cdots &amp; T_{2n} \\
-                  \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
-                  0      &amp; 0      &amp; \cdots &amp; T_{nn}
-                \end{bmatrix}
-              \end{equation*}</annotation></semantics></math><br> where each
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>T</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">T_{ij}</annotation></semantics></math>
-              is a square matrix, all matrices in the same row have the same number of
-              rows, all matrices in the same column have the same number of columns,
-              and the zeros denote zero matrices. The set of eigenvalues of a matrix
-              of this form is the union of the sets of eigenvalues of each matrix
-              along the main diagonal. A block upper triangular matrix made up of
-              either
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">1 \times 1</annotation></semantics></math>
-              or
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 2</annotation></semantics></math>
-              matrices is known as a <em>reduced upper Hessenberg</em> matrix. Our
-              goal is to bring the unreduced upper Hessenberg companion matrix to
-              reduced upper Hessenberg form by bringing some subdiagonal entries to
-              zero.</p>
+              </details>
 
+              <details>
+                    <summary> <h2 id="canonical-forms">2.2. Canonical Forms</h2> </summary>
 
-              <h2 id="similar-matrices">2.3. Similar Matrices</h2>
-              <p>Two square matrices
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>
-              with the same dimension have the same eigenvalues whenever there is a
-              matrix
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
-              such that
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><msup><mi>X</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>A</mi><mi>X</mi></mrow><annotation encoding="application/x-tex">B = X^{-1} A X</annotation></semantics></math>;
-              we say
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>
-              are <em>similar matrices</em> in this case. Given a matrix
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>,
-              forming
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><msup><mi>X</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>A</mi><mi>X</mi></mrow><annotation encoding="application/x-tex">B = X^{-1} A X</annotation></semantics></math>
-              for some matrix
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
-              is called <em>conjugation of A by X</em>. We will refer to this
-              operation as applying a <em>similarity transformation</em> to
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>.
-              A matrix
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
-              is called <em>orthogonal</em> if
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>Q</mi><mi>T</mi></msup><mo>=</mo><msup><mi>Q</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">Q^T = Q^{-1}</annotation></semantics></math>;
-              these are a good choice for use in similarity transformations since it
-              avoids having to form the inverse of a matrix (an expensive operation in
-              general). We will call a similarity transformation using an orthogonal
-              matrix an <em>orthogonal similarity transformation</em>.</p>
+                    <p>We list some matrices whose eigenvalues can be determined directly
+                    from its coefficients. The simplest of these are diagonal matrices: <br><br>
+                    <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mn>1</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mn>2</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>d</mi><mi>n</mi></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                      D = \begin{bmatrix}
+                        d_1    &amp; 0      &amp; \cdots &amp; 0      \\
+                        0      &amp; d_2    &amp; \cdots &amp; 0      \\
+                        \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+                        0      &amp; 0      &amp; \cdots &amp; d_n
+                      \end{bmatrix}
+                    \end{equation*}</annotation></semantics></math> <br> whose eigenvalues are
+                    simply their diagonal entries. The same is true for upper triangular
+                    matrices: <br><br>
+                    <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>11</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>12</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mn>1</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mn>22</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mn>2</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>t</mi><mrow><mi>n</mi><mi>n</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                      T = \begin{bmatrix}
+                        t_{11} &amp; t_{12} &amp; \cdots &amp; t_{1n} \\
+                        0      &amp; t_{22} &amp; \cdots &amp; t_{2n} \\
+                        \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+                        0      &amp; 0      &amp; \cdots &amp; t_{nn}
+                      \end{bmatrix}.
+                    \end{equation*}</annotation></semantics></math> <br>These matrices can be
+                    targeted when finding the eigenvalues of a matrix with complex entries
+                    (diagonal when the matrix is hermitian, upper triangular otherwise).
+                    Since we are working with polynomials with real coefficients, and
+                    therefore matrices with real entries, we will need to target a slightly
+                    less intuitive form, which we call block upper triangular:<br><br>
+                    <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>11</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>12</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mn>1</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mn>22</mn></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mn>2</mn><mi>n</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋱</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>⋮</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mi>⋯</mi></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>T</mi><mrow><mi>n</mi><mi>n</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                      T = \begin{bmatrix}
+                        T_{11} &amp; T_{12} &amp; \cdots &amp; T_{1n} \\
+                        0      &amp; T_{22} &amp; \cdots &amp; T_{2n} \\
+                        \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+                        0      &amp; 0      &amp; \cdots &amp; T_{nn}
+                      \end{bmatrix}
+                    \end{equation*}</annotation></semantics></math><br> where each
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>T</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">T_{ij}</annotation></semantics></math>
+                    is a square matrix, all matrices in the same row have the same number of
+                    rows, all matrices in the same column have the same number of columns,
+                    and the zeros denote zero matrices. The set of eigenvalues of a matrix
+                    of this form is the union of the sets of eigenvalues of each matrix
+                    along the main diagonal. A block upper triangular matrix made up of
+                    either
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">1 \times 1</annotation></semantics></math>
+                    or
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2 \times 2</annotation></semantics></math>
+                    matrices is known as a <em>reduced upper Hessenberg</em> matrix. Our
+                    goal is to bring the unreduced upper Hessenberg companion matrix to
+                    reduced upper Hessenberg form by bringing some subdiagonal entries to
+                    zero.</p>
+
+              </details>
+
+             <details>
+                    <summary> <h2 id="similar-matrices">2.3. Similar Matrices</h2> </summary>
+
+                    <p>Two square matrices
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+                    and
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>
+                    with the same dimension have the same eigenvalues whenever there is a
+                    matrix
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
+                    such that
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><msup><mi>X</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>A</mi><mi>X</mi></mrow><annotation encoding="application/x-tex">B = X^{-1} A X</annotation></semantics></math>;
+                    we say
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+                    and
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>
+                    are <em>similar matrices</em> in this case. Given a matrix
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>,
+                    forming
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><msup><mi>X</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>A</mi><mi>X</mi></mrow><annotation encoding="application/x-tex">B = X^{-1} A X</annotation></semantics></math>
+                    for some matrix
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
+                    is called <em>conjugation of A by X</em>. We will refer to this
+                    operation as applying a <em>similarity transformation</em> to
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>.
+                    A matrix
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
+                    is called <em>orthogonal</em> if
+                    <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>Q</mi><mi>T</mi></msup><mo>=</mo><msup><mi>Q</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">Q^T = Q^{-1}</annotation></semantics></math>;
+                    these are a good choice for use in similarity transformations since it
+                    avoids having to form the inverse of a matrix (an expensive operation in
+                    general). We will call a similarity transformation using an orthogonal
+                    matrix an <em>orthogonal similarity transformation</em>.</p>
+
+              </details>
 
 
               <h2 id="qr-decomposition">2.4. QR Decomposition</h2>
@@ -249,7 +259,16 @@
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mi>k</mi></msub><mo>=</mo><msub><mi>Q</mi><mi>k</mi></msub><msub><mi>R</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">A_k = Q_k R_k</annotation></semantics></math>,
               we form
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msubsup><mi>Q</mi><mi>k</mi><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>Q</mi><mi>k</mi></msub><mo>=</mo><msub><mi>R</mi><mi>k</mi></msub><msub><mi>Q</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">A_{k+1} = Q_k^T A_k Q_k = R_k Q_k</annotation></semantics></math>.
-              There are some choices for how to perform the decomposition.</p>
+              There are some choices for how to perform the decomposition (Fig 2).</p>
+
+
+              <object class="diagram" data="svg/How to find Q.svg" type="image/svg+xml">
+                <!-- Fallback content if browser doesn't support SVG -->
+                <img src="fallback-map.png" alt="Static Map">
+              </object>
+              <div class="fig"> Fig.2 QR Decomposition </div>
+
+
 
               <h3 id="triangular-orthogonalization">2.4.1. Triangular Orthogonalization</h3>
               <p>The most famous technique, known as the <em>Gram-Schmidt
@@ -290,13 +309,19 @@
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><msub><mi>Q</mi><mn>1</mn></msub><mi>⋯</mi><msub><mi>Q</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">Q = Q_1 \cdots Q_n</annotation></semantics></math>.</p>
               <p>There are two possible forms for the
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mi>j</mi></msub><annotation encoding="application/x-tex">Q_j</annotation></semantics></math>:
-              Householder reflections and Givens rotations. A Householder reflection
+              Householder reflections and Givens rotations.
+
+              <br><br> 1. Householder Reflection
+
+              <br><br> A Householder reflection
               is a reflection of a vector about a hyperplane through the origin. One
               can be represented by the symmetric orthogonal matrix
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>=</mo><mi>I</mi><mo>−</mo><mn>2</mn><mi>v</mi><msup><mi>v</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">H = I - 2vv^T</annotation></semantics></math>,
               where
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>v</mi><annotation encoding="application/x-tex">v</annotation></semantics></math>
-              is the normal vector of the hyperplane. To bring
+              is the normal vector of the hyperplane.
+
+              <br><br> To bring
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
               to upper triangular form using Householder reflections, we zero out the
               subdiagonal elements of each column. For the first column, we want to
@@ -329,41 +354,48 @@
               update requires
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( n^2 \right)</annotation></semantics></math>
               operations.</p>
-              <p>A Givens rotation is a rotation in the plane spanned by two basis
-              vectors. We can bring a single non-zero subdiagonal element of a column
-              of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
-              to zero by <br><br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mi>c</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><mi>s</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>s</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>c</mi></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mi>r</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
-                \begin{bmatrix}
-                  c &amp; -s \\
-                  s &amp; c
-                \end{bmatrix} \begin{bmatrix}
-                  a_{j,j} \\
-                  a_{j+1,j}
-                \end{bmatrix} = \begin{bmatrix}
-                  r \\
-                  0
-                \end{bmatrix}
-              \end{equation*}</annotation></semantics></math> <br>where
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">a_{j,j}</annotation></semantics></math>
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">a_{j+1,j}</annotation></semantics></math>
-              are the diagonal and subdiagonal elements of the
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>j</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">h</mi></mrow></msup><annotation encoding="application/x-tex">j^{\mathrm{th}}</annotation></semantics></math>
-              column of
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>,
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><msqrt><mrow><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub></mrow></msqrt></mrow><annotation encoding="application/x-tex">r = \sqrt{a_{j,j} + a_{j+1,j}}</annotation></semantics></math>,
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>=</mo><mfrac><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><mi>r</mi></mfrac></mrow><annotation encoding="application/x-tex">c = \frac{a_{j,j}}{r}</annotation></semantics></math>,
-              and
-              <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mi>−</mi><mfrac><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub><mi>r</mi></mfrac></mrow><annotation encoding="application/x-tex">s = -\frac{a_{j+1,j}}{r}</annotation></semantics></math>.
-              In <a href="#subsec:implicitshift" data-reference-type="ref+label"
-              data-reference="subsec:implicitshift">3.3</a>, we will require
-              operations that bring 2 subdiagonal entries to zero instead of 1. For
-              this reason, it is more convenient to work with Householder reflections.
-              We never implemented a version of the QR algorithm using Givens
-              rotations, and so cannot comment on whether any of their potential
-              advantages can be realized in practice.</p>
+
+
+              <details>
+                    <summary> 2. Givens Rotation </summary><p>
+
+                        A Givens rotation is a rotation in the plane spanned by two basis
+                      vectors. We can bring a single non-zero subdiagonal element of a column
+                      of
+                      <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+                      to zero by <br><br>
+                      <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mi>c</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>−</mi><mi>s</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>s</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>c</mi></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mi>r</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation*}
+                        \begin{bmatrix}
+                          c &amp; -s \\
+                          s &amp; c
+                        \end{bmatrix} \begin{bmatrix}
+                          a_{j,j} \\
+                          a_{j+1,j}
+                        \end{bmatrix} = \begin{bmatrix}
+                          r \\
+                          0
+                        \end{bmatrix}
+                      \end{equation*}</annotation></semantics></math> <br>where
+                      <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">a_{j,j}</annotation></semantics></math>
+                      and
+                      <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">a_{j+1,j}</annotation></semantics></math>
+                      are the diagonal and subdiagonal elements of the
+                      <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>j</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">h</mi></mrow></msup><annotation encoding="application/x-tex">j^{\mathrm{th}}</annotation></semantics></math>
+                      column of
+                      <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>,
+                      <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><msqrt><mrow><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub></mrow></msqrt></mrow><annotation encoding="application/x-tex">r = \sqrt{a_{j,j} + a_{j+1,j}}</annotation></semantics></math>,
+                      <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>=</mo><mfrac><msub><mi>a</mi><mrow><mi>j</mi><mo>,</mo><mi>j</mi></mrow></msub><mi>r</mi></mfrac></mrow><annotation encoding="application/x-tex">c = \frac{a_{j,j}}{r}</annotation></semantics></math>,
+                      and
+                      <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mi>−</mi><mfrac><msub><mi>a</mi><mrow><mi>j</mi><mo>+</mo><mn>1</mn><mo>,</mo><mi>j</mi></mrow></msub><mi>r</mi></mfrac></mrow><annotation encoding="application/x-tex">s = -\frac{a_{j+1,j}}{r}</annotation></semantics></math>.
+                      In <a href="#subsec:implicitshift" data-reference-type="ref+label"
+                      data-reference="subsec:implicitshift">3.3</a>, we will require
+                      operations that bring 2 subdiagonal entries to zero instead of 1. For
+                      this reason, it is more convenient to work with Householder reflections.
+                      We never implemented a version of the QR algorithm using Givens
+                      rotations, and so cannot comment on whether any of their potential
+                      advantages can be realized in practice.</p>
+
+              </details>
 
               <h1 id="convergence">3. CONVERGENCE</h1>
 
@@ -418,6 +450,13 @@
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow><mo>−</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">\left\vert \lambda_1 \right\vert - \left\vert \lambda_2 \right\vert</annotation></semantics></math>
               is very small, convergence will be very slow. We are therefore motivated
               to modify the strategy to speed up convergence.</p>
+
+
+              <object class="diagram" data="svg/Reduce iterations.svg" type="image/svg+xml">
+                <!-- Fallback content if browser doesn't support SVG -->
+                <img src="fallback-map.png" alt="Static Map">
+              </object>
+              <div class="fig"> Fig.3 Methods for reducing amount of iterations </div>
 
 
               <h2 id="shifted-qr">3.1. Shifted QR</h2>
