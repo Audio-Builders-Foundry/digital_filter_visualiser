@@ -40,12 +40,23 @@
 
            <div class="abstract">
 
-              <div class="mini-header"> OVERVIEW </div> <br>
+              <div class="mini-header"> Coefficients to Roots </div> <br>
+
+
+              <h1 id="shifted-qr">1. OVERVIEW</h1>
 
               <p>There are no closed-form solutions for polynomials of degree 5 or
-              greater; iterative methods are required. Algorithms largely fall into
-              one of two broad categories: Newton’s method-based solvers and
-              eigenvalue solvers.</p>
+              greater; iterative methods are required. Here we will discuss the different methods for solving polynimials (Fig.1). Algorithms largely fall into one of two broad categories: Newton’s method-based solvers and eigenvalue solvers.</p>
+
+              <object class="diagram" data="svg/Chart.svg" type="image/svg+xml">
+                <!-- Fallback content if browser doesn't support SVG -->
+                <img src="fallback-map.png" alt="Static Map">
+              </object>
+
+              <div class="fig"> Fig.1 Overview of the methods discussed in this poster </div>
+
+
+
               <p>Newton’s method is a technique for finding roots of any function, not
               just polynomials. While it is relatively simple and can be applied to
               polynomials as well, Newton’s method has problems with convergence,
@@ -53,6 +64,8 @@
               There are specializations of Newton’s method for polynomials that try to
               address these problems, such as the Aberth-Ehrlich method, but we found
               these insufficient.</p>
+
+
               <p>Eigenvalue solvers use a method for computing the eigenvalues of a
               matrix whose eigenvalues are the roots of the polynomial we want to
               solve. Compared to Newton solvers, they require more sophisticated
@@ -90,11 +103,8 @@
               implementation and the post processing technique for clustering
               higher-order roots.</p>
 
-            </div>
 
-           <div class="abstract">
-
-              <div class="mini-header"> STRATEGY </div> <br>
+              <h1 id="shifted-qr">2. STRATEGY</h1>
 
               <p>We will construct a matrix whose eigenvalues are the roots of the
               polynomial we want to solve. Then we will iteratively apply operations
@@ -354,12 +364,8 @@
               We never implemented a version of the QR algorithm using Givens
               rotations, and so cannot comment on whether any of their potential
               advantages can be realized in practice.</p>
-            </div>
 
-
-           <div class="abstract">
-
-              <div class="mini-header"> CONVERGENCE </div> <br>
+              <h1 id="shifted-qr">3. CONVERGENCE</h1>
 
               <p>The basic QR iteration computes
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msubsup><mi>Q</mi><mi>k</mi><mi>T</mi></msubsup><msub><mi>A</mi><mi>k</mi></msub><msub><mi>Q</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">A_{k+1} = Q_k^T A_k Q_k</annotation></semantics></math>;
@@ -608,13 +614,8 @@
               <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\left( n^2 \right)</annotation></semantics></math>
               operations.</p>
 
-            </div>
 
-
-
-           <div class="abstract">
-
-              <div class="mini-header"> IMPLEMENTATION </div> <br>
+              <h1 id="shifted-qr">4. IMPLEMENTATION </h1>
 
               <p>We use the double implicit shift QR algorithm. All matrices are
               stored in contiguous arrays of doubles. The threshold for decoupling is
