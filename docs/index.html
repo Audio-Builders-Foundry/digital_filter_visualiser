@@ -22,25 +22,37 @@
 
             <div class="abstract">
                 <div class="mini-header"> ABSTRACT </div>  <br>
-                Digital filters are a foundational concept in <span class="tooltip" tabindex="0">digital audio<span class="tooltip-text">Is this working?</span> </span>, but designing them presents certain challenges: from finding the right coefficients to checking for stability. <br><br>
-                We present DigitalFilterVisualizer: a tool that allows you to see the mathematical structure of linear time-invariant filters, calculate filter coefficients from your poles and zeros and vice versa, automatically ensure the stability, and instantly hear the result. <br><br>
-                DigitalFilterVisualizer features 5 autosynchronized representations of a filter, including interactive visual interfaces, to provide utility in both learning and creating. <br><br>
-                A method to convert coefficients to roots is provided using the Francis implicit double shift QR algorithm. <br><br>
-
-                <details>
-                    <summary> Will this expand? </summary>
-                    <p>
-                        This is implemented as a standalone app as well as a VST3 plug-in available at <a href="https://www.github.com/Audio-Builders-Foundry/digital_filter_visualiser"> DigitalFilterVisualiser </a>
-                    </p>
-                </details>
-
-                <br><br>
+                Digital filters are a foundational concept in <span class="tooltip" tabindex="0">digital audio<span class="tooltip-text">Is this working?</span> </span>, but designing them presents certain challenges: from finding the right coefficients to checking for stability. To facilitate the study of this topic, it would be highly beneficial to have a tool with an interactive visual interface. Such a tool should allow users to determine which roots of the polynomials defining a filter correspond to given coefficients - and vice versa - as well as to adjust these roots on the complex plane in real time, instantly hearing how the audio processing result changes and observing the corresponding shifts in the filter's frequency and phase response. This would help foster an intuitive grasp of the processes underlying the mathematical formulas. <br><br>
+                We present Digital Filter Visualizer: a tool that allows you to see the mathematical structure of linear time-invariant filters, calculate filter coefficients from your poles and zeros and vice versa, automatically ensure the stability, and instantly hear the result. <br><br>
+                Digital Filter Visualizer features 5 autosynchronized representations of a filter, including interactive visual interfaces, to provide utility in both learning and creating. <br><br>
+                In this poster, we concentrate on the math behind the most challenging part of its implementation - namely, converting the filter's coefficients to roots, that is provided using the Francis implicit double shift QR algorithm. Other problems, like building the filter's processing chain and plotting frequency response, will be briefly described as well. <br><br>
+		The open-source implementation of Digital Filter Visualizer as a standalone app as well as a VST3 plug-in available at: <a href="https://www.github.com/Audio-Builders-Foundry/digital_filter_visualiser">https://www.github.com/Audio-Builders-Foundry/digital_filter_visualiser</a>. <br><br>
 
             </div>
 
+          <div class="abstract">
+
+              <div class="mini-header"> Technical Preliminaries </div>  <br>
+
+              <p class="p1">An IIR filter is defined by its transfer function:</p> <br>
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow><mo>=</mo><mi>g</mi><mfrac><mrow><mi>B</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow></mrow><mrow><mi>A</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">H(z) = g\frac{B(z)}{A(z)},</annotation></semantics></math> <br>
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow><mo>=</mo><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mn>1</mn></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mn>2</mn></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mi>…</mi><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mi>M</mi></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">B(z) = \left( 1 - p_{1}z^{- 1} \right)\left( 1 - p_{2}z^{- 1} \right)\ldots\left( 1 - p_{M}z^{- 1} \right),</annotation></semantics></math> <br>
+
+
+              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow><mo>=</mo><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>q</mi><mn>1</mn></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>q</mi><mn>2</mn></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mi>…</mi><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>q</mi><mi>N</mi></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">A(z) = \left( 1 - q_{1}z^{- 1} \right)\left( 1 - q_{2}z^{- 1} \right)\ldots\left( 1 - q_{N}z^{- 1} \right),</annotation></semantics></math> <br>
+
+
+
+
+              <p class="p1">where <i>z</i> is the complex variable of the <i>z</i>-transform, <i>g</i> is the real gain factor, <i>p</i><sub>1</sub>…<i>p</i><i><sub>M</sub></i> are the zeros, and <i>q</i><sub>1</sub>…<i>q</i><i><sub>N</sub></i> are the poles.</p>
+              <p class="p1">Computing the polynomial coefficients from known roots is a simple task: we only need to multiply out the brackets in the numerator and the denominator. The numerical error can be reduced by choosing the order in which the brackets are multiplied out: from the roots with a smaller magnitude to the roots with a larger magnitude.</p>
+              <p class="p1">The inverse problem, however, is much more complex.</p>
+
+           </div>
+
            <div class="abstract">
 
-              <div class="mini-header"> Coefficients to Roots </div> <br>
+              <div class="mini-header"> Computing Roots from Coefficients </div> <br>
 
 
               <h1 id="shifted-qr">1. OVERVIEW</h1>
@@ -720,39 +732,17 @@
 
           <div class="abstract">
 
-              <div class="mini-header"> Coefficients from Roots </div>  <br>
-
-              <p class="p1">Computing polynomial coefficients from known roots</p>
-              <p class="p1">The transfer function is</p> <br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow><mo>=</mo><mi>g</mi><mfrac><mrow><mi>B</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow></mrow><mrow><mi>A</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">H(z) = g\frac{B(z)}{A(z)},</annotation></semantics></math> <br>
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow><mo>=</mo><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mn>1</mn></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mn>2</mn></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mi>…</mi><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mi>M</mi></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">B(z) = \left( 1 - p_{1}z^{- 1} \right)\left( 1 - p_{2}z^{- 1} \right)\ldots\left( 1 - p_{M}z^{- 1} \right),</annotation></semantics></math> <br>
-
-
-              <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mrow><mo form="prefix" stretchy="true">(</mo><mi>z</mi><mo form="postfix" stretchy="true">)</mo></mrow><mo>=</mo><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>q</mi><mn>1</mn></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>q</mi><mn>2</mn></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mi>…</mi><mrow><mo form="prefix" stretchy="true">(</mo><mn>1</mn><mo>−</mo><msub><mi>q</mi><mi>N</mi></msub><msup><mi>z</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo form="postfix" stretchy="true">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">A(z) = \left( 1 - q_{1}z^{- 1} \right)\left( 1 - q_{2}z^{- 1} \right)\ldots\left( 1 - q_{N}z^{- 1} \right),</annotation></semantics></math> <br>
-
-
-
-
-              <p class="p1">where <i>z</i> is the complex variable of the <i>z</i>-transform, <i>g</i> is a real gain factor, <i>p</i><sub>1</sub>…<i>p</i><i><sub>M</sub></i> are the zeros, and <i>q</i><sub>1</sub>…<i>q</i><i><sub>N</sub></i> are the poles.</p>
-              <p class="p1">Computing the polynomial coefficients from known roots is a simple task: we only need to multiply out the brackets in the numerator and the denominator.</p>
-              <p class="p1">The numerical error can be reduced by choosing the order in which the brackets are multiplied out: from the roots with a smaller magnitude to the roots with a larger magnitude.</p>
-
-
-              <p class="p1">Building a filter with given roots</p>
-
-
+              <div class="mini-header"> Building a filter processing chain </div>  <br>
 
               <p class="p1">High-order polynomials are acceptable for displaying the solution. However, if the filter is implemented as a single block, that is, as the ratio of these polynomials, the solution becomes numerically unstable. The coefficients are computed with finite precision, and the effect of rounding errors grows with the polynomial order. Besides a simple mismatch between the theoretical and the actual filter parameters, this increases the risk of instability: in theory the filter is stable (its poles are inside the unit circle), but rounding errors in the coefficients can make the actual filter unstable.</p>
               <p class="p1">To improve accuracy and reduce the risk of instability, the filter is implemented as a cascade of biquads, that is, second-order IIR filters connected in series. Second order is the lowest order that can represent complex-conjugate roots. In this form, the pole sensitivity (the ratio of the pole shift caused by an error in a coefficient to the error itself) stays minimal.</p>
-              <p class="p1">The effect of coefficient errors on the filter parameters can be reduced further by choosing which zeros and poles go into each biquad.</p>
+              <p class="p1">The effect of coefficient errors on the filter parameters can be reduced further by choosing which zeros and poles go into each biquad.</p> <br><br>
               <p class="p1">First, we need to find which poles can add the largest error to the processed signal. The average absolute error of a floating-point number is proportional to the value of this number. Therefore, the potential error of a filter can be estimated by its maximum gain, that is, its gain at the peak frequency. If the input signal is unknown, this gain measures the risk in the worst case. Here and below, the gain of a filter at a given frequency means the magnitude of the transfer function |<i>H</i>(<i>z</i>)| at the point <i>z</i> of the unit circle that corresponds to this frequency.</p>
 
 
 
               <details>
                     <summary> Finding the peak frequency </summary>
-
-                    <p class="p1"><i>Finding the peak frequency</i></p>
 
                     <p class="p1">If <i>g</i> = 1 and the filter has only poles, the maximum gain is reached at the frequency where the denominator of the transfer function is minimal:</p>
 
@@ -829,15 +819,13 @@
 
                     <p class="p1">Otherwise, the maximum gain of the filter is reached at <i>ω</i> = 0 if <i>c</i> &gt; 1, and at <i>ω</i> = <i>π</i> if <i>c</i> &lt; −1.</p>
                     <p class="p1">The case where the filter has two distinct real poles is not considered here.</p>
-                    <p class="p1"><i>[End of expandable section]</i></p>
 
 
                 </details>
 
-
+	      <br><br>
 
               <p class="p1">If a stage in the chain of biquads adds an error, the following stages can no longer tell the error from the signal, so they cannot improve the signal-to-error ratio. The potential error can be reduced if a level increase is compensated by a level decrease inside the same biquad. To do this, each pole is paired with a zero. Poles with a higher gain at their peak frequency are paired first. From the zeros that do not have a pair yet, we choose the one that gives the strongest attenuation at the peak frequency of the pole. Zeros that amplify the signal at this frequency are not considered as candidates.</p>
-              <p class="p1"><i>[The rule for choosing zeros may be revised]</i></p>
               <p class="p1">If some zeros are left without a pair after this matching, they form an FIR filter placed after the IIR section.</p>
               <p class="p2"><br></p>
 
@@ -848,6 +836,7 @@
 
               <div class="mini-header"> Computing the frequency response </div>  <br>
 
+              <p class="p1">To plot the phase-frequency and magnitude-frequency response, it is necessary to determine the corresponding frequency functions. It is straightforward if the roots are known. Moreover, there is a simple geometric rule for calculating them. The only challenge lies in correctly constructing a continuous phase function, which requires the use of an "unwrapped" phase. A technique for computing it is described below. </p><br><br>
 
               <p class="p1">The magnitude response and the phase response of the filter at the angular frequency <i>ω</i> are the magnitude and the argument of the transfer function <i>H</i>(<i>z</i>) at the point <i>z</i> of the unit circle at the angle <i>ω</i> to the real axis. The magnitude response in dimensionless units is <i>a</i>(<i>ω</i>) = |<i>H</i>(<i>z</i>)|, and the phase response is arg(<i>H</i>(<i>z</i>)), defined up to a multiple of 2<i>π</i>. With known roots, both are easy to compute as follows.</p>
               <p class="p1">Since 1 − <i>p</i><i><sub>i</sub></i><i>z</i><sup>−1</sup> = <i>z</i><sup>−1</sup>(<i>z</i> − <i>p</i><i><sub>i</sub></i>) and 1 − <i>q</i><i><sub>j</sub></i><i>z</i><sup>−1</sup> = <i>z</i><sup>−1</sup>(<i>z</i> − <i>q</i><i><sub>j</sub></i>), the transfer function can be written as</p>
