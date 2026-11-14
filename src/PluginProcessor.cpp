@@ -118,7 +118,7 @@ void AudioPluginAudioProcessor::setCurrentProgram (int index)
 const juce::String AudioPluginAudioProcessor::getProgramName (int index)
 {
   juce::ignoreUnused (index);
-  return {};
+  return "Default";
 }
 
 void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String& newName)
