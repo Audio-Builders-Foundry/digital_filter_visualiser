@@ -30,6 +30,7 @@ CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
 
 CoefficientsComponent::~CoefficientsComponent()
 {
+    processor->filterState->removeListener(this);
     coeffTable.setModel(nullptr);
 }
 
