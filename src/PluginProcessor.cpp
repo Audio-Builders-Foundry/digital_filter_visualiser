@@ -36,6 +36,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
     um.removeChangeListener(this);
+    transportSource.removeChangeListener(this);
 
     if (auto* activePtr = activeState.exchange(nullptr))
     {

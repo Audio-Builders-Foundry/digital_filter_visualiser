@@ -406,6 +406,7 @@ ComplexPlaneEditor(AudioPluginAudioProcessor* p)
     , constantAngleInteractionButton("arg")
 {
     processor->filterState->addListener(this);
+    processor->filterState->um->addChangeListener(this);
 
     RootPoint::editor = this;
 
@@ -460,6 +461,7 @@ ComplexPlaneEditor::
 ~ComplexPlaneEditor()
 {
     processor->filterState->removeListener(this);
+    processor->filterState->um->removeChangeListener(this);
 }
 
 void ComplexPlaneEditor::
@@ -788,6 +790,11 @@ paint(juce::Graphics& g)
             }
         }
     }
+}
+
+void ComplexPlaneEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    repaint();
 }
 
 void ComplexPlaneEditor::

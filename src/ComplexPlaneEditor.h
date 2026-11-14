@@ -4,6 +4,7 @@
 class ComplexPlaneEditor final
   :public juce::Component
   ,private juce::ValueTree::Listener
+  ,private juce::ChangeListener
 {
   /** TODO(ry):
    * better root creation interface (ability to create poles, increase/decrease root order)
@@ -189,6 +190,8 @@ public:
   void resized(void) override;
 
   void paint(juce::Graphics &g) override;
+
+  void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
   void setPointHoveringOverAxis(bool hovering);
   bool isPointHoveringOverAxis(void);
