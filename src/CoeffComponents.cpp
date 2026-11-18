@@ -165,6 +165,15 @@ void CoefficientsComponent::updateFilterState()
 {
     // Calculate gain scale;
     // check if number of poles >= number of zeros.
+    //
+    // After normalization the first non-zero feed-forward and feed-back coefficients will be 1:
+    // the multiplicator goes to the gain coefficient.
+    // It is calculated as the value of the first non-zero feed-forward coefficient
+    // divided by the value of the first non-zero feed-back coefficient.
+    // 
+    // It shouldn't be connected with the gain slider 
+    // not to exceed its boundaries and to prevent blowing up speakers.
+
     double gainScale = 1.0;
     int i = 0;
     while (i < ffcoeffs.size() && ffcoeffs[i] == 0)
@@ -185,6 +194,7 @@ void CoefficientsComponent::updateFilterState()
             "Error",
             "The filter with the given coefficients is non-causal.\nUnable to apply change in coefficients.",
             this);
+        // return to the initial state
         if (!isFeedForwardSynchronized)
             ffcoeffs = ffcoeffsLastSync;
         if (!isFeedBackSynchronized)
@@ -238,6 +248,7 @@ void CoefficientsComponent::updateFilterState()
                 "Error",
                 "The filter with the given coefficients is unstable.\nUnable to apply change in coefficients.",
                 this);
+            // return to the initial state
             if (!isFeedForwardSynchronized)
                 ffcoeffs = ffcoeffsLastSync;
             if (!isFeedBackSynchronized)
@@ -337,6 +348,10 @@ void CoefficientsComponent::updateCoeffTable()
         processor->filterState->poles);
     ffcoeffs = RootsToCoefficients::CalculatePolynomialCoefficientsFrom(
         processor->filterState->zeros, static_cast<int>(fbcoeffs.size()));
+
+    // When a user changes roots using complex plane editor or loads a preset,
+    // gain scale is reset to 1.
+    // In this case it should not be displayed.
     gainScaleLabel.setText("", juce::NotificationType::dontSendNotification);
     coeffTable.updateContent();
 }
