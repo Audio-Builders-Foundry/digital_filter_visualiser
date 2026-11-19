@@ -65,6 +65,9 @@ public:
         setColour(juce::Slider::textBoxOutlineColourId, outlineColour);
         setColour(juce::Slider::textBoxTextColourId, tableColour);
         setColour(juce::Slider::textBoxHighlightColourId, buttonBackgroundColour);
+        setColour(juce::TooltipWindow::backgroundColourId, almostBlackColour);
+        setColour(juce::TooltipWindow::outlineColourId, outlineColour);
+        setColour(juce::TooltipWindow::textColourId, tableColour);
 
         setColour(ColourIds::controlHeaderBackgroundColourId, controlHeaderAndImageButtonBackgroundColour);
         setColour(ColourIds::controlHeaderOutlineColourId, outlineColour);

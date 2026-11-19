@@ -18,7 +18,7 @@ ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
     Utilities::setButtonImage(&redoButton, redoImage);
     Utilities::setButtonImage(&addRootButton, addImage);
 
-    exportButton.setTooltip("Export");
+    exportButton.setTooltip("Export state to XML");
     undoButton.setTooltip("Undo");
     redoButton.setTooltip("Redo");
     addRootButton.setTooltip("Add root");
@@ -47,6 +47,7 @@ ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
     };
 
     // NOTE(ry): gain slider setup
+    gainSlider.setTooltip("Gain");
     gainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
     gainSlider.setRange(-90.f, 6.f, 0.01f);
     gainSlider.setTextValueSuffix(" dB");

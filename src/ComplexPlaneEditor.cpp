@@ -417,6 +417,11 @@ ComplexPlaneEditor(AudioPluginAudioProcessor* p)
     addChildComponent(&tooltip);
 
     // TODO(ry): some generatable looking code here
+
+    defaultInteractionButton.setTooltip("Roots can be moved in any direction");
+    constantMagnitudeInteractionButton.setTooltip("Roots can be moved preserving their magnitudes");
+    constantAngleInteractionButton.setTooltip("Roots can be moved preserving their angles");
+
     defaultInteractionButton.addMouseListener(this, false);
     constantMagnitudeInteractionButton.addMouseListener(this, false);
     constantAngleInteractionButton.addMouseListener(this, false);

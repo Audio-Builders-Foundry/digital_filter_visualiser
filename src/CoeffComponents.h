@@ -35,6 +35,7 @@ private:
     void updateCoeffTable();
     void onCellChanged(int row, int col, double value);
     void updateFilterState();
+    static juce::String valueToString(const double value);
 
     // override juce::TableListBox
     int getNumRows() override;

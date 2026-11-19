@@ -83,8 +83,8 @@ void CoefficientsComponent::paintCell(juce::Graphics& g, int row, int col, int w
 
     juce::String text;
     if (col == 1) text = juce::String(row);
-    if (col == 2) text = juce::String(ffcoeffs[static_cast<size_t>(row)]);
-    if (col == 3) text = juce::String(fbcoeffs[static_cast<size_t>(row)]);
+    if (col == 2) text = valueToString(ffcoeffs[static_cast<size_t>(row)]);
+    if (col == 3) text = valueToString(fbcoeffs[static_cast<size_t>(row)]);
 
     constexpr int padding = 5;
     g.setFont(15.f);
@@ -133,7 +133,7 @@ juce::Component* CoefficientsComponent::refreshComponentForCell(int row, int col
         jassert(col == 3);
         value = fbcoeffs[static_cast<size_t>(row)];
     }
-    label->setText(juce::String(value), juce::dontSendNotification );
+    label->setText(valueToString(value), juce::dontSendNotification );
     return label;
 }
 
@@ -283,6 +283,16 @@ void CoefficientsComponent::updateFilterState()
     isFeedBackSynchronized = isFeedForwardSynchronized = true;
     internalRootProcessing = false;
     recalculateButton.setEnabled(false);
+}
+
+juce::String CoefficientsComponent::valueToString(const double value)
+{
+    int constexpr numberOfDigits = 4;
+    if (!std::isnormal(value))
+        return juce::String(value);
+    if (std::abs(value) < 1.e-3 || std::abs(value) > 1.e6)
+        return juce::String(value, numberOfDigits, true);
+    return juce::String::toDecimalStringWithSignificantFigures(value, numberOfDigits);
 }
 
 void CoefficientsComponent::valueTreePropertyChanged (juce::ValueTree& node, const juce::Identifier& property)

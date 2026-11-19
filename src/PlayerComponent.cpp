@@ -12,6 +12,11 @@ PlayerComponent::PlayerComponent(AudioPluginAudioProcessor& p)
     stopImage = juce::ImageCache::getFromMemory(BinaryData::Stop_png, BinaryData::Stop_pngSize);
     loopImage = juce::ImageCache::getFromMemory(BinaryData::Loop_png, BinaryData::Loop_pngSize);
 
+    openButton.setTooltip("Open audio file");
+    playButton.setTooltip("Play/Pause");
+    stopButton.setTooltip("Stop");
+    loopButton.setTooltip("Loop");
+
     addAndMakeVisible(&openButton);
     Utilities::setButtonImage(&openButton, openImage);
     openButton.onClick = [this] { openFile(); };
