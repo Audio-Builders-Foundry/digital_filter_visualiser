@@ -1,13 +1,19 @@
 #pragma once
 #include "DFVLookAndFeel.h"
+#include "Accessibility.h"
 
 class DFVComponent
     : public juce::Component
 {
 public:
-    DFVComponent(const juce::String& componentName = "")
+    DFVComponent(const Group& g, const juce::String& componentName = "")
         : juce::Component(componentName)
     {
+        setTitle(g.title);
+        setDescription(g.description);
+        setHelpText(g.helpText); 
+        setFocusContainerType(FocusContainerType::focusContainer);
+        setExplicitFocusOrder(g.focusOrder);
     }
 
     void paint(juce::Graphics& g) override

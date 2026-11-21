@@ -2,7 +2,7 @@
 
 ComplexPlaneComponent::
 ComplexPlaneComponent(AudioPluginAudioProcessor* p)
-    :editor(p)
+    :editor(p), DFVComponent(Focus::cpe)
 {
     setName("PLOT");
     addAndMakeVisible(editor);

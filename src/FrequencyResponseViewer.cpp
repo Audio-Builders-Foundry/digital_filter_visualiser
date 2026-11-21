@@ -2,6 +2,7 @@
 #include "FrequencyResponseCalculator.h"
 
 FrequencyResponseViewer::FrequencyResponseViewer(AudioPluginAudioProcessor* p) :
+    DFVComponent(Focus::frv),
     processor(p),
     ampDb(minAmpDb * 4),
     sampleRate(processor->getSampleRate()),
@@ -13,6 +14,7 @@ FrequencyResponseViewer::FrequencyResponseViewer(AudioPluginAudioProcessor* p) :
     phaseButton("PHASE"),
     bothButton("BOTH")
 {
+
     setName("FREQUENCY RESPONSE");
     this->processor->addChangeListener(this);
     this->processor->filterState->um->addChangeListener(this);

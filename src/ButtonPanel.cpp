@@ -6,8 +6,10 @@
 
 ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
   :processorRef(p)
+  ,DFVComponent(Focus::bp) 
   ,player(p)
 {
+    
     saveImage = juce::ImageCache::getFromMemory(BinaryData::Save_png, BinaryData::Save_pngSize);
     undoImage = juce::ImageCache::getFromMemory(BinaryData::Undo_png, BinaryData::Undo_pngSize);
     redoImage = juce::ImageCache::getFromMemory(BinaryData::Redo_png, BinaryData::Redo_pngSize);

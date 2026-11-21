@@ -1,7 +1,9 @@
 EquationViewer::
 EquationViewer(AudioPluginAudioProcessor *p)
-  :processor(p)
+  : processor(p)
+  , DFVComponent(Focus::ev)
 {
+  
   addAndMakeVisible(numeratorText);
   addAndMakeVisible(denominatorText);
 

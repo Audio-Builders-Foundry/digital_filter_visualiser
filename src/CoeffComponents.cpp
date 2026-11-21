@@ -7,8 +7,10 @@
 
 CoefficientsComponent::CoefficientsComponent(AudioPluginAudioProcessor* p)
     : processor(p)
+    , DFVComponent(Focus::cc)
     , recalculateButton("RECALCULATE")
 {
+
     //setupCoefficient's table
     setName("FILTER COEFFICIENTS");
     coeffTable.setModel(this); // pass ownership to the class.
