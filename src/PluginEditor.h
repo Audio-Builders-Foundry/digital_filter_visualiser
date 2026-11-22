@@ -14,7 +14,10 @@
 #include "StateSerializer.h"
 
 //==============================================================================
-class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
+class AudioPluginAudioProcessorEditor final 
+	: public juce::AudioProcessorEditor
+	, private juce::KeyListener
+
 {
 public:
   explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
@@ -23,6 +26,7 @@ public:
   //==============================================================================
   void paint (juce::Graphics&) override;
   void resized() override;
+  void parentHierarchyChanged() override;
 
 private:
   ComplexPlaneComponent complexPlaneComponent;
@@ -32,6 +36,11 @@ private:
   EquationViewer equationViewer;
   juce::TooltipWindow tooltipWindow;
   DFVLookAndFeel lnf;
+
+  // parent component of AudioPluginAudioProcessorEditor
+  juce::Component::SafePointer<juce::Component> topLevelComponent;
+  
+  bool keyPressed(const juce::KeyPress& key, juce::Component*) override;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };

@@ -34,6 +34,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    if (topLevelComponent != nullptr)
+        topLevelComponent->removeKeyListener(this);
 }
 
 //==============================================================================
@@ -77,4 +79,35 @@ void AudioPluginAudioProcessorEditor::resized()
   coefficients.setBoundsRelative(0.02f, 0.36f, 0.26f, 0.56f);
   complexPlaneComponent.setBoundsRelative(0.29f, 0.36f, 0.37f, 0.56f);
   frequencyResponseViewer.setBoundsRelative(0.67f, 0.36f, 0.31f, 0.56f);
+}
+
+void AudioPluginAudioProcessorEditor::parentHierarchyChanged()
+{
+    // Subscribe parent component of AudioPluginAudioProcessorEditor to keyPressed.
+    if (topLevelComponent != nullptr)
+        topLevelComponent->removeKeyListener(this);
+    topLevelComponent = getTopLevelComponent();
+    topLevelComponent->addKeyListener(this);
+}
+
+bool AudioPluginAudioProcessorEditor::keyPressed(
+    const juce::KeyPress& key,
+    juce::Component*)
+{
+    // KeyListener's callback triggers the traversal when pressing TAB for the first time.
+
+    // If the key is not TAB or the component or one of its child already has keyboard focus 
+    // then no action is needed.
+    if (!key.isKeyCode(juce::KeyPress::tabKey) || hasKeyboardFocus(true))
+        return false;
+
+    // Get all components that can be focused.
+    auto components = juce::KeyboardFocusTraverser().getAllComponents(this);
+    if (components.empty())
+        return false;
+
+    // Set active component to the first or the last child depending on the key(s): TAB or SHIFT+TAB.
+    auto* component = key.getModifiers().isShiftDown() ? components.back() : components.front();
+    component->grabKeyboardFocus();
+    return true;
 }
