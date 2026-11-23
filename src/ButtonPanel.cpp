@@ -69,6 +69,45 @@ ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
 
     processorRef.filterState->addListener(this);
     processorRef.filterState->syncListener(this);
+
+    // add keyboard focus on buttons
+    exportButton.setWantsKeyboardFocus(true);
+    exportButton.setHasFocusOutline(true);
+    undoButton.setWantsKeyboardFocus(true);
+    undoButton.setHasFocusOutline(true);
+    redoButton.setWantsKeyboardFocus(true);
+    redoButton.setHasFocusOutline(true);
+    addRootButton.setWantsKeyboardFocus(true);
+    addRootButton.setHasFocusOutline(true);
+
+    gainSlider.setWantsKeyboardFocus(true);
+    gainSlider.setHasFocusOutline(true);
+
+    undoButton.setTitle(Focus::buttonPanel::undo.title);
+    undoButton.setDescription(Focus::buttonPanel::undo.description);
+    undoButton.setHelpText(Focus::buttonPanel::undo.helpText); // Should receive the current state? 
+    undoButton.setExplicitFocusOrder(Focus::buttonPanel::undo.focusOrder);
+
+    redoButton.setTitle(Focus::buttonPanel::redo.title);
+    redoButton.setDescription(Focus::buttonPanel::redo.description);
+    redoButton.setHelpText(Focus::buttonPanel::redo.helpText);
+    redoButton.setExplicitFocusOrder(Focus::buttonPanel::redo.focusOrder);
+
+    exportButton.setTitle(Focus::buttonPanel::exportb.title);
+    exportButton.setDescription(Focus::buttonPanel::exportb.description);
+    exportButton.setHelpText(Focus::buttonPanel::exportb.helpText);
+    exportButton.setExplicitFocusOrder(Focus::buttonPanel::exportb.focusOrder);
+
+    addRootButton.setTitle(Focus::buttonPanel::addroot.title);
+    addRootButton.setDescription(Focus::buttonPanel::addroot.description);
+    addRootButton.setHelpText(Focus::buttonPanel::addroot.helpText);
+    addRootButton.setExplicitFocusOrder(Focus::buttonPanel::addroot.focusOrder);
+
+    gainSlider.setTitle(Focus::buttonPanel::level.title);
+    gainSlider.setDescription(Focus::buttonPanel::level.description);
+    gainSlider.setHelpText(Focus::buttonPanel::level.helpText);
+    gainSlider.setExplicitFocusOrder(Focus::buttonPanel::level.focusOrder);
+
 }
 
 ButtonPanel::~ButtonPanel()
