@@ -62,10 +62,11 @@ ButtonPanel::ButtonPanel(AudioPluginAudioProcessor& p)
     addAndMakeVisible(undoButton);
     addAndMakeVisible(redoButton);
     addAndMakeVisible(addRootButton);
-    addAndMakeVisible(gainSlider);
 
     if (processorRef.wrapperType == juce::AudioProcessor::WrapperType::wrapperType_Standalone)
         addAndMakeVisible(player);
+
+    addAndMakeVisible(gainSlider);
 
     processorRef.filterState->addListener(this);
     processorRef.filterState->syncListener(this);
