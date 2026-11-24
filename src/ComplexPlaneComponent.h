@@ -13,5 +13,17 @@ public:
 
 private:
     static constexpr float innerCornerSize = 9.f;
+    static constexpr int buttonsHeight = 20;
+    static constexpr int buttonsWidth = 45;
+
+    AudioPluginAudioProcessor& processorRef;
     ComplexPlaneEditor editor;
+
+    // interaction mode toggles
+    juce::TextButton defaultInteractionButton;
+    juce::TextButton constantMagnitudeInteractionButton;
+    juce::TextButton constantAngleInteractionButton;
+    juce::TextButton addRootButton;
+
+    static constexpr int InteractionToggleGroupID = 0x00867068;
 };

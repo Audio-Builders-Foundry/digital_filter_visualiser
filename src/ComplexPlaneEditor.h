@@ -181,8 +181,8 @@ public:
     ComplexPlaneEditor *editor;
   };
 
-  void mouseEnter(const juce::MouseEvent &e) override;
-  void mouseExit(const juce::MouseEvent &e) override;
+  std::function<void(const bool constantMagnitude, const bool constantAngle)> onInteractionModeChanged;
+
   void mouseWheelMove(const juce::MouseEvent &e, const juce::MouseWheelDetails &w) override;
   void mouseDown(const juce::MouseEvent&) override;
   void mouseDrag(const juce::MouseEvent &e) override;
@@ -224,13 +224,7 @@ public:
     {
       transientInteractionFlags = iflags|authoritativeInteractionFlags;
 
-      constantMagnitudeInteractionButton
-	.setToggleState(constantMagnitudeInteraction(), juce::dontSendNotification);
-      constantAngleInteractionButton
-	.setToggleState(constantAngleInteraction(), juce::dontSendNotification);
-      defaultInteractionButton
-	.setToggleState(!constantMagnitudeInteraction() && !constantAngleInteraction(),
-			juce::dontSendNotification);
+      juce::NullCheckedInvocation::invoke(onInteractionModeChanged, constantMagnitudeInteraction(), constantAngleInteraction());
     }
 
     DBG("setter:");
@@ -258,15 +252,8 @@ private:
 
   RootTooltip tooltip;
 
-  // interaction mode toggles
-  juce::TextButton defaultInteractionButton;
-  juce::TextButton constantMagnitudeInteractionButton;
-  juce::TextButton constantAngleInteractionButton;
-
   u32 authoritativeInteractionFlags;
   u32 transientInteractionFlags;
-
-  static constexpr int InteractionToggleGroupID = 0x00867068;
 
   bool pointHoveringOverAxis;
 };
