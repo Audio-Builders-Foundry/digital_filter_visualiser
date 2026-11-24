@@ -2,10 +2,12 @@
 
 ComplexPlaneComponent::
 ComplexPlaneComponent(AudioPluginAudioProcessor* p)
-    :editor(p)
+    : processorRef(*p)
+    , editor(p)
     , defaultInteractionButton("DEF")
     , constantMagnitudeInteractionButton("MAG")
     , constantAngleInteractionButton("ARG")
+    , addRootButton("ADD")
 {
     setName("PLOT");
     
@@ -14,6 +16,7 @@ ComplexPlaneComponent(AudioPluginAudioProcessor* p)
     defaultInteractionButton.setTooltip("Roots can be moved in any direction");
     constantMagnitudeInteractionButton.setTooltip("Roots can be moved preserving their magnitudes");
     constantAngleInteractionButton.setTooltip("Roots can be moved preserving their angles");
+    addRootButton.setTooltip("Add root");
 
     defaultInteractionButton.addMouseListener(this, false);
     constantMagnitudeInteractionButton.addMouseListener(this, false);
@@ -46,9 +49,15 @@ ComplexPlaneComponent(AudioPluginAudioProcessor* p)
         }
         };
 
+    addRootButton.onClick = [this] {
+        processorRef.filterState->um->beginNewTransaction();
+        processorRef.filterState->add(1);
+        };
+
     addAndMakeVisible(defaultInteractionButton);
     addAndMakeVisible(constantMagnitudeInteractionButton);
     addAndMakeVisible(constantAngleInteractionButton);
+    addAndMakeVisible(addRootButton);
 
     editor.onInteractionModeChanged = [this](const bool constantMagnitude, const bool constantAngle)
         {
@@ -75,9 +84,10 @@ resized(void)
 
     
     int y = reducedBounds.getY();
-    defaultInteractionButton.setBounds(reducedBounds.getX(), y, plotButtonsWidth, buttonsHeight);
-    constantMagnitudeInteractionButton.setBounds(defaultInteractionButton.getRight() + padding, y, plotButtonsWidth, buttonsHeight);
-    constantAngleInteractionButton.setBounds(constantMagnitudeInteractionButton.getRight() + padding, y, plotButtonsWidth, buttonsHeight);
+    defaultInteractionButton.setBounds(reducedBounds.getX(), y, buttonsWidth, buttonsHeight);
+    constantMagnitudeInteractionButton.setBounds(defaultInteractionButton.getRight() + padding, y, buttonsWidth, buttonsHeight);
+    constantAngleInteractionButton.setBounds(constantMagnitudeInteractionButton.getRight() + padding, y, buttonsWidth, buttonsHeight);
+    addRootButton.setBounds(reducedBounds.getWidth() - buttonsWidth, y, buttonsWidth, buttonsHeight);
 
     reducedBounds.removeFromTop(constantMagnitudeInteractionButton.getHeight() + padding);
     int reduce = padding + (int)std::sqrt(innerCornerSize) + 1;

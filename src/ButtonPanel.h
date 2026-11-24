@@ -21,11 +21,10 @@ private:
     juce::PopupMenu exportPopupMenu;
     std::unique_ptr<juce::FileChooser> chooser;
 
-    juce::Image saveImage, undoImage, redoImage, addImage, delImage;
+    juce::Image saveImage, undoImage, redoImage;
     juce::ImageButton exportButton;
     juce::ImageButton undoButton;
     juce::ImageButton redoButton;
-    juce::ImageButton addRootButton;
     PlayerComponent player;
     juce::Slider gainSlider;
 
