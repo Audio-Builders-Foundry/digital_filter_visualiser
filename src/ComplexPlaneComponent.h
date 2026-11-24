@@ -13,5 +13,15 @@ public:
 
 private:
     static constexpr float innerCornerSize = 9.f;
+    static constexpr int buttonsHeight = 20;
+    static constexpr int plotButtonsWidth = 45;
+
     ComplexPlaneEditor editor;
+
+    // interaction mode toggles
+    juce::TextButton defaultInteractionButton;
+    juce::TextButton constantMagnitudeInteractionButton;
+    juce::TextButton constantAngleInteractionButton;
+
+    static constexpr int InteractionToggleGroupID = 0x00867068;
 };

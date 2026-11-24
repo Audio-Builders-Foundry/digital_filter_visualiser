@@ -401,9 +401,6 @@ ComplexPlaneEditor::
 ComplexPlaneEditor(AudioPluginAudioProcessor* p)
     :processor(p)
     , tooltip(this)
-    , defaultInteractionButton("def")
-    , constantMagnitudeInteractionButton("mag")
-    , constantAngleInteractionButton("arg")
 {
     processor->filterState->addListener(this);
     processor->filterState->um->addChangeListener(this);
@@ -416,49 +413,6 @@ ComplexPlaneEditor(AudioPluginAudioProcessor* p)
 
     addChildComponent(&tooltip);
 
-    // TODO(ry): some generatable looking code here
-
-    defaultInteractionButton.setTooltip("Roots can be moved in any direction");
-    constantMagnitudeInteractionButton.setTooltip("Roots can be moved preserving their magnitudes");
-    constantAngleInteractionButton.setTooltip("Roots can be moved preserving their angles");
-
-    defaultInteractionButton.addMouseListener(this, false);
-    constantMagnitudeInteractionButton.addMouseListener(this, false);
-    constantAngleInteractionButton.addMouseListener(this, false);
-
-    defaultInteractionButton.setClickingTogglesState(true);
-    constantMagnitudeInteractionButton.setClickingTogglesState(true);
-    constantAngleInteractionButton.setClickingTogglesState(true);
-
-    defaultInteractionButton.setRadioGroupId(InteractionToggleGroupID);
-    constantMagnitudeInteractionButton.setRadioGroupId(InteractionToggleGroupID);
-    constantAngleInteractionButton.setRadioGroupId(InteractionToggleGroupID);
-
-    defaultInteractionButton.onClick = [this]() {
-        if (defaultInteractionButton.getToggleState())
-        {
-            setInteractionMode(0, true);
-        }
-        };
-    constantMagnitudeInteractionButton.onClick = [this]() {
-        if (constantMagnitudeInteractionButton.getToggleState())
-        {
-            setInteractionMode(InteractionFlag_constantMagnitude, true);
-        }
-        };
-    constantAngleInteractionButton.onClick = [this]() {
-        if (constantAngleInteractionButton.getToggleState())
-        {
-            setInteractionMode(InteractionFlag_constantAngle, true);
-        }
-        };
-
-    addChildComponent(defaultInteractionButton);
-    addChildComponent(constantMagnitudeInteractionButton);
-    addChildComponent(constantAngleInteractionButton);
-
-    defaultInteractionButton.setToggleState(true, juce::sendNotification);
-
     processor->filterState->syncListener(this);
 }
 
@@ -467,24 +421,6 @@ ComplexPlaneEditor::
 {
     processor->filterState->removeListener(this);
     processor->filterState->um->removeChangeListener(this);
-}
-
-void ComplexPlaneEditor::
-mouseEnter(const juce::MouseEvent& e)
-{
-    juce::ignoreUnused(e);
-    defaultInteractionButton.setVisible(true);
-    constantMagnitudeInteractionButton.setVisible(true);
-    constantAngleInteractionButton.setVisible(true);
-}
-
-void ComplexPlaneEditor::
-mouseExit(const juce::MouseEvent& e)
-{
-    juce::ignoreUnused(e);
-    defaultInteractionButton.setVisible(false);
-    constantMagnitudeInteractionButton.setVisible(false);
-    constantAngleInteractionButton.setVisible(false);
 }
 
 void ComplexPlaneEditor::
@@ -601,13 +537,6 @@ resized(void)
         area.removeFromBottom(5 * seventhHeight);
         area.removeFromLeft(deltaX);
         area.removeFromRight(deltaX);
-    }
-
-    {
-        auto thirdWidth = area.getWidth() / 3;
-        defaultInteractionButton.setBounds(area.removeFromLeft(thirdWidth));
-        constantMagnitudeInteractionButton.setBounds(area.removeFromLeft(thirdWidth));
-        constantAngleInteractionButton.setBounds(area.removeFromLeft(thirdWidth));
     }
 
     updateTransformsAndChildBounds();
